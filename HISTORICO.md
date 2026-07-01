@@ -383,3 +383,13 @@ Esta etapa revisou os arquivos prontos e completou o que faltava.
   procedimento → estoque → caixa → agenda) com dados reais.
 - Lembrete de deploy: `git push` para o GitHub aciona o redeploy na Vercel; as
   env vars `GOOGLE_CLIENT_ID/SECRET` já estão lá (necessárias p/ a refresh).
+
+### Deploy da Etapa 6 + reconciliação do Git (2026-06-30)
+- Commit único da Etapa 6 (`cfad5a0`, root-commit) enviado ao GitHub.
+- **Pegadinha:** a pasta local tinha histórico próprio (root-commit) e o GitHub
+  tinha o "deploy inicial" antigo (`bb57c34`) com histórico **não relacionado** →
+  o `git push` normal foi rejeitado (`fetch first`). Comparando os dois: o local
+  era superconjunto atualizado; só existia no remoto o `.claude/settings.local.json`
+  (config de máquina, descartável e já no `.gitignore`).
+- Resolvido com **`git push --force-with-lease`**: a Etapa 6 virou o estado
+  canônico no GitHub (`bb57c34` → `cfad5a0`). Redeploy na Vercel disparado pelo push.
