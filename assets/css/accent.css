@@ -1,0 +1,40 @@
+/* ============================================================================
+   accent.css — cor de destaque personalizável (Configurações → Aparência).
+   Cada paleta só redefine os 4 tons crus de mauve (100/300/500/700). Como todo
+   o app referencia --accent / --color-mauve-* (banner, abas ativas, chip "hoje",
+   badges dos mini-cards), trocar data-accent muda tudo sem tocar componente.
+   Carregado DEPOIS de tokens.css. 'rose' é o padrão (= mauve original).
+   ponytail: hexes derivados na mão (suave/claro/médio/texto), afináveis por
+   conta-gotas se o usuário quiser bater exato com as amostras.
+   ============================================================================ */
+
+[data-accent="rose"] {
+  --color-mauve-100: #f3e9ea;
+  --color-mauve-300: #d9c2c6;
+  --color-mauve-500: #b79ca0;
+  --color-mauve-700: #8f7276;
+}
+[data-accent="sand"] {
+  --color-mauve-100: #f5efe4;
+  --color-mauve-300: #e4d5bd;
+  --color-mauve-500: #cbb088;
+  --color-mauve-700: #9d8154;
+}
+[data-accent="sky"] {
+  --color-mauve-100: #e8f0f6;
+  --color-mauve-300: #c3d7e6;
+  --color-mauve-500: #9bb9cf;
+  --color-mauve-700: #6d8ca6;
+}
+[data-accent="lilac"] {
+  --color-mauve-100: #efe9f3;
+  --color-mauve-300: #d3c4de;
+  --color-mauve-500: #b29ec6;
+  --color-mauve-700: #86709c;
+}
+[data-accent="mint"] {
+  --color-mauve-100: #e6f1ea;
+  --color-mauve-300: #c2ddcb;
+  --color-mauve-500: #97c0a6;
+  --color-mauve-700: #6a9179;
+}

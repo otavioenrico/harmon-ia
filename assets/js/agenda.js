@@ -204,7 +204,7 @@ export async function render(root, ctx) {
         ${evs.length > 3 ? `<span class="ag-more">+${evs.length - 3}</span>` : ''}
       </div>`;
     }
-    body.innerHTML = `<div class="ag-grid">${WD.map((w) => `<div class="ag-head">${w}</div>`).join('')}${cells}</div>`;
+    body.innerHTML = `<div class="ag-scroll"><div class="ag-grid">${WD.map((w) => `<div class="ag-head">${w}</div>`).join('')}${cells}</div></div>`;
     body.querySelectorAll('.ag-cell').forEach((c) => c.addEventListener('click', (e) => {
       if (e.target.closest('[data-ev]')) return;
       openForm(c.dataset.day);
@@ -266,12 +266,12 @@ export async function render(root, ctx) {
     const canComplete = proc && proc.status === 'scheduled';
     const foot = document.createElement('div');
     foot.innerHTML = `
-      <button class="btn btn--ghost" data-del-d>Cancelar agend.</button>
+      <button class="btn btn--danger" data-del-d>Cancelar agend.</button>
       ${client?.phone ? `<a class="btn btn--secondary" target="_blank" rel="noopener"
         href="${waLink(client.phone, `Olá ${esc(client.name.split(' ')[0])}! Confirmando seu horário em ${start.toLocaleDateString('pt-BR')} às ${hhmm(start)}. 💛`)}">${icon('whatsapp')} WhatsApp</a>` : ''}
       ${canComplete ? `<button class="btn btn--secondary" data-done>${icon('check')} Concluir</button>` : ''}
       <button class="btn btn--secondary" data-edit>Editar</button>
-      <button class="btn btn--primary" data-x>Fechar</button>`;
+      <button class="btn btn--ghost" data-x>Fechar</button>`;
     const m = openModal({ title: 'Agendamento', body: bodyEl, footer: foot });
     foot.querySelector('[data-x]').onclick = () => m.close();
     foot.querySelector('[data-edit]').onclick = () => { m.close(); openForm(null, ev); };

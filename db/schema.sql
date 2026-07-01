@@ -27,6 +27,7 @@ create table if not exists public.user_settings (
   user_id              uuid references auth.users(id) on delete cascade not null unique,
   google_refresh_token text,
   theme                text default 'light',         -- 'light' | 'dark'
+  accent               text default 'rose',          -- rose | sand | sky | lilac | mint
   created_at           timestamptz default now(),
   updated_at           timestamptz default now()
 );
@@ -160,6 +161,7 @@ create table if not exists public.agenda_drafts (
 
 -- migrações p/ bancos já implantados (idempotente) ----------------------------
 alter table public.clients add column if not exists address_complement text;
+alter table public.user_settings add column if not exists accent text default 'rose';
 
 -- =================================================== updated_at triggers ======
 do $$

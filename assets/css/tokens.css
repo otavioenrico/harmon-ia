@@ -10,7 +10,7 @@
   --color-white:    #ffffff;
   --color-gray-100: #f5f4f2;   /* fundo geral */
   --color-gray-200: #ebe8e5;
-  --color-gray-400: #9e9892;
+  --color-gray-400: #7d766e;   /* ~4.6:1 sobre branco (era #9e9892, abaixo de AA) */
   --color-gray-600: #6b6760;   /* 5.62:1 sobre branco */
 
   /* rosé/mauve — cor de FUNDO e GRÁFICO, nunca de texto de corpo */
@@ -50,6 +50,8 @@
   --success: var(--color-success);
   --warning: var(--color-warning);
   --danger:  var(--color-danger);
+  /* cor de marca do WhatsApp — dissociada de --success (semântica financeira) */
+  --whatsapp: #4a7c59;
 
   /* sobre fundo claro, versões suaves para badges */
   --success-soft: #e7efe9;

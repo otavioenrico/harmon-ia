@@ -9,9 +9,19 @@ import { toast, esc, initials, download, todayISO, icon } from './utils.js';
 const TABLES = ['user_settings', 'services', 'clients', 'stock_items',
   'stock_transactions', 'procedures', 'procedure_materials', 'financial_entries'];
 
+// cor de destaque: id + amostra (tom 500 de cada paleta em accent.css) + rótulo
+const ACCENTS = [
+  ['rose',  '#b79ca0', 'Rosé'],
+  ['sand',  '#cbb088', 'Areia'],
+  ['sky',   '#9bb9cf', 'Céu'],
+  ['lilac', '#b29ec6', 'Lilás'],
+  ['mint',  '#97c0a6', 'Menta'],
+];
+
 export async function render(root, ctx) {
   const p = profile(ctx.session);
   const dark = ctx.settings?.theme === 'dark';
+  const accent = ctx.settings?.accent || 'rose';
 
   root.innerHTML = `
     <div style="max-width:640px; display:flex; flex-direction:column; gap:24px">
@@ -42,6 +52,13 @@ export async function render(root, ctx) {
           <span class="switch"><input type="checkbox" id="theme" ${dark ? 'checked' : ''}><span class="track"></span></span>
           Tema escuro
         </label>
+        <div class="mt-4">
+          <div class="muted" style="font-size:14px">Cor de destaque</div>
+          <div class="swatches mt-4" id="accent">
+            ${ACCENTS.map(([id, hex, label]) =>
+              `<span class="swatch${id === accent ? ' selected' : ''}" data-a="${id}" style="background:${hex}" title="${label}" role="button" aria-label="${label}"></span>`).join('')}
+          </div>
+        </div>
         <p class="hint mt-4">A preferência fica salva na sua conta e vale em qualquer dispositivo.</p>
       </section>
 
@@ -69,6 +86,18 @@ export async function render(root, ctx) {
       .upsert({ user_id: ctx.session.user.id, theme }, { onConflict: 'user_id' });
     if (error) { console.error(error); toast('Não foi possível salvar o tema.', 'error'); }
     else toast('Tema atualizado.');
+  };
+
+  root.querySelector('#accent').onclick = async (e) => {
+    const s = e.target.closest('[data-a]'); if (!s) return;
+    const accent = s.dataset.a;
+    document.documentElement.dataset.accent = accent;
+    ctx.settings.accent = accent;
+    root.querySelectorAll('#accent .swatch').forEach((x) => x.classList.toggle('selected', x === s));
+    const { error } = await supabase.from('user_settings')
+      .upsert({ user_id: ctx.session.user.id, accent }, { onConflict: 'user_id' });
+    if (error) { console.error(error); toast('Não foi possível salvar a cor.', 'error'); }
+    else toast('Cor de destaque atualizada.');
   };
 
   root.querySelector('#backup').onclick = async (e) => {

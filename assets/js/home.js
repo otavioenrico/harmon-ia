@@ -83,7 +83,7 @@ export async function render(root, ctx) {
     <div class="hero">
       <div>
         <div class="hero__label">${greeting()}</div>
-        <div class="hero__title">Olá, ${esc(name)} ✦</div>
+        <div class="hero__title">Olá, ${esc(name)} ${icon('sparkle')}</div>
         <div class="hero__sub">${upcoming.length
           ? `${upcoming.length} agendamento${upcoming.length > 1 ? 's' : ''} pela frente.`
           : 'Nenhum agendamento futuro no momento.'}</div>
@@ -92,9 +92,9 @@ export async function render(root, ctx) {
     </div>
 
     <div class="mini-cards">
-      ${miniCard('users', 'var(--pill-blue-bg)', 'Novos clientes no mês', novos)}
-      ${miniCard('wallet', 'var(--pill-tan-bg)', 'Recebido no mês', money(receita))}
-      ${miniCard('wallet', 'var(--pill-peach-bg)', 'Despesas no mês', money(despesas))}
+      ${miniCard('users', 'var(--color-mauve-100)', 'Novos clientes no mês', novos)}
+      ${miniCard('wallet', 'var(--color-mauve-100)', 'Recebido no mês', money(receita))}
+      ${miniCard('wallet', 'var(--color-mauve-100)', 'Despesas no mês', money(despesas))}
     </div>
 
     <div class="panel">

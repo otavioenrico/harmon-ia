@@ -136,22 +136,26 @@ export async function render(root, ctx) {
         </div>
 
         <h3 style="margin:20px 0 8px">Registrar movimentação</h3>
-        <form id="mov" class="field-row" style="align-items:flex-end">
-          <div class="field"><label>Tipo</label>
-            <select class="select" name="type">
-              <option value="in">Entrada (compra)</option>
-              <option value="out">Saída / descarte</option>
-              <option value="set">Ajuste (contagem)</option>
-            </select>
+        <form id="mov">
+          <div class="field-row" style="align-items:flex-end">
+            <div class="field"><label>Tipo</label>
+              <select class="select" name="type" style="min-width:120px">
+                <option value="in">Entrada (compra)</option>
+                <option value="out">Saída / descarte</option>
+                <option value="set">Ajuste (contagem)</option>
+              </select>
+            </div>
+            <div class="field"><label id="qlbl">Quantidade</label>
+              <input class="input" name="qty" type="number" step="0.001" min="0" required /></div>
+            <div class="field" id="paid-wrap"><label>Valor pago (R$)</label>
+              <input class="input" name="paid_total" type="number" step="0.01" min="0" placeholder="opcional" /></div>
           </div>
-          <div class="field"><label id="qlbl">Quantidade</label>
-            <input class="input" name="qty" type="number" step="0.001" min="0" required /></div>
-          <div class="field" id="paid-wrap"><label>Valor pago total (R$)</label>
-            <input class="input" name="paid_total" type="number" step="0.01" min="0" placeholder="opcional" />
-            <span class="hint">Atualiza o custo unitário (÷ qtd).</span></div>
-          <div class="field" style="flex:2"><label>Observação</label>
-            <input class="input" name="notes" /></div>
-          <button class="btn btn--primary" type="submit" form="mov">Registrar</button>
+          <p class="hint" id="paid-hint">Valor pago atualiza o custo unitário (÷ qtd).</p>
+          <div class="field-row" style="align-items:flex-end">
+            <div class="field" style="flex:1"><label>Observação</label>
+              <input class="input" name="notes" /></div>
+            <button class="btn btn--primary" type="submit">Registrar</button>
+          </div>
         </form>
 
         <h3 style="margin:20px 0 8px">Histórico</h3>
@@ -166,9 +170,12 @@ export async function render(root, ctx) {
     // ajuste usa contagem absoluta; entrada/saída usam delta
     const qlbl = body.querySelector('#qlbl');
     const paidWrap = body.querySelector('#paid-wrap');   // valor pago só faz sentido em entrada
+    const paidHint = body.querySelector('#paid-hint');
     body.querySelector('[name="type"]').onchange = (e) => {
       qlbl.textContent = e.target.value === 'set' ? 'Nova contagem' : 'Quantidade';
-      paidWrap.hidden = e.target.value !== 'in';
+      const isIn = e.target.value === 'in';
+      paidWrap.hidden = !isIn;
+      paidHint.hidden = !isIn;
     };
 
     renderAttachments(it, body.querySelector('#thumb'));

@@ -28,18 +28,19 @@ export async function render(root, ctx) {
   btn.onclick = () => openForm(ctx.session.user.id, load);
   const csvBtn = document.createElement('button');
   csvBtn.className = 'btn btn--secondary';
-  csvBtn.textContent = 'Exportar CSV';
+  csvBtn.innerHTML = `${icon('download')}<span class="btn-label">Exportar CSV</span>`;
+  csvBtn.title = 'Exportar CSV';
   csvBtn.onclick = () => exportCSV(filtered());
   ctx.actions.append(btn, csvBtn);
 
   // item 11: apresentação em abas por cima da mesma query/estado.
   root.innerHTML = `
-    <div class="tabs" id="f-tabs">
-      <button class="tab active" data-t="resumo">Resumo</button>
-      <button class="tab" data-t="entradas">Entradas</button>
-      <button class="tab" data-t="saidas">Saídas</button>
-      <button class="tab" data-t="comp">Comparativo</button>
-      <button class="tab" data-t="planilha">Planilha</button>
+    <div class="segmented mb-3" id="f-tabs">
+      <button class="active" data-t="resumo">Resumo</button>
+      <button data-t="entradas">Entradas</button>
+      <button data-t="saidas">Saídas</button>
+      <button data-t="comp">Comparativo</button>
+      <button data-t="planilha">Planilha</button>
     </div>
     <div class="module__toolbar">
       <div id="f-filters" class="flex" style="gap:8px; flex-wrap:wrap"></div>
@@ -52,7 +53,7 @@ export async function render(root, ctx) {
   root.querySelector('#f-tabs').onclick = (e) => {
     const b = e.target.closest('[data-t]'); if (!b) return;
     state.tab = b.dataset.t;
-    root.querySelectorAll('#f-tabs .tab').forEach((x) => x.classList.toggle('active', x === b));
+    root.querySelectorAll('#f-tabs button').forEach((x) => x.classList.toggle('active', x === b));
     paint();
   };
 

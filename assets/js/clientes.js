@@ -126,14 +126,14 @@ export async function render(root, ctx) {
         </div>
 
         <div class="flex mt-4">
-          <button class="btn btn--secondary btn--sm" data-agendar>Agendar</button>
+          <button class="btn btn--primary btn--sm" data-agendar>Agendar</button>
           <button class="btn btn--secondary btn--sm" data-proc>Novo procedimento</button>
           <button class="btn btn--ghost btn--sm" data-edit>Editar</button>
         </div>
 
-        <div class="tabs mt-4">
-          <button class="tab active" data-tab="proc">Procedimentos</button>
-          <button class="tab" data-tab="fin">Financeiro</button>
+        <div class="segmented mt-4" data-tabs>
+          <button class="active" data-tab="proc">Procedimentos</button>
+          <button data-tab="fin">Financeiro</button>
         </div>
         <div id="pane-proc"><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
         <div id="pane-fin" hidden><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
@@ -150,9 +150,9 @@ export async function render(root, ctx) {
     body.querySelector('[data-proc]').onclick = () => {
       sessionStorage.setItem('intent:procedimento', id); ctx.navigate('historico');
     };
-    body.querySelector('.tabs').onclick = (e) => {
+    body.querySelector('[data-tabs]').onclick = (e) => {
       const t = e.target.closest('[data-tab]'); if (!t) return;
-      body.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x === t));
+      body.querySelectorAll('[data-tabs] button').forEach((x) => x.classList.toggle('active', x === t));
       body.querySelector('#pane-proc').hidden = t.dataset.tab !== 'proc';
       body.querySelector('#pane-fin').hidden = t.dataset.tab !== 'fin';
     };

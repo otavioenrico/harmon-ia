@@ -15,7 +15,7 @@ const ROUTES = {
   clientes:      { title: 'Clientes',       icon: 'users' },
   historico:     { title: 'Histórico',      icon: 'clipboard' },
   financeiro:    { title: 'Fluxo de Caixa', icon: 'wallet' },
-  configuracoes: { title: 'Configurações',  icon: 'settings' },
+  configuracoes: { title: 'Configurações',  icon: 'tool' },
 };
 const ORDER = Object.keys(ROUTES);
 
@@ -32,6 +32,7 @@ const moduleCache = {};
 
   settings = await loadSettings();
   applyTheme(settings?.theme || 'light');
+  applyAccent(settings?.accent || 'rose');
   renderUserFooter();
   buildNav();
   wireChrome();
@@ -47,6 +48,10 @@ async function loadSettings() {
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : '';
+}
+
+function applyAccent(accent) {
+  document.documentElement.dataset.accent = accent || 'rose';
 }
 
 // ----------------------------------------------------------------- sidebar --
@@ -77,8 +82,24 @@ function wireChrome() {
   const brand = document.querySelector('.brand-mark');
   if (brand) brand.innerHTML = icon('sparkle');
   const collapse = $('collapse');
-  collapse.innerHTML = icon('menu');
-  collapse.addEventListener('click', () => $('shell').classList.toggle('collapsed'));
+  collapse.innerHTML = icon('panel');
+
+  // Desktop: colapsa a sidebar (rail de ícones). Mobile (≤900px): a sidebar é um
+  // drawer sobreposto — o botão abre/fecha com scrim; navegar fecha.
+  const shell = $('shell');
+  const mobile = window.matchMedia('(max-width: 900px)');
+  let scrim = null;
+  const closeDrawer = () => { shell.classList.remove('sidebar-open'); scrim?.remove(); scrim = null; };
+  collapse.addEventListener('click', () => {
+    if (!mobile.matches) return shell.classList.toggle('collapsed');
+    if (shell.classList.toggle('sidebar-open')) {
+      scrim = document.createElement('div');
+      scrim.className = 'scrim';
+      scrim.addEventListener('click', closeDrawer);
+      document.body.appendChild(scrim);
+    } else closeDrawer();
+  });
+  navEl.addEventListener('click', () => { if (mobile.matches) closeDrawer(); });
 }
 
 // ----------------------------------------------------------------- router ---
