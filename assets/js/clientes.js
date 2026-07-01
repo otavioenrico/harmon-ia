@@ -6,7 +6,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, maskPhone, maskCPF, bindMask, openModal, openDrawer,
-  toast, busy, debounce, esc, initials, skeletonRows, h } from './utils.js';
+  toast, busy, debounce, esc, initials, skeletonRows, h, waLink, icon } from './utils.js';
 
 export async function render(root, ctx) {
   const state = { all: [], q: '', sort: 'name' };
@@ -46,6 +46,7 @@ export async function render(root, ctx) {
   root.querySelector('#cli-sort').onchange = (e) => { state.sort = e.target.value; paint(); };
 
   tbody.onclick = (e) => {
+    if (e.target.closest('a.wa-link')) return;  // link do WhatsApp não abre o perfil
     const tr = e.target.closest('[data-id]'); if (!tr) return;
     openProfile(tr.dataset.id);
   };
@@ -72,7 +73,7 @@ export async function render(root, ctx) {
       `${c.name} ${c.phone || ''} ${c.email || ''}`.toLowerCase().includes(state.q));
     rows = [...rows].sort(SORTERS[state.sort]);
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="icon">👥</div>
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="icon">${icon('users')}</div>
         <p>Nenhuma cliente ${state.q ? 'encontrada' : 'cadastrada ainda'}.</p></div></td></tr>`;
       return;
     }
@@ -83,7 +84,7 @@ export async function render(root, ctx) {
     return `
       <tr class="clickable" data-id="${c.id}">
         <td>${esc(c.name)}${c.active === false ? ' <span class="badge badge--muted">inativa</span>' : ''}</td>
-        <td class="nowrap">${esc(c.phone || '—')}</td>
+        <td class="nowrap">${c.phone ? `<a class="wa-link" href="${waLink(c.phone)}" target="_blank" rel="noopener" title="WhatsApp">${icon('whatsapp')}${esc(c.phone)}</a>` : '—'}</td>
         <td>${esc(c.email || '—')}</td>
         <td>${esc(c.address_city || '—')}</td>
         <td class="nowrap">${c._last ? fmtDate(c._last) : '—'}</td>
@@ -98,7 +99,7 @@ export async function render(root, ctx) {
     if (drawer) drawer.close();
 
     const addr = [
-      [c.address_street, c.address_number].filter(Boolean).join(', '),
+      [[c.address_street, c.address_number].filter(Boolean).join(', '), c.address_complement].filter(Boolean).join(' — '),
       [c.address_city, c.address_state].filter(Boolean).join('/'),
       c.address_zip,
     ].filter(Boolean).join(' — ') || '—';
@@ -246,6 +247,8 @@ function openForm(ctx, c, onSaved) {
         <input class="input" name="address_street" value="${esc(c?.address_street || '')}" /></div>
       <div class="field" style="flex:1"><label>Número</label>
         <input class="input" name="address_number" value="${esc(c?.address_number || '')}" /></div>
+      <div class="field" style="flex:2"><label>Complemento</label>
+        <input class="input" name="address_complement" placeholder="apto, bloco, ref." value="${esc(c?.address_complement || '')}" /></div>
     </div>
     <div class="field-row">
       <div class="field" style="flex:2"><label>Cidade</label>
@@ -291,6 +294,7 @@ function openForm(ctx, c, onSaved) {
       cpf: val('cpf'),
       address_street: val('address_street'),
       address_number: val('address_number'),
+      address_complement: val('address_complement'),
       address_city: val('address_city'),
       address_state: val('address_state'),
       address_zip: val('address_zip'),

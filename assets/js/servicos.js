@@ -3,7 +3,7 @@
 // Regra: serviços não são excluídos, apenas inativados (têm procedimentos ligados).
 // ============================================================================
 import { supabase } from './supabase.js';
-import { money, openModal, toast, busy, esc, debounce } from './utils.js';
+import { money, openModal, toast, busy, esc, debounce, icon } from './utils.js';
 
 const COLORS = ['#b85450', '#c9923a', '#4a7c59', '#3f6f86', '#7b6d8d', '#6b6760', '#9e9892', '#e2dbd3'];
 
@@ -48,7 +48,7 @@ export async function render(root, ctx) {
     const { data, error } = await q;
     if (error) { grid.innerHTML = ''; toast('Erro ao carregar serviços.', 'error'); return; }
     if (!data.length) {
-      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="icon">✂️</div>
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="icon">${icon('scissors')}</div>
         <p>Nenhum serviço ${state.q ? 'encontrado' : 'cadastrado'}.</p></div>`;
       return;
     }

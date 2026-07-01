@@ -7,7 +7,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDateTime, openModal, openDrawer, toast, busy, debounce,
-  esc, skeletonRows, h, toCSV, download } from './utils.js';
+  esc, skeletonRows, h, toCSV, download, icon } from './utils.js';
 
 const BUCKET = 'uploads';
 const isLow = (it) => it.active !== false && Number(it.quantity || 0) <= Number(it.min_quantity || 0);
@@ -16,7 +16,7 @@ const REASONS = { compra: 'Entrada (compra)', descarte: 'Saída / descarte',
   ajuste: 'Ajuste', uso_procedimento: 'Uso em procedimento' };
 
 export async function render(root, ctx) {
-  const state = { all: [], q: '', filter: 'all' };
+  const state = { all: [], q: '', filter: 'all', thumbs: {} };
   let drawer = null;
 
   const buy = document.createElement('button');
@@ -73,6 +73,13 @@ export async function render(root, ctx) {
     if (error) { console.error(error); tbody.innerHTML = ''; toast('Erro ao carregar o estoque.', 'error'); return; }
     state.all = data || [];
     ctx.setBadge('estoque', state.all.filter(isLow).length);
+    // item 6: miniaturas na lista. Gera as signed URLs uma vez por load (bucket
+    // privado) e cacheia por sessão — não regera a cada render/filtro.
+    const paths = state.all.map((i) => i.photo_url).filter((p) => p && !(p in state.thumbs));
+    if (paths.length) {
+      const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls(paths, 3600);
+      (signed || []).forEach((s) => { if (s.path) state.thumbs[s.path] = s.signedUrl || null; });
+    }
     paint();
   }
 
@@ -82,7 +89,7 @@ export async function render(root, ctx) {
     else if (state.filter === 'inactive') rows = rows.filter((i) => i.active === false);
     if (state.q) rows = rows.filter((i) => (i.name || '').toLowerCase().includes(state.q));
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="icon">📦</div>
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="icon">${icon('box')}</div>
         <p>Nenhum item ${state.q || state.filter !== 'all' ? 'encontrado' : 'cadastrado ainda'}.</p></div></td></tr>`;
       return;
     }
@@ -93,7 +100,10 @@ export async function render(root, ctx) {
     const low = isLow(it);
     return `
       <tr class="clickable" data-id="${it.id}">
-        <td>${esc(it.name)}${it.active === false ? ' <span class="badge badge--muted">inativo</span>' : ''}</td>
+        <td><div class="flex" style="gap:8px">
+          ${it.photo_url && state.thumbs[it.photo_url] ? `<img class="thumb" src="${esc(state.thumbs[it.photo_url])}" alt="">` : ''}
+          <span>${esc(it.name)}${it.active === false ? ' <span class="badge badge--muted">inativo</span>' : ''}</span>
+        </div></td>
         <td class="num ${low ? 'neg' : ''}">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
         <td class="num">${fmtQty(it.min_quantity)}</td>
         <td class="num">${it.cost_price != null ? money(it.cost_price) : '—'}</td>
@@ -136,6 +146,9 @@ export async function render(root, ctx) {
           </div>
           <div class="field"><label id="qlbl">Quantidade</label>
             <input class="input" name="qty" type="number" step="0.001" min="0" required /></div>
+          <div class="field" id="paid-wrap"><label>Valor pago total (R$)</label>
+            <input class="input" name="paid_total" type="number" step="0.01" min="0" placeholder="opcional" />
+            <span class="hint">Atualiza o custo unitário (÷ qtd).</span></div>
           <div class="field" style="flex:2"><label>Observação</label>
             <input class="input" name="notes" /></div>
           <button class="btn btn--primary" type="submit" form="mov">Registrar</button>
@@ -152,8 +165,11 @@ export async function render(root, ctx) {
 
     // ajuste usa contagem absoluta; entrada/saída usam delta
     const qlbl = body.querySelector('#qlbl');
-    body.querySelector('[name="type"]').onchange = (e) =>
+    const paidWrap = body.querySelector('#paid-wrap');   // valor pago só faz sentido em entrada
+    body.querySelector('[name="type"]').onchange = (e) => {
       qlbl.textContent = e.target.value === 'set' ? 'Nova contagem' : 'Quantidade';
+      paidWrap.hidden = e.target.value !== 'in';
+    };
 
     renderAttachments(it, body.querySelector('#thumb'));
     renderLinks(it.marketplace_links, body.querySelector('#links'));
@@ -198,6 +214,16 @@ async function submitMovement(ctx, it, form, onDone) {
   const up = await supabase.from('stock_items').update({ quantity: newQty }).eq('id', it.id);
   busy(submit, false);
   if (up.error) { console.error(up.error); return toast('Movimento gravado, mas falhou ao atualizar a quantidade.', 'error'); }
+
+  // item 13: entrada com valor pago total → custo unitário = valor ÷ qtd.
+  // ponytail: última compra (não custo médio ponderado) — regra mais simples e
+  // previsível p/ clínica solo; trocar por média se o giro exigir.
+  const paidTotal = Number(fd.get('paid_total'));
+  if (type === 'in' && paidTotal > 0 && input > 0) {
+    const unit = Number((paidTotal / input).toFixed(2));
+    const c = await supabase.from('stock_items').update({ cost_price: unit }).eq('id', it.id);
+    if (c.error) console.error(c.error);
+  }
   toast('Movimentação registrada.');
   onDone();
 }
@@ -376,7 +402,7 @@ function openForm(ctx, it, onSaved) {
 function openShoppingList(lowItems) {
   const body = h(`<div></div>`);
   if (!lowItems.length) {
-    body.innerHTML = `<div class="empty"><div class="icon">✅</div>
+    body.innerHTML = `<div class="empty"><div class="icon">${icon('check')}</div>
       <p>Nenhum item abaixo do mínimo. Estoque em dia!</p></div>`;
   } else {
     body.innerHTML = `

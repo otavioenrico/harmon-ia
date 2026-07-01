@@ -7,7 +7,13 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, todayISO, daysSince, openModal, toast, busy, esc,
-  debounce, waLink } from './utils.js';
+  debounce, waLink, icon, clientAutocomplete } from './utils.js';
+
+const STATUS_BADGE = {
+  scheduled: '<span class="badge badge--warning">agendado</span>',
+  completed: '<span class="badge badge--success">realizado</span>',
+  cancelled: '<span class="badge badge--muted">cancelado</span>',
+};
 
 // métodos à vista entram já pagos; crédito/parcelado entram pendentes (decisão fechada)
 const PAID_METHODS = new Set(['pix', 'dinheiro', 'cartao_debito']);
@@ -18,7 +24,8 @@ const METHODS = [
 
 export async function render(root, ctx) {
   const state = { all: [], clients: [], services: [], stock: [],
-    view: 'proc', fCliente: '', fServico: '', fDe: '', fAte: '', reDays: 60 };
+    view: 'proc', fCliente: '', fServico: '', fStatus: '', fDe: '', fAte: '',
+    reDays: 60, retMonths: 1 };
 
   const btn = document.createElement('button');
   btn.className = 'btn btn--primary';
@@ -31,6 +38,7 @@ export async function render(root, ctx) {
       <div class="segmented" id="h-view">
         <button data-v="proc" class="active">Procedimentos</button>
         <button data-v="reat">Reativação</button>
+        <button data-v="ret">Retornos</button>
       </div>
       <div class="spacer"></div>
       <div id="h-filters" class="flex" style="gap:8px; flex-wrap:wrap"></div>
@@ -56,15 +64,32 @@ export async function render(root, ctx) {
         debounce((e) => { state.reDays = Number(e.target.value) || 0; paint(); }));
       return;
     }
+    if (state.view === 'ret') {
+      const MS = [[1, '1 mês'], [3, '3 meses'], [6, '6 meses'], [12, '12 meses']];
+      filters.innerHTML = `<div class="segmented" id="ret-ms">
+        ${MS.map(([v, l]) => `<button data-m="${v}" class="${v === state.retMonths ? 'active' : ''}">${l}</button>`).join('')}</div>`;
+      filters.querySelector('#ret-ms').onclick = (e) => {
+        const b = e.target.closest('[data-m]'); if (!b) return;
+        state.retMonths = Number(b.dataset.m);
+        filters.querySelectorAll('#ret-ms button').forEach((x) => x.classList.toggle('active', x === b));
+        paint();
+      };
+      return;
+    }
     const opts = (arr, sel) => arr.map((x) =>
       `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}</option>`).join('');
     filters.innerHTML = `
       <select class="select" id="f-cli" style="max-width:180px"><option value="">Toda cliente</option>${opts(state.clients, state.fCliente)}</select>
       <select class="select" id="f-svc" style="max-width:180px"><option value="">Todo serviço</option>${opts(state.services, state.fServico)}</select>
+      <select class="select" id="f-st" style="max-width:150px">
+        <option value="">Todo status</option><option value="scheduled">Agendados</option>
+        <option value="completed">Realizados</option><option value="cancelled">Cancelados</option></select>
       <input class="input" id="f-de" type="date" value="${state.fDe}" title="De" style="max-width:150px">
       <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até" style="max-width:150px">`;
     filters.querySelector('#f-cli').onchange = (e) => { state.fCliente = e.target.value; paint(); };
     filters.querySelector('#f-svc').onchange = (e) => { state.fServico = e.target.value; paint(); };
+    filters.querySelector('#f-st').value = state.fStatus;
+    filters.querySelector('#f-st').onchange = (e) => { state.fStatus = e.target.value; paint(); };
     filters.querySelector('#f-de').onchange = (e) => { state.fDe = e.target.value; paint(); };
     filters.querySelector('#f-ate').onchange = (e) => { state.fAte = e.target.value; paint(); };
   }
@@ -100,16 +125,19 @@ export async function render(root, ctx) {
 
   function paint() {
     if (state.view === 'reat') return paintReat();
+    if (state.view === 'ret') return paintRetornos();
     let rows = state.all;
     if (state.fCliente) rows = rows.filter((p) => p.client_id === state.fCliente);
     if (state.fServico) rows = rows.filter((p) => p.service_id === state.fServico);
+    if (state.fStatus) rows = rows.filter((p) => (p.status || 'completed') === state.fStatus);
     if (state.fDe) rows = rows.filter((p) => p.date >= state.fDe);   // 'YYYY-MM-DD' lexicográfico
     if (state.fAte) rows = rows.filter((p) => p.date <= state.fAte);
     if (!rows.length) {
-      tableWrap.innerHTML = emptyBox('📋', 'Nenhum procedimento registrado.'); return;
+      tableWrap.innerHTML = emptyBox(icon('clipboard'), 'Nenhum procedimento registrado.'); return;
     }
+    // item 9: agendados e realizados listados juntos, com coluna de status.
     tableWrap.innerHTML = table(
-      ['Data', 'Cliente', 'Serviço', 'Valor', 'Lucro'],
+      ['Data', 'Cliente', 'Serviço', 'Status', 'Valor', 'Lucro'],
       rows.map((p) => {
         const has = p.price_charged != null;
         const lucro = has ? Number(p.price_charged) - p._cost : null;
@@ -117,27 +145,59 @@ export async function render(root, ctx) {
           <td class="nowrap">${fmtDate(p.date)}</td>
           <td>${esc(p.clients?.name || '—')}</td>
           <td>${esc(p.services?.name || '—')}</td>
+          <td>${STATUS_BADGE[p.status] || STATUS_BADGE.completed}</td>
           <td class="num">${has ? money(p.price_charged) : '—'}</td>
           <td class="num ${lucro < 0 ? 'neg' : ''}">${has ? money(lucro) : '—'}</td>
         </tr>`;
-      }).join(''));
+      }).join(''), 4);
+  }
+
+  // último procedimento REALIZADO por cliente (agendamento futuro não conta)
+  function lastCompletedByClient() {
+    const last = new Map();
+    for (const p of state.all) {
+      if (p.status !== 'completed' || !p.client_id || !p.date) continue;
+      if (!last.has(p.client_id) || p.date > last.get(p.client_id)) last.set(p.client_id, p.date);
+    }
+    return last;
   }
 
   function paintReat() {
-    // último procedimento por cliente (datas 'YYYY-MM-DD' → maior = mais recente)
-    const last = new Map();
-    for (const p of state.all) {
-      if (!p.client_id || !p.date) continue;
-      if (!last.has(p.client_id) || p.date > last.get(p.client_id)) last.set(p.client_id, p.date);
-    }
+    const last = lastCompletedByClient();
     const rows = state.clients
       .map((c) => ({ ...c, _last: last.get(c.id) || null, _days: daysSince(last.get(c.id)) }))
       .filter((c) => c._last && c._days >= state.reDays)
       .sort((a, b) => b._days - a._days);
     if (!rows.length) {
-      tableWrap.innerHTML = emptyBox('👋', `Nenhuma cliente sem retorno há ${state.reDays}+ dias.`); return;
+      tableWrap.innerHTML = emptyBox(icon('users'), `Nenhuma cliente sem retorno há ${state.reDays}+ dias.`); return;
     }
     const msg = (n) => `Oi ${n.split(' ')[0]}! Faz um tempinho que você não aparece por aqui. Que tal agendarmos seu próximo cuidado? 💛`;
+    tableWrap.innerHTML = table(
+      ['Cliente', 'Último proc.', 'Dias', ''],
+      rows.map((c) => `<tr>
+        <td>${esc(c.name)}</td>
+        <td class="nowrap">${fmtDate(c._last)}</td>
+        <td class="num">${c._days}</td>
+        <td class="num">${c.phone
+          ? `<a class="btn btn--secondary btn--sm" target="_blank" rel="noopener"
+               href="${waLink(c.phone, msg(c.name))}">WhatsApp</a>`
+          : '<span class="faint">sem telefone</span>'}</td>
+      </tr>`).join(''));
+  }
+
+  // item 9: lembretes de retorno em 1/3/6/12 meses. "Automático" = calculado ao
+  // abrir a tela (não há cron no projeto). Marca quem já passou do intervalo.
+  function paintRetornos() {
+    const last = lastCompletedByClient();
+    const threshold = state.retMonths * 30;   // ponytail: mês ≈ 30 dias, suficiente p/ lembrete
+    const rows = state.clients
+      .map((c) => ({ ...c, _last: last.get(c.id) || null, _days: daysSince(last.get(c.id)) }))
+      .filter((c) => c._last && c._days >= threshold)
+      .sort((a, b) => b._days - a._days);
+    if (!rows.length) {
+      tableWrap.innerHTML = emptyBox(icon('bell'), `Nenhuma cliente para retorno de ${state.retMonths} ${state.retMonths === 1 ? 'mês' : 'meses'}.`); return;
+    }
+    const msg = (n) => `Oi ${n.split(' ')[0]}! Já faz um tempinho do seu último procedimento — que tal agendar seu retorno? 💛`;
     tableWrap.innerHTML = table(
       ['Cliente', 'Último proc.', 'Dias', ''],
       rows.map((c) => `<tr>
@@ -159,14 +219,14 @@ export async function render(root, ctx) {
   if (intent) openForm(ctx, state, intent, load);
 }
 
-const table = (cols, bodyHTML) => `
+const table = (cols, bodyHTML, numFrom = 3) => `
   <table class="data">
     <thead><tr>${cols.map((c, i) =>
-      `<th${i >= 3 ? ' class="num"' : ''}>${esc(c)}</th>`).join('')}</tr></thead>
+      `<th${i >= numFrom ? ' class="num"' : ''}>${esc(c)}</th>`).join('')}</tr></thead>
     <tbody>${bodyHTML}</tbody>
   </table>`;
-const emptyBox = (icon, msg) =>
-  `<div class="empty"><div class="icon">${icon}</div><p>${esc(msg)}</p></div>`;
+const emptyBox = (iconHTML, msg) =>
+  `<div class="empty"><div class="icon">${iconHTML}</div><p>${esc(msg)}</p></div>`;
 
 // --------------------------------------------------------------- formulário --
 function openForm(ctx, state, clientId, onSaved) {
@@ -178,7 +238,7 @@ function openForm(ctx, state, clientId, onSaved) {
   form.innerHTML = `
     <div class="field-row">
       <div class="field"><label>Cliente <span class="req">*</span></label>
-        <select class="select" name="client_id" required>${opt(state.clients, clientId, '— selecione —')}</select></div>
+        <div data-client-slot></div></div>
       <div class="field"><label>Data <span class="req">*</span></label>
         <input class="input" name="date" type="date" required value="${todayISO()}" /></div>
     </div>
@@ -208,6 +268,10 @@ function openForm(ctx, state, clientId, onSaved) {
       <label>Observações</label>
       <textarea class="textarea" name="notes"></textarea>
     </div>`;
+
+  // item 15: seleção de cliente por busca (componente compartilhado)
+  const clientPicker = clientAutocomplete(state.clients, clientId);
+  form.querySelector('[data-client-slot]').appendChild(clientPicker.el);
 
   // serviço → sugere o preço padrão
   const priceEl = form.querySelector('[name="price"]');
@@ -252,7 +316,8 @@ function openForm(ctx, state, clientId, onSaved) {
   form.onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(form);
-    if (!fd.get('client_id')) return toast('Selecione a cliente.', 'warning');
+    const clientSel = clientPicker.value();
+    if (!clientSel) return toast('Selecione a cliente.', 'warning');
     if (!fd.get('service_id')) return toast('Selecione o serviço.', 'warning');
 
     // coleta e valida materiais
@@ -273,7 +338,7 @@ function openForm(ctx, state, clientId, onSaved) {
     const price = fd.get('price') ? Number(fd.get('price')) : null;
 
     const args = {
-      p_client_id: fd.get('client_id'),
+      p_client_id: clientSel,
       p_service_id: fd.get('service_id'),
       p_date: fd.get('date'),
       p_price_charged: price,

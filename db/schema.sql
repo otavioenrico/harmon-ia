@@ -56,6 +56,7 @@ create table if not exists public.clients (
   cpf               text,
   address_street    text,
   address_number    text,
+  address_complement text,
   address_city      text,
   address_state     text,
   address_zip       text,
@@ -145,13 +146,28 @@ create table if not exists public.financial_entries (
   updated_at     timestamptz default now()
 );
 
+-- agenda_drafts ---------------------------------------------------------------
+-- Rascunho de agendamento (item 17): NÃO vira evento no Google nem linha em
+-- procedures até ser confirmado. Expiração de 7 dias é feita na leitura (não há
+-- cron no projeto) — ver delete lazy no módulo Agenda.
+create table if not exists public.agenda_drafts (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references auth.users(id) on delete cascade not null,
+  payload       jsonb not null,   -- { client_id, service_id, date, time, price, materials, ... }
+  created_at    timestamptz default now(),
+  updated_at    timestamptz default now()
+);
+
+-- migrações p/ bancos já implantados (idempotente) ----------------------------
+alter table public.clients add column if not exists address_complement text;
+
 -- =================================================== updated_at triggers ======
 do $$
 declare t text;
 begin
   foreach t in array array[
     'user_settings','services','clients','stock_items',
-    'procedures','financial_entries'
+    'procedures','financial_entries','agenda_drafts'
   ] loop
     execute format('drop trigger if exists trg_updated_at on public.%I', t);
     execute format(
@@ -171,6 +187,9 @@ create index if not exists idx_proc_client         on public.procedures(client_i
 create index if not exists idx_procmat_proc        on public.procedure_materials(procedure_id);
 create index if not exists idx_fin_user            on public.financial_entries(user_id);
 create index if not exists idx_fin_due             on public.financial_entries(due_date);
+create index if not exists idx_fin_proc            on public.financial_entries(procedure_id);
+create index if not exists idx_proc_status         on public.procedures(status, date);
+create index if not exists idx_drafts_user         on public.agenda_drafts(user_id);
 
 -- ============================================================ RLS =============
 -- Cada conta Google só enxerga os próprios dados. USING + WITH CHECK explícitos
@@ -180,7 +199,7 @@ declare t text;
 begin
   foreach t in array array[
     'user_settings','services','clients','stock_items','stock_transactions',
-    'procedures','procedure_materials','financial_entries'
+    'procedures','procedure_materials','financial_entries','agenda_drafts'
   ] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists "own_data" on public.%I', t);
@@ -278,6 +297,146 @@ begin
   end if;
 
   return v_proc;
+end $$;
+
+-- ================================== RPC: agendar procedimento (item 8/14/1.1) ==
+-- Cria procedures(status='scheduled') + reserva de materiais (custo congelado,
+-- SEM debitar estoque) + parcelas financeiras pendentes (categoria
+-- 'Agendamentos'). Nada é debitado até complete_procedure — cancelar/no-show
+-- não deixa estoque nem caixa errados.
+create or replace function public.schedule_procedure(
+  p_client_id       uuid,
+  p_service_id      uuid,
+  p_date            date,
+  p_price_charged   numeric,
+  p_notes           text,
+  p_google_event_id text,
+  p_materials       jsonb,
+  p_payment_method  text,
+  p_installments    int
+) returns uuid
+language plpgsql as $$
+declare
+  v_user uuid := auth.uid();
+  v_proc uuid;
+  v_mat  jsonb;
+  v_item uuid;
+  v_qty  numeric;
+  v_cost numeric;
+  v_n    int := greatest(coalesce(p_installments, 1), 1);
+  v_each numeric;
+  v_acc  numeric := 0;
+  v_amt  numeric;
+  i      int;
+begin
+  if v_user is null then raise exception 'not authenticated'; end if;
+
+  insert into public.procedures(
+    user_id, client_id, service_id, date, price_charged, notes,
+    google_event_id, status)
+  values (
+    v_user, p_client_id, p_service_id, p_date, p_price_charged, p_notes,
+    p_google_event_id, 'scheduled')
+  returning id into v_proc;
+
+  -- materiais: só RESERVA (snapshot do custo). Sem stock_transactions/débito.
+  if p_materials is not null then
+    for v_mat in select * from jsonb_array_elements(p_materials) loop
+      v_item := (v_mat->>'stock_item_id')::uuid;
+      v_qty  := (v_mat->>'quantity_used')::numeric;
+      select cost_price into v_cost
+        from public.stock_items where id = v_item and user_id = v_user;
+      insert into public.procedure_materials(
+        user_id, procedure_id, stock_item_id, quantity_used, unit_cost_at_time)
+      values (v_user, v_proc, v_item, v_qty, v_cost);
+    end loop;
+  end if;
+
+  -- financeiro: N parcelas pendentes (nada pago até completar)
+  if p_price_charged is not null and p_price_charged > 0 then
+    v_each := round(p_price_charged / v_n, 2);
+    for i in 1..v_n loop
+      if i < v_n then v_amt := v_each; v_acc := v_acc + v_each;
+      else v_amt := p_price_charged - v_acc; end if;
+      insert into public.financial_entries(
+        user_id, type, amount, description, category, payment_method,
+        installments, installment_of, due_date, paid, client_id, procedure_id)
+      values (
+        v_user, 'income', v_amt, 'Agendamento', 'Agendamentos', p_payment_method,
+        v_n, i, (p_date + ((i - 1) || ' month')::interval)::date,
+        false, p_client_id, v_proc);
+    end loop;
+  end if;
+
+  return v_proc;
+end $$;
+
+-- ============================= RPC: completar procedimento (item 8/14/1.1) =====
+-- Debita o estoque dos materiais reservados (cria stock_transactions +
+-- decrementa quantity) e marca status='completed'. À vista (pix/dinheiro/débito
+-- em parcela única) confirma o pagamento; crédito/parcelado continua pendente.
+-- ponytail: estoque pode ficar negativo (single-tenant, mesmo teto já aceito no
+-- register_procedure); migrar p/ trava por item se houver concorrência real.
+create or replace function public.complete_procedure(p_procedure_id uuid)
+returns void
+language plpgsql as $$
+declare
+  v_user uuid := auth.uid();
+  v_date date;
+  v_mat  record;
+  v_n    int;
+  v_method text;
+begin
+  if v_user is null then raise exception 'not authenticated'; end if;
+
+  update public.procedures
+    set status = 'completed'
+    where id = p_procedure_id and user_id = v_user and status = 'scheduled'
+    returning date into v_date;
+  if v_date is null then return; end if;   -- inexistente ou já concluído/cancelado
+
+  -- debita estoque das reservas
+  for v_mat in
+    select stock_item_id, quantity_used
+      from public.procedure_materials
+      where procedure_id = p_procedure_id and user_id = v_user
+        and stock_item_id is not null
+  loop
+    insert into public.stock_transactions(
+      user_id, stock_item_id, type, quantity, reason, procedure_id)
+    values (v_user, v_mat.stock_item_id, 'out', v_mat.quantity_used,
+            'uso_procedimento', p_procedure_id);
+    update public.stock_items
+      set quantity = quantity - v_mat.quantity_used
+      where id = v_mat.stock_item_id and user_id = v_user;
+  end loop;
+
+  -- pagamento: à vista (parcela única + método à vista) confirma agora
+  select count(*), min(payment_method) into v_n, v_method
+    from public.financial_entries
+    where procedure_id = p_procedure_id and user_id = v_user;
+  update public.financial_entries
+    set category = 'procedimento',
+        paid    = case when v_n = 1 and v_method in ('pix','dinheiro','cartao_debito')
+                       then true else paid end,
+        paid_at = case when v_n = 1 and v_method in ('pix','dinheiro','cartao_debito')
+                       then v_date else paid_at end
+    where procedure_id = p_procedure_id and user_id = v_user;
+end $$;
+
+-- ============================= RPC: cancelar procedimento (item 1.1) ===========
+-- Marca status='cancelled' e remove os lançamentos pendentes (nunca foram
+-- receita real). Estoque nunca foi tocado no agendamento — nada a desfazer.
+create or replace function public.cancel_procedure(p_procedure_id uuid)
+returns void
+language plpgsql as $$
+declare v_user uuid := auth.uid();
+begin
+  if v_user is null then raise exception 'not authenticated'; end if;
+  update public.procedures set status = 'cancelled'
+    where id = p_procedure_id and user_id = v_user;
+  delete from public.financial_entries
+    where procedure_id = p_procedure_id and user_id = v_user and paid = false;
 end $$;
 
 -- ============================================================ STORAGE =========

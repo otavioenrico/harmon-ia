@@ -7,7 +7,9 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, todayISO, openModal, toast, busy, esc, parseMoney,
-  toCSV, download } from './utils.js';
+  toCSV, download, icon } from './utils.js';
+
+const finIcon = icon('wallet');
 
 const METHODS = [
   ['pix', 'Pix'], ['dinheiro', 'Dinheiro'], ['cartao_debito', 'Cartão de débito'],
@@ -18,7 +20,7 @@ const methodLabel = (v) => (METHODS.find(([k]) => k === v) || [, '—'])[1];
 const refDate = (e) => (e.due_date || e.created_at || '').slice(0, 10);
 
 export async function render(root, ctx) {
-  const state = { all: [], fStatus: '', fType: '', fDe: '', fAte: '' };
+  const state = { all: [], tab: 'resumo', fStatus: '', fDe: '', fAte: '' };
 
   const btn = document.createElement('button');
   btn.className = 'btn btn--primary';
@@ -30,32 +32,42 @@ export async function render(root, ctx) {
   csvBtn.onclick = () => exportCSV(filtered());
   ctx.actions.append(btn, csvBtn);
 
+  // item 11: apresentação em abas por cima da mesma query/estado.
   root.innerHTML = `
-    <div class="stat-cards" id="f-stats"></div>
+    <div class="tabs" id="f-tabs">
+      <button class="tab active" data-t="resumo">Resumo</button>
+      <button class="tab" data-t="entradas">Entradas</button>
+      <button class="tab" data-t="saidas">Saídas</button>
+      <button class="tab" data-t="comp">Comparativo</button>
+      <button class="tab" data-t="planilha">Planilha</button>
+    </div>
     <div class="module__toolbar">
       <div id="f-filters" class="flex" style="gap:8px; flex-wrap:wrap"></div>
     </div>
-    <div class="table-wrap" id="f-table"></div>`;
+    <div id="f-pane"></div>`;
 
-  const statsEl = root.querySelector('#f-stats');
-  const tableWrap = root.querySelector('#f-table');
+  const pane = root.querySelector('#f-pane');
   const filters = root.querySelector('#f-filters');
 
+  root.querySelector('#f-tabs').onclick = (e) => {
+    const b = e.target.closest('[data-t]'); if (!b) return;
+    state.tab = b.dataset.t;
+    root.querySelectorAll('#f-tabs .tab').forEach((x) => x.classList.toggle('active', x === b));
+    paint();
+  };
+
   filters.innerHTML = `
-    <select class="select" id="f-type" style="max-width:160px">
-      <option value="">Tudo</option><option value="income">Receitas</option><option value="expense">Despesas</option></select>
     <select class="select" id="f-status" style="max-width:160px">
       <option value="">Todo status</option><option value="pending">Pendentes</option><option value="paid">Pagos</option></select>
     <input class="input" id="f-de" type="date" value="${state.fDe}" title="De" style="max-width:150px">
     <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até" style="max-width:150px">`;
-  filters.querySelector('#f-type').onchange = (e) => { state.fType = e.target.value; paint(); };
   filters.querySelector('#f-status').onchange = (e) => { state.fStatus = e.target.value; paint(); };
   filters.querySelector('#f-de').onchange = (e) => { state.fDe = e.target.value; paint(); };
   filters.querySelector('#f-ate').onchange = (e) => { state.fAte = e.target.value; paint(); };
 
+  // filtro base (status + período); a aba decide o recorte por tipo.
   function filtered() {
     let rows = state.all;
-    if (state.fType) rows = rows.filter((e) => e.type === state.fType);
     if (state.fStatus) rows = rows.filter((e) => (state.fStatus === 'paid') === !!e.paid);
     if (state.fDe) rows = rows.filter((e) => refDate(e) >= state.fDe);
     if (state.fAte) rows = rows.filter((e) => refDate(e) <= state.fAte);
@@ -63,8 +75,8 @@ export async function render(root, ctx) {
   }
 
   async function load() {
-    tableWrap.innerHTML = `<table class="data"><tbody>${
-      `<tr><td><div class="skeleton"></div></td></tr>`.repeat(5)}</tbody></table>`;
+    pane.innerHTML = `<div class="table-wrap"><table class="data"><tbody>${
+      `<tr><td><div class="skeleton"></div></td></tr>`.repeat(5)}</tbody></table></div>`;
     // ponytail: busca tudo e filtra em memória (igual historico/clientes); vira
     // RPC/view se uma profissional acumular milhares de lançamentos.
     const { data, error } = await supabase.from('financial_entries')
@@ -78,19 +90,80 @@ export async function render(root, ctx) {
 
   function paint() {
     const rows = filtered();
-    paintStats(rows);
+    if (state.tab === 'resumo') return paintResumo(rows);
+    if (state.tab === 'comp') return paintComparativo(rows);
+    // entradas / saidas / planilha são todas tabelas, só muda o recorte por tipo
+    const subset = state.tab === 'entradas' ? rows.filter((e) => e.type === 'income')
+                 : state.tab === 'saidas'   ? rows.filter((e) => e.type === 'expense')
+                 : rows;
+    paintTable(subset);
+  }
+
+  function paintTable(rows) {
     if (!rows.length) {
-      tableWrap.innerHTML = `<div class="empty"><div class="icon">💰</div><p>Nenhum lançamento no filtro.</p></div>`;
+      pane.innerHTML = `<div class="empty"><div class="icon">${finIcon}</div><p>Nenhum lançamento no filtro.</p></div>`;
       return;
     }
-    tableWrap.innerHTML = `
-      <table class="data">
+    pane.innerHTML = `
+      <div class="table-wrap"><table class="data">
         <thead><tr><th>Data</th><th>Descrição</th><th>Cliente</th><th>Forma</th>
           <th class="num">Valor</th><th>Status</th><th></th></tr></thead>
         <tbody>${rows.map(rowHTML).join('')}</tbody>
-      </table>`;
-    tableWrap.querySelectorAll('[data-pay]').forEach((b) =>
-      b.onclick = () => settle(b.dataset.pay, load));
+      </table></div>`;
+    pane.querySelectorAll('[data-pay]').forEach((b) => b.onclick = () => settle(b.dataset.pay, load));
+  }
+
+  function paintResumo(rows) {
+    let recebido = 0, aReceber = 0, despesas = 0;
+    for (const e of rows) {
+      const v = Number(e.amount) || 0;
+      if (e.type === 'income') (e.paid ? recebido += v : aReceber += v);
+      else if (e.paid) despesas += v;
+    }
+    const saldo = recebido - despesas;
+    const card = (label, val, cls = '') =>
+      `<div class="stat"><div class="label">${label}</div><div class="value ${cls}">${money(val)}</div></div>`;
+    // quebra por categoria (top do período)
+    const byCat = {};
+    for (const e of rows) {
+      const k = `${e.type}|${e.category || 'sem categoria'}`;
+      byCat[k] = (byCat[k] || 0) + (Number(e.amount) || 0);
+    }
+    const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    pane.innerHTML = `
+      <div class="stat-cards">
+        ${card('Recebido', recebido, 'pos')}${card('A receber', aReceber)}
+        ${card('Despesas', despesas, despesas ? 'neg' : '')}${card('Saldo', saldo, saldo < 0 ? 'neg' : 'pos')}
+      </div>
+      <div class="panel"><div class="panel__title">Por categoria</div>
+        ${cats.length ? cats.map(([k, v]) => {
+          const [t, c] = k.split('|');
+          return `<div class="panel__row"><span class="grow">${esc(c)}</span>
+            <span class="${t === 'income' ? 'pos' : 'neg'}">${t === 'income' ? '' : '−'}${money(v)}</span></div>`;
+        }).join('') : '<p class="faint">Sem lançamentos no período.</p>'}
+      </div>`;
+  }
+
+  function paintComparativo(rows) {
+    // receita × despesa por mês (regime de competência: usa a data de referência)
+    const byMonth = {};
+    for (const e of rows) {
+      const m = refDate(e).slice(0, 7); if (!m) continue;
+      (byMonth[m] = byMonth[m] || { income: 0, expense: 0 })[e.type] += Number(e.amount) || 0;
+    }
+    const months = Object.keys(byMonth).sort().reverse().slice(0, 12);
+    if (!months.length) { pane.innerHTML = `<div class="empty"><div class="icon">${finIcon}</div><p>Sem dados no período.</p></div>`; return; }
+    const max = Math.max(...months.map((m) => Math.max(byMonth[m].income, byMonth[m].expense)), 1);
+    const bar = (v, cls) => `<div class="bar"><span class="bar__fill ${cls}" style="width:${(v / max * 100).toFixed(1)}%"></span><span class="bar__val">${money(v)}</span></div>`;
+    pane.innerHTML = `<div class="panel"><div class="panel__title">Receitas × Despesas por mês</div>
+      ${months.map((m) => {
+        const d = byMonth[m]; const [y, mo] = m.split('-');
+        return `<div class="panel__row" style="align-items:stretch; flex-direction:column; gap:6px">
+          <strong>${mo}/${y}</strong>
+          ${bar(d.income, 'pos')}${bar(d.expense, 'neg')}
+          <span class="faint">Saldo: ${money(d.income - d.expense)}</span>
+        </div>`;
+      }).join('')}</div>`;
   }
 
   function rowHTML(e) {
@@ -109,23 +182,6 @@ export async function render(root, ctx) {
       <td class="num">${e.paid ? '' :
         `<button class="btn btn--secondary btn--sm" data-pay="${e.id}">Dar baixa</button>`}</td>
     </tr>`;
-  }
-
-  function paintStats(rows) {
-    let recebido = 0, aReceber = 0, despesas = 0;
-    for (const e of rows) {
-      const v = Number(e.amount) || 0;
-      if (e.type === 'income') (e.paid ? recebido += v : aReceber += v);
-      else if (e.paid) despesas += v;
-    }
-    const card = (label, val, cls = '') =>
-      `<div class="stat"><div class="label">${label}</div><div class="value ${cls}">${money(val)}</div></div>`;
-    const saldo = recebido - despesas;
-    statsEl.innerHTML =
-      card('Recebido', recebido, 'pos') +
-      card('A receber', aReceber) +
-      card('Despesas', despesas, despesas ? 'neg' : '') +
-      card('Saldo', saldo, saldo < 0 ? 'neg' : 'pos');
   }
 
   await load();
@@ -164,8 +220,11 @@ function openForm(uid, onSaved) {
   form.innerHTML = `
     <div class="field-row">
       <div class="field"><label>Tipo</label>
-        <select class="select" name="type">
-          <option value="income">Receita</option><option value="expense">Despesa</option></select></div>
+        <input type="hidden" name="type" value="income">
+        <div class="segmented" id="type-toggle">
+          <button type="button" data-type="income" class="active">Receita</button>
+          <button type="button" data-type="expense">Despesa</button>
+        </div></div>
       <div class="field"><label>Valor (R$) <span class="req">*</span></label>
         <input class="input" name="amount" type="number" step="0.01" min="0" required /></div>
     </div>
@@ -191,6 +250,13 @@ function openForm(uid, onSaved) {
                     <button class="btn btn--primary" type="submit" form="fin-form">Salvar</button>`;
   const m = openModal({ title: 'Novo lançamento', body: form, footer: foot, wide: true });
   foot.querySelector('[data-x]').onclick = () => m.close();
+
+  // item 12: toggle Receita/Despesa alimenta o hidden input name="type"
+  form.querySelector('#type-toggle').onclick = (e) => {
+    const b = e.target.closest('[data-type]'); if (!b) return;
+    form.querySelector('[name="type"]').value = b.dataset.type;
+    form.querySelectorAll('#type-toggle button').forEach((x) => x.classList.toggle('active', x === b));
+  };
 
   form.onsubmit = async (e) => {
     e.preventDefault();

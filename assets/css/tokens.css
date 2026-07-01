@@ -5,17 +5,28 @@
    ============================================================================ */
 
 :root {
-  /* -------- paleta crua (nunca usar #000000 puro) -------- */
-  --color-black:    #1a1a18;
-  --color-beige:    #e2dbd3;
+  /* -------- paleta crua v2 — rosé/mauve (ref. "Coursue") -------- */
+  --color-black:    #1a1816;   /* quase-preto */
   --color-white:    #ffffff;
-  --color-gray-100: #f5f4f2;
-  --color-gray-200: #e8e5e1;
+  --color-gray-100: #f5f4f2;   /* fundo geral */
+  --color-gray-200: #ebe8e5;
   --color-gray-400: #9e9892;
-  --color-gray-600: #6b6760;
+  --color-gray-600: #6b6760;   /* 5.62:1 sobre branco */
+
+  /* rosé/mauve — cor de FUNDO e GRÁFICO, nunca de texto de corpo */
+  --color-mauve-100: #f3e9ea;  /* pill/badge suave */
+  --color-mauve-300: #d9c2c6;  /* gradiente banner, ponta clara / chip */
+  --color-mauve-500: #b79ca0;  /* gradiente banner, ponta escura / barras */
+  --color-mauve-700: #8f7276;
+
   --color-success:  #4a7c59;
   --color-warning:  #c9923a;
   --color-danger:   #b85450;
+
+  /* pills de categoria (pastéis) — texto escurecido p/ contraste AA */
+  --pill-blue-bg:  #e3f1fc;  --pill-blue-text:  #2c6690;
+  --pill-tan-bg:   #f3e9e0;  --pill-tan-text:   #7a5f4a;
+  --pill-peach-bg: #f7e9de;  --pill-peach-text: #a35a35;
 
   /* -------- tokens semânticos (tema claro = padrão) -------- */
   --bg:            var(--color-gray-100);
@@ -26,14 +37,14 @@
   --text-faint:    var(--color-gray-400);
   --border:        var(--color-gray-200);
   --border-strong: var(--color-gray-400);
-  --accent:        var(--color-beige);
+  --accent:        var(--color-mauve-300);
   --accent-text:   var(--color-black);
 
-  /* botões primários: fundo escuro, texto branco */
+  /* botões primários: fundo escuro, texto branco (17:1) */
   --btn-primary-bg:   var(--color-black);
   --btn-primary-text: var(--color-white);
-  /* botões secundários: fundo bege, texto escuro */
-  --btn-secondary-bg:   var(--color-beige);
+  /* botões secundários: mauve suave, texto escuro */
+  --btn-secondary-bg:   var(--color-mauve-100);
   --btn-secondary-text: var(--color-black);
 
   --success: var(--color-success);
@@ -45,12 +56,15 @@
   --warning-soft: #f6ecd9;
   --danger-soft:  #f4e3e2;
 
-  /* -------- tipografia -------- */
-  --font: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --fw-200: 200;
-  --fw-300: 300;
+  /* -------- tipografia — fonte de sistema (SF/Segoe/Roboto) -------- */
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* pesos recalibrados p/ fonte de sistema (nunca acima de 700) */
+  --fw-200: 400;
+  --fw-300: 400;   /* corpo — 300 ficava fino demais fora da Raleway */
   --fw-400: 400;
-  --fw-500: 500;   /* peso máximo — nunca 600+ */
+  --fw-500: 500;
+  --fw-600: 600;
+  --fw-700: 700;
 
   --fs-xs:   0.75rem;
   --fs-sm:   0.85rem;
@@ -73,6 +87,7 @@
   --radius:    8px;     /* arredondamento padrão dos cards */
   --radius-sm: 6px;
   --radius-lg: 14px;
+  --radius-xl: 20px;    /* cards grandes: banner, painel direito, home */
   --radius-pill: 999px;
 
   /* sombras sutis, nunca pesadas */

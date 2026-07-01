@@ -73,7 +73,8 @@ button { font-family: inherit; }
   white-space: nowrap;
   overflow: hidden;
 }
-.sidebar__brand b { font-weight: var(--fw-500); }
+.sidebar__brand b { font-weight: var(--fw-500); display: inline-flex; }
+.sidebar__brand svg { width: 22px; height: 22px; }
 
 .nav { flex: 1; padding: var(--sp-3) var(--sp-3); overflow-y: auto; }
 .nav__item {
@@ -94,9 +95,12 @@ button { font-family: inherit; }
   font-size: var(--fs-base);
   position: relative;
 }
+.nav__item { border-radius: 10px; }
 .nav__item:hover { background: var(--surface-2); color: var(--text); }
-.nav__item.active { background: var(--accent); color: var(--accent-text); }
-.nav__icon { width: 20px; text-align: center; flex-shrink: 0; }
+.nav__item.active { background: var(--surface-2); color: var(--text); font-weight: var(--fw-500); }
+.nav__icon { width: 20px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-faint); }
+.nav__item.active .nav__icon, .nav__item:hover .nav__icon { color: var(--text); }
+.nav__icon svg { width: 20px; height: 20px; }
 .nav__badge {
   margin-left: auto;
   background: var(--danger);
@@ -150,6 +154,7 @@ button { font-family: inherit; }
   font-size: var(--fs-lg); padding: var(--sp-2); border-radius: var(--radius-sm);
 }
 .collapse-btn:hover { background: var(--surface-2); }
+.collapse-btn svg { width: 20px; height: 20px; display: block; }
 
 .module { padding: var(--sp-6); flex: 1; }
 .module__toolbar {

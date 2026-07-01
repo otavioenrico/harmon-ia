@@ -4,7 +4,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { profile, signOut, signInWithGoogle } from './auth.js';
-import { toast, esc, initials, download, todayISO } from './utils.js';
+import { toast, esc, initials, download, todayISO, icon } from './utils.js';
 
 const TABLES = ['user_settings', 'services', 'clients', 'stock_items',
   'stock_transactions', 'procedures', 'procedure_materials', 'financial_entries'];
@@ -31,7 +31,7 @@ export async function render(root, ctx) {
       <section class="card">
         <h3>Google</h3>
         <p class="mt-4">Conta conectada: <strong>${esc(p.email)}</strong></p>
-        <p class="muted">Agenda: <span class="badge badge--success">conectada ✓</span></p>
+        <p class="muted">Agenda: <span class="badge badge--success">${icon('check')} conectada</span></p>
         <p class="hint mt-4">Se a agenda parar de sincronizar, reconecte sua conta Google para renovar o acesso ao Calendar.</p>
         <button class="btn btn--secondary mt-4" id="reconnect">Reconectar Google</button>
       </section>

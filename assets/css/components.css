@@ -25,6 +25,10 @@
 .btn--sm { padding: var(--sp-2) var(--sp-3); font-size: var(--fs-sm); }
 .btn--icon { padding: var(--sp-2); width: 34px; height: 34px; }
 .btn--block { width: 100%; }
+/* CTA em destaque (banner/hero): pill. Botões do dia-a-dia continuam retângulo. */
+.btn--pill { border-radius: var(--radius-pill); padding: var(--sp-3) var(--sp-5); }
+.btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.btn--icon svg { width: 20px; height: 20px; }
 
 .btn-google {
   width: 100%; gap: var(--sp-3);
@@ -215,6 +219,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 /* --------------------------------------------------------- estados vazios - */
 .empty { text-align: center; padding: var(--sp-8) var(--sp-5); color: var(--text-faint); }
 .empty .icon { font-size: 2rem; opacity: 0.6; }
+.empty .icon svg { width: 40px; height: 40px; }
 .empty p { margin: var(--sp-3) 0 var(--sp-4); }
 
 /* utilitários --------------------------------------------------------------- */
@@ -228,6 +233,61 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .mt-4 { margin-top: var(--sp-4); }
 .search-input { max-width: 280px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+/* --------------------------------------------------------------- home ----- */
+/* 3ª coluna vira grid interno da Home; some abaixo de 1200px (spec 1) */
+.home-grid { display: grid; grid-template-columns: 1fr 340px; gap: var(--sp-5); align-items: start; }
+.home-main { min-width: 0; display: flex; flex-direction: column; gap: var(--sp-5); }
+.home-aside { display: flex; flex-direction: column; gap: var(--sp-5); }
+@media (max-width: 1200px) { .home-grid { grid-template-columns: 1fr; } }
+
+.hero {
+  background: linear-gradient(135deg, var(--color-mauve-300), var(--color-mauve-500));
+  border-radius: var(--radius-xl); padding: var(--sp-7) var(--sp-6);
+  color: #fff; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5);
+}
+.hero__label { text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; opacity: 0.85; }
+.hero__title { font-size: var(--fs-2xl); font-weight: var(--fw-700); margin-top: var(--sp-2); color: #fff; }
+.hero__sub { opacity: 0.9; margin-top: var(--sp-2); }
+
+/* mini stat-cards da Home (ícone em círculo pastel) */
+.mini-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
+@media (max-width: 700px) { .mini-cards { grid-template-columns: 1fr; } }
+.mini { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: var(--sp-4); box-shadow: var(--shadow-sm); }
+.mini__icon { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; margin-bottom: var(--sp-3); }
+.mini__icon svg { width: 20px; height: 20px; }
+.mini__label { font-size: var(--fs-xs); color: var(--text-muted); }
+.mini__value { font-size: var(--fs-lg); font-weight: var(--fw-600); margin-top: 2px; }
+
+/* card genérico grande da Home / painel direito */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--sp-5); }
+.panel__title { font-weight: var(--fw-600); margin-bottom: var(--sp-4); }
+.panel__row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0; border-top: 1px solid var(--border); }
+.panel__row:first-of-type { border-top: none; }
+.panel__row .grow { flex: 1; min-width: 0; }
+.panel__row .grow .sub { font-size: var(--fs-xs); color: var(--text-faint); }
+
+/* pills de categoria (pastéis) */
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: var(--radius-pill); font-size: var(--fs-xs); font-weight: var(--fw-500); }
+.pill svg { width: 14px; height: 14px; }
+.pill--blue  { background: var(--pill-blue-bg);  color: var(--pill-blue-text); }
+.pill--tan   { background: var(--pill-tan-bg);   color: var(--pill-tan-text); }
+.pill--peach { background: var(--pill-peach-bg); color: var(--pill-peach-text); }
+
+/* barras do comparativo (financeiro) */
+.bar { position: relative; display: flex; align-items: center; gap: var(--sp-2); height: 22px; background: var(--surface-2); border-radius: var(--radius-sm); overflow: hidden; }
+.bar__fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: var(--radius-sm); opacity: 0.35; }
+.bar__fill.pos { background: var(--success); }
+.bar__fill.neg { background: var(--danger); }
+.bar__val { position: relative; margin-left: auto; padding: 0 var(--sp-2); font-size: var(--fs-xs); }
+
+/* link de WhatsApp (listagem de clientes / agenda) */
+.wa-link { display: inline-flex; align-items: center; gap: 4px; color: var(--success); text-decoration: none; }
+.wa-link:hover { text-decoration: underline; }
+.wa-link svg { width: 15px; height: 15px; }
+
+/* thumbnail de item (estoque) */
+.thumb { width: 40px; height: 40px; border-radius: var(--radius-sm); object-fit: cover; background: var(--surface-2); flex-shrink: 0; }
 
 /* -------------------------------------------------------------- agenda ----- */
 .mb-3 { margin-bottom: var(--sp-3); }

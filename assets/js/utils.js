@@ -63,6 +63,36 @@ export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
 export const waLink = (phone, msg) =>
   `https://wa.me/55${onlyDigits(phone)}?text=${encodeURIComponent(msg || '')}`;
 
+// ------------------------------------------------------------------ ícones --
+// Iconoir-style: SVGs inline, self-hosted (sem CDN — coerente com o projeto).
+// icon(name) -> string SVG (stroke = currentColor, herda cor/tamanho do pai).
+const ICON_PATHS = {
+  home:     '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
+  scissors: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 8l12 8M8 16 20 8"/>',
+  box:      '<path d="M3 8l9-4 9 4v8l-9 4-9-4V8Z"/><path d="M3 8l9 4 9-4M12 12v8"/>',
+  users:    '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5M21 20c0-2.3-1.3-4-3.5-4.6"/>',
+  clipboard:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v2H9zM9 11h6M9 15h4"/>',
+  wallet:   '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+  logout:   '<path d="M14 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2"/><path d="M9 12h11M17 9l3 3-3 3"/>',
+  menu:     '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  trash:    '<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M10 11v6M14 11v6"/>',
+  plug:     '<path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0V8ZM12 17v4"/>',
+  left:     '<path d="M15 6l-6 6 6 6"/>',
+  right:    '<path d="M9 6l6 6-6 6"/>',
+  check:    '<path d="M5 12l4 4 10-11"/>',
+  warning:  '<path d="M12 3 2 20h20L12 3ZM12 9v6M12 18h.01"/>',
+  whatsapp: '<path d="M4 20l1.4-4A8 8 0 1 1 9 19.6L4 20Z"/><path d="M9 10c.5 2 2 3.5 4 4l1.2-1.4 2 .8v2c-3.5.5-7-3-6.5-6.5l2 .3.3 1.8Z"/>',
+  plus:     '<path d="M12 5v14M5 12h14"/>',
+  search:   '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  bell:     '<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6ZM10 20a2 2 0 0 0 4 0"/>',
+  x:        '<path d="M6 6l12 12M18 6 6 18"/>',
+  sparkle:  '<path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z"/>',
+};
+export const icon = (name) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ''}</svg>`;
+
 // cria elemento a partir de HTML string
 export const h = (html) => {
   const t = document.createElement('template');
@@ -84,7 +114,6 @@ export function toast(message, type = 'success') {
 // openModal({title, body(HTMLElement|string), footer, wide}) -> {overlay, close, body}
 // ESC e clique fora fecham; confirma se algum campo foi alterado.
 export function openModal({ title = '', body = '', footer = '', wide = false } = {}) {
-  let dirty = false;
   const overlay = h(`<div class="modal-overlay"></div>`);
   const modal = h(`
     <div class="modal ${wide ? 'modal--wide' : ''}">
@@ -103,10 +132,9 @@ export function openModal({ title = '', body = '', footer = '', wide = false } =
   }
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  bodyEl.addEventListener('input', () => { dirty = true; });
 
-  const close = (force = false) => {
-    if (dirty && !force && !confirm('Descartar as alterações não salvas?')) return;
+  // item 16: sem confirmação de "descartar alterações" — fecha direto.
+  const close = () => {
     document.removeEventListener('keydown', onKey);
     overlay.remove();
   };
@@ -114,7 +142,7 @@ export function openModal({ title = '', body = '', footer = '', wide = false } =
   document.addEventListener('keydown', onKey);
   overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(); });
   modal.querySelector('.modal__close').addEventListener('click', () => close());
-  return { overlay, modal, body: bodyEl, close, markClean: () => { dirty = false; } };
+  return { overlay, modal, body: bodyEl, close, markClean: () => {} };
 }
 
 // ---------------------------------------------------------------- drawer ----
@@ -131,6 +159,48 @@ export function openDrawer(bodyEl) {
   document.addEventListener('keydown', onKey);
   overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(); });
   return { close };
+}
+
+// -------------------------------------------------------- autocomplete -----
+// item 15: seleção de cliente por busca (nome ou telefone). Componente único —
+// Agendamento e Histórico usam o mesmo. Devolve { el, value() } onde value() é
+// o id selecionado (ou ''). Mesma lógica p/ qualquer lista {id,name,phone}.
+export function clientAutocomplete(clients, selectedId = '') {
+  const wrap = h(`<div class="autocomplete">
+    <input class="input" type="text" placeholder="Buscar cliente…" autocomplete="off">
+    <input type="hidden">
+    <div class="autocomplete__list" hidden></div>
+  </div>`);
+  const [input, hidden, list] = wrap.children;
+  let active = -1, matches = [];
+  const pick = (c) => { hidden.value = c ? c.id : ''; input.value = c ? c.name : ''; };
+  const cur = clients.find((c) => c.id === selectedId);
+  if (cur) pick(cur);
+  const render = () => {
+    const q = input.value.trim().toLowerCase();
+    matches = (!q ? clients.slice(0, 8)
+      : clients.filter((c) => (c.name || '').toLowerCase().includes(q)
+          || onlyDigits(c.phone).includes(onlyDigits(q))).slice(0, 8));
+    list.innerHTML = matches.map((c, i) =>
+      `<div class="autocomplete__item${i === active ? ' active' : ''}" data-i="${i}">${esc(c.name)}${c.phone ? `<div class="sub">${esc(c.phone)}</div>` : ''}</div>`
+    ).join('') || `<div class="autocomplete__item faint">Nenhum cliente</div>`;
+    list.hidden = false;
+  };
+  input.addEventListener('focus', render);
+  input.addEventListener('input', () => { hidden.value = ''; active = -1; render(); });
+  input.addEventListener('keydown', (e) => {
+    if (list.hidden) return;
+    if (e.key === 'ArrowDown') { active = Math.min(active + 1, matches.length - 1); render(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
+    else if (e.key === 'Enter' && matches[active]) { pick(matches[active]); list.hidden = true; e.preventDefault(); }
+    else if (e.key === 'Escape') { list.hidden = true; }
+  });
+  list.addEventListener('mousedown', (e) => {
+    const it = e.target.closest('[data-i]'); if (!it) return;
+    pick(matches[+it.dataset.i]); list.hidden = true;
+  });
+  document.addEventListener('mousedown', (e) => { if (!wrap.contains(e.target)) list.hidden = true; });
+  return { el: wrap, value: () => hidden.value };
 }
 
 // --------------------------------------------------------------- skeleton ---

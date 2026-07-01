@@ -13,13 +13,13 @@
   --border:        #322f2b;
   --border-strong: #4a4640;
   --accent:        #2e2a25;
-  --accent-text:   var(--color-beige);
+  --accent-text:   var(--color-mauve-300);
 
   /* primário inverte para o bege (texto escuro) — destaque sem #fff puro */
-  --btn-primary-bg:   var(--color-beige);
+  --btn-primary-bg:   var(--color-mauve-300);
   --btn-primary-text: var(--color-black);
   --btn-secondary-bg:   #2e2a25;
-  --btn-secondary-text: var(--color-beige);
+  --btn-secondary-text: var(--color-mauve-300);
 
   --success-soft: #1d2a22;
   --warning-soft: #2c2417;
@@ -30,5 +30,5 @@
 }
 
 /* o switch fica bege no escuro */
-[data-theme="dark"] .switch input:checked + .track { background: var(--color-beige); }
+[data-theme="dark"] .switch input:checked + .track { background: var(--color-mauve-300); }
 [data-theme="dark"] .switch .track::before { background: #131311; }
