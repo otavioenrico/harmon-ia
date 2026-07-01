@@ -449,3 +449,73 @@ galeria de verificação em `improvements/preview-rodada3.html` (sem Supabase).
 ### Fora do escopo (registrado p/ depois)
 Persistência de filtros, histórico de busca no autocomplete, preview de anexos,
 UI otimista, RPC atômica p/ movimentação de estoque (comentário `ponytail:` mantido).
+
+---
+
+## Rodada 4 — Aprimoramentos de UI, 11 itens (2026-07-01)
+
+### Contexto
+Usuário revisou o app em uso real (screenshots) e levantou 11 ajustes pontuais
+de UI/UX espalhados por Sidebar, Fluxo de Caixa, Clientes, Estoque, Agenda,
+Configurações e Dashboard. Planejado em `plan mode`
+(`~/.claude/plans/magical-beaming-narwhal.md`) antes de codar.
+
+### Feito
+1. **Sidebar**: botão de recolher movido de dentro do header para dentro da
+   sidebar (mesma linha do logo, alinhado à direita); largura 240→272px
+   (`tokens.css`, `layout.css`, `app.html`).
+2. **Menu**: gap de 4px entre os itens do nav (`.nav` virou flex column com
+   `gap: var(--sp-1)`).
+3. **Fluxo de Caixa**: coluna **Lucro** na aba Entradas — lucro do
+   procedimento rateado pela fração do valor que a parcela representa
+   (`lucroOf()` em `financeiro.js`, join com `procedures`+`procedure_materials`).
+4. **Clientes** e **5. Estoque**: `openDrawer()` (utils.js) ganhou opção
+   `{ center: true }` → `.drawer--center` reaproveita o grid de centralização
+   do `.modal-overlay` em vez de fixar à direita. Perfil de cliente e item de
+   estoque agora abrem centralizados e maiores (640px). Thumbnail do estoque
+   40→56px.
+6. **Agenda**: edição completa de agendamento (cliente/serviço/materiais/
+   pagamento) quando o procedimento ainda está `status='scheduled'` — antes só
+   dava pra editar título/hora/notas/valor. Nova RPC
+   `update_scheduled_procedure` (schema.sql): apaga e recria
+   `procedure_materials` e as parcelas pendentes de `financial_entries`,
+   espelhando `schedule_procedure`. Seguro porque nada foi debitado/pago
+   ainda nesse status. `completed`/`cancelled` continuam com a edição
+   restrita (consequências já aconteceram).
+7. **Estoque — lista de compras**: passou a persistir adições manuais (nova
+   tabela `shopping_list_items`, RLS padrão). Botão **"+ Adicionar produto"**
+   no toolbar (busca via `clientAutocomplete` generalizado com placeholder
+   customizável) e **"Lista de compras"** no drawer de cada item.
+8. **Configurações**: campo **WhatsApp do administrador**
+   (`user_settings.whatsapp_number`, `maskPhone`). Usado no CTA **"Enviar no
+   WhatsApp"** da lista de compras (`waLink`) — só aparece se o número estiver
+   preenchido.
+9. **Filtros lado a lado**: nova classe `.filters` (`flex-wrap: nowrap` +
+   `overflow-x: auto`, nunca empilha) aplicada em `financeiro.js` e
+   `historico.js` (Clientes já usava um layout de 2 itens sem esse problema).
+10. **Dashboard — atalhos rápidos**: hero ganhou 3 botões novos (Novo
+    cliente/produto/lançamento) além do "Agendar", todos abrindo a criação
+    **direto** via flags `intent:novo*` em `sessionStorage` lidas no fim de
+    cada `render()` — mesmo padrão que `intent:agendar`/`intent:procedimento`
+    já usavam.
+11. **Dashboard — hero neutro**: gradiente mauve trocado por `var(--surface)`
+    + borda + sombra (mesmo tratamento dos `.panel`/`.mini`); removido o
+    override de dark mode do gradiente (`theme.css`) e o token órfão
+    `--hero-text` (`tokens.css`).
+
+### Verificação
+`node --check` limpo nos 7 arquivos JS tocados (agenda, clientes, estoque,
+financeiro, configuracoes, home, utils). SQL revisado manualmente: 6 funções
++ 2 blocos `do $$` = 8 `end $$;` (balanceado).
+
+### Deploy
+Commit `600e91d` (branch `main`) → push → deploy automático da Vercel
+(integração GitHub) ficou **Ready** em produção em ~6s:
+**https://harmon-ia-rouge.vercel.app**. Usuário já tinha rodado o
+`db/schema.sql` atualizado no Supabase antes do push (idempotente: nova
+tabela `shopping_list_items`, coluna `user_settings.whatsapp_number`, RPC
+`update_scheduled_procedure`).
+
+### Pendente / próximo
+Verificação visual dos 11 itens direto na produção (não foi testado em
+browser real nesta sessão — só `node --check` + revisão manual do SQL).

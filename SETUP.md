@@ -36,6 +36,11 @@ DOMINIO_VERCEL    = https://__________.vercel.app   (você descobre no Passo 3)
 > 🆘 Se o Run der erro: **me cole a mensagem de erro vermelha** que aparece e
 > eu te digo o que é.
 
+> 🔁 **Já tem o Harmon IA no ar e só quer atualizar?** O `db/schema.sql` é
+> **idempotente** — pode colar o arquivo inteiro de novo no SQL Editor e rodar
+> **Run** sempre que o código mudar tabelas/colunas/funções novas (o
+> `HISTORICO.md` avisa quando isso acontece). Não apaga dados existentes.
+
 ---
 
 ## Passo 2 — GitHub (guardar o código)
@@ -167,6 +172,9 @@ precisa de 4 variáveis. **Sem elas, login funciona mas a Agenda não.**
    - **Agenda** → criar um agendamento → confira se ele aparece no seu Google
      Calendar de verdade.
    - **Estoque**, **Histórico**, **Fluxo de Caixa** → dar uma navegada.
+4. Opcional: em **Configurações**, preencha o campo **WhatsApp do
+   administrador** — ele liga o botão "Enviar no WhatsApp" da lista de
+   compras (Estoque). Sem preencher, o app funciona normal, só sem esse atalho.
 
 > 🆘 Algo não funcionou? Aperte **F12** no navegador → aba **Console** →
 > tire um print ou copie as linhas vermelhas e me mande. 90% dos problemas aqui

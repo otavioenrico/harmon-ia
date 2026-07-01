@@ -204,9 +204,9 @@ footer a { color: var(--text-muted); }
 <div class="wrap">
   <section class="overview">
     <p class="lead">
-      Roadmap derivado direto do <a href="HISTORICO.md">HISTORICO.md</a>: cada etapa = uma sessão de
-      desenvolvimento. As Etapas 1 a 5 estão concluídas; as seguintes são o plano de execução até o
-      lançamento. Os status são a fonte da verdade do progresso abaixo.
+      Roadmap derivado direto do <a href="HISTORICO.md">HISTORICO.md</a>: cada etapa/rodada = uma sessão de
+      desenvolvimento. Etapas 1 a 6 e as Rodadas 3–4 (polish + aprimoramentos de UI) estão concluídas;
+      só falta a Etapa 7 (Polish · Lançamento) pra fechar o roadmap. Os status são a fonte da verdade do progresso abaixo.
     </p>
     <div class="prog-card">
       <div class="prog-num"><b id="pct">0%</b></div>
@@ -229,7 +229,7 @@ footer a { color: var(--text-muted); }
   <main id="board"></main>
 
   <footer>
-    Gerado a partir de <a href="HISTORICO.md">HISTORICO.md</a> · última atualização 2026-06-30 (Etapa 6 no ar — Git reconciliado, só falta a Etapa 7 · Polish) ·
+    Gerado a partir de <a href="HISTORICO.md">HISTORICO.md</a> · última atualização 2026-07-01 (Rodada 4 no ar — 11 itens de UI; falta a Etapa 7 · Polish) ·
     para atualizar o progresso, mude o campo <code>s</code> de cada task no array <code>TASKS</code> deste arquivo.
   </footer>
 </div>
@@ -247,6 +247,7 @@ const PHASES = [
   { id:'p5', etapa:'Etapa 5', title:'Fluxo de Caixa', note:'concluída' },
   { id:'p6', etapa:'Etapa 6', title:'Agenda · Integração Google', note:'concluída' },
   { id:'p7', etapa:'Etapa 7', title:'Polish · Lançamento', note:'próximo' },
+  { id:'p8', etapa:'Rodada 4', title:'Aprimoramentos de UI (11 itens)', note:'concluída' },
   { id:'p0', etapa:'Pré-requisito', title:'Setup do ambiente — no ar ✅', note:'concluída' },
 ];
 
@@ -350,6 +351,28 @@ const TASKS = [
     d:'Contraste, navegação por teclado e aria nos componentes.' },
   { p:'p7', t:'Verificação fim-a-fim', s:'todo',
     d:'Testar o fluxo completo (cliente → procedimento → estoque → caixa → agenda) com dados reais.' },
+
+  // ---- Rodada 4 — Aprimoramentos de UI, 11 itens (concluída 2026-07-01) ----
+  { p:'p8', t:'Sidebar: botão de recolher + largura', s:'done', f:['app.html','assets/css/layout.css','assets/css/tokens.css'],
+    d:'Botão movido pra dentro da sidebar (linha do logo, alinhado à direita); largura 240→272px.' },
+  { p:'p8', t:'Menu: espaçamento entre itens', s:'done', f:['assets/css/layout.css'],
+    d:'.nav virou flex column com gap de 4px entre os itens do nav.' },
+  { p:'p8', t:'Fluxo de Caixa: coluna Lucro', s:'done', f:['assets/js/financeiro.js'],
+    d:'Aba Entradas ganha lucro do procedimento rateado pela fração da parcela (join com procedure_materials).' },
+  { p:'p8', t:'Clientes/Estoque: pop-ups centrais e maiores', s:'done', f:['assets/js/utils.js','assets/css/components.css','assets/js/clientes.js','assets/js/estoque.js'],
+    d:'openDrawer ganhou { center: true } (.drawer--center); perfil de cliente e item de estoque abrem centralizados, 640px. Thumb 40→56px.' },
+  { p:'p8', t:'Agenda: edição completa de agendamento', s:'done', f:['db/schema.sql','assets/js/agenda.js'], dep:'só p/ status scheduled',
+    d:'Nova RPC update_scheduled_procedure recria materiais e parcelas pendentes; completed/cancelled mantêm edição restrita.' },
+  { p:'p8', t:'Estoque: lista de compras persistente', s:'done', f:['db/schema.sql','assets/js/estoque.js'],
+    d:'Nova tabela shopping_list_items; botões "+ Adicionar produto" (toolbar) e "Lista de compras" (drawer do item).' },
+  { p:'p8', t:'Configurações: WhatsApp do admin + CTA', s:'done', f:['db/schema.sql','assets/js/configuracoes.js','assets/js/estoque.js'],
+    d:'Coluna user_settings.whatsapp_number; CTA "Enviar no WhatsApp" na lista de compras (waLink).' },
+  { p:'p8', t:'Filtros lado a lado', s:'done', f:['assets/css/components.css','assets/js/financeiro.js','assets/js/historico.js'],
+    d:'Classe .filters (flex-wrap:nowrap + overflow-x:auto) — nunca mais empilha em telas estreitas.' },
+  { p:'p8', t:'Dashboard: atalhos rápidos', s:'done', f:['assets/js/home.js','assets/js/clientes.js','assets/js/estoque.js','assets/js/financeiro.js','assets/js/agenda.js'],
+    d:'3 botões novos no hero (Novo cliente/produto/lançamento) + Agendar, todos abrindo a criação direto via flags intent:novo* no sessionStorage.' },
+  { p:'p8', t:'Dashboard: hero neutro', s:'done', f:['assets/css/components.css','assets/css/theme.css','assets/css/tokens.css'],
+    d:'Gradiente mauve trocado por var(--surface) + borda + sombra, igual aos outros cards; removido override dark e token --hero-text.' },
 
   // ---- Pré-requisito (externo, você) — CONCLUÍDO no deploy 2026-06-30 ----
   { p:'p0', t:'Supabase: projeto + schema.sql', s:'done', f:['db/schema.sql'],
