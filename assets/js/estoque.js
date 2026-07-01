@@ -1,0 +1,417 @@
+// ============================================================================
+// estoque.js — controle de estoque: lista com alerta de mínimo, CRUD com links
+// de recompra (marketplace_links) e upload de foto/NF para o bucket privado
+// `uploads`, movimentações (entrada/saída/ajuste em stock_transactions + débito
+// na quantidade) e lista de compras com export. Segue o padrão de servicos.js /
+// clientes.js; a RLS isola por usuário (user_id nos inserts).
+// ============================================================================
+import { supabase } from './supabase.js';
+import { money, fmtDateTime, openModal, openDrawer, toast, busy, debounce,
+  esc, skeletonRows, h, toCSV, download } from './utils.js';
+
+const BUCKET = 'uploads';
+const isLow = (it) => it.active !== false && Number(it.quantity || 0) <= Number(it.min_quantity || 0);
+const fmtQty = (n) => Number(n || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
+const REASONS = { compra: 'Entrada (compra)', descarte: 'Saída / descarte',
+  ajuste: 'Ajuste', uso_procedimento: 'Uso em procedimento' };
+
+export async function render(root, ctx) {
+  const state = { all: [], q: '', filter: 'all' };
+  let drawer = null;
+
+  const buy = document.createElement('button');
+  buy.className = 'btn btn--secondary';
+  buy.textContent = 'Lista de compras';
+  buy.onclick = () => openShoppingList(state.all.filter(isLow));
+
+  const add = document.createElement('button');
+  add.className = 'btn btn--primary';
+  add.textContent = '+ Novo Item';
+  add.onclick = () => openForm(ctx, null, load);
+  ctx.actions.append(buy, add);
+
+  root.innerHTML = `
+    <div class="module__toolbar">
+      <div class="segmented" id="stk-filter">
+        <button data-f="all" class="active">Todos</button>
+        <button data-f="low">Em falta</button>
+        <button data-f="inactive">Inativos</button>
+      </div>
+      <div class="spacer"></div>
+      <input class="input search-input" id="stk-q" placeholder="Buscar item…" />
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr>
+          <th>Item</th><th class="num">Quantidade</th><th class="num">Mínimo</th>
+          <th class="num">Custo</th><th>Status</th>
+        </tr></thead>
+        <tbody id="stk-rows"></tbody>
+      </table>
+    </div>`;
+
+  const tbody = root.querySelector('#stk-rows');
+
+  root.querySelector('#stk-filter').onclick = (e) => {
+    const b = e.target.closest('[data-f]'); if (!b) return;
+    state.filter = b.dataset.f;
+    root.querySelectorAll('#stk-filter button').forEach((x) => x.classList.toggle('active', x === b));
+    paint();
+  };
+  root.querySelector('#stk-q').addEventListener('input',
+    debounce((e) => { state.q = e.target.value.trim().toLowerCase(); paint(); }));
+
+  tbody.onclick = (e) => {
+    const tr = e.target.closest('[data-id]'); if (!tr) return;
+    openItem(tr.dataset.id);
+  };
+
+  // ----------------------------------------------------------------- dados ---
+  async function load() {
+    tbody.innerHTML = skeletonRows(5);
+    const { data, error } = await supabase.from('stock_items').select('*').order('name');
+    if (error) { console.error(error); tbody.innerHTML = ''; toast('Erro ao carregar o estoque.', 'error'); return; }
+    state.all = data || [];
+    ctx.setBadge('estoque', state.all.filter(isLow).length);
+    paint();
+  }
+
+  function paint() {
+    let rows = state.all;
+    if (state.filter === 'low') rows = rows.filter(isLow);
+    else if (state.filter === 'inactive') rows = rows.filter((i) => i.active === false);
+    if (state.q) rows = rows.filter((i) => (i.name || '').toLowerCase().includes(state.q));
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="icon">📦</div>
+        <p>Nenhum item ${state.q || state.filter !== 'all' ? 'encontrado' : 'cadastrado ainda'}.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(row).join('');
+  }
+
+  function row(it) {
+    const low = isLow(it);
+    return `
+      <tr class="clickable" data-id="${it.id}">
+        <td>${esc(it.name)}${it.active === false ? ' <span class="badge badge--muted">inativo</span>' : ''}</td>
+        <td class="num ${low ? 'neg' : ''}">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
+        <td class="num">${fmtQty(it.min_quantity)}</td>
+        <td class="num">${it.cost_price != null ? money(it.cost_price) : '—'}</td>
+        <td>${low ? '<span class="badge badge--warning">em falta</span>' : '<span class="badge badge--success">ok</span>'}</td>
+      </tr>`;
+  }
+
+  // ------------------------------------------------------------- item drawer --
+  function openItem(id) {
+    const it = state.all.find((x) => x.id === id);
+    if (!it) return;
+    if (drawer) drawer.close();
+
+    const body = h(`
+      <div style="padding:24px">
+        <div class="flex" style="justify-content:space-between; align-items:flex-start">
+          <div>
+            <div style="font-size:18px">${esc(it.name)}${it.active === false ? ' <span class="badge badge--muted">inativo</span>' : ''}</div>
+            <div class="faint">${fmtQty(it.quantity)} ${esc(it.unit || '')} em estoque · mínimo ${fmtQty(it.min_quantity)}</div>
+          </div>
+          <button class="btn btn--icon btn--ghost" data-close aria-label="Fechar">×</button>
+        </div>
+
+        <div class="flex mt-4" id="thumb"></div>
+        ${it.description ? `<p class="muted mt-4">${esc(it.description)}</p>` : ''}
+        <div class="flex mt-4" id="links"></div>
+
+        <div class="flex mt-4">
+          <button class="btn btn--ghost btn--sm" data-edit>Editar item</button>
+        </div>
+
+        <h3 style="margin:20px 0 8px">Registrar movimentação</h3>
+        <form id="mov" class="field-row" style="align-items:flex-end">
+          <div class="field"><label>Tipo</label>
+            <select class="select" name="type">
+              <option value="in">Entrada (compra)</option>
+              <option value="out">Saída / descarte</option>
+              <option value="set">Ajuste (contagem)</option>
+            </select>
+          </div>
+          <div class="field"><label id="qlbl">Quantidade</label>
+            <input class="input" name="qty" type="number" step="0.001" min="0" required /></div>
+          <div class="field" style="flex:2"><label>Observação</label>
+            <input class="input" name="notes" /></div>
+          <button class="btn btn--primary" type="submit" form="mov">Registrar</button>
+        </form>
+
+        <h3 style="margin:20px 0 8px">Histórico</h3>
+        <div id="hist"><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
+      </div>`);
+
+    drawer = openDrawer(body);
+    body.querySelector('[data-close]').onclick = () => drawer.close();
+    body.querySelector('[data-edit]').onclick = () =>
+      openForm(ctx, it, async () => { await load(); openItem(id); });
+
+    // ajuste usa contagem absoluta; entrada/saída usam delta
+    const qlbl = body.querySelector('#qlbl');
+    body.querySelector('[name="type"]').onchange = (e) =>
+      qlbl.textContent = e.target.value === 'set' ? 'Nova contagem' : 'Quantidade';
+
+    renderAttachments(it, body.querySelector('#thumb'));
+    renderLinks(it.marketplace_links, body.querySelector('#links'));
+
+    body.querySelector('#mov').onsubmit = (e) => {
+      e.preventDefault();
+      submitMovement(ctx, it, e.target, async () => { await load(); openItem(id); });
+    };
+    loadHistory(id, body.querySelector('#hist'));
+  }
+
+  await load();
+}
+
+// ------------------------------------------------------------ movimentação --
+async function submitMovement(ctx, it, form, onDone) {
+  const fd = new FormData(form);
+  const type = fd.get('type');
+  const input = Number(fd.get('qty'));
+  if (!(input >= 0)) return toast('Quantidade inválida.', 'warning');
+  const current = Number(it.quantity || 0);
+
+  let txType, txQty, newQty, reason;
+  if (type === 'in')       { txType = 'in';  txQty = input; newQty = current + input; reason = 'compra'; }
+  else if (type === 'out') { txType = 'out'; txQty = input; newQty = current - input; reason = 'descarte'; }
+  else {                                                     // ajuste p/ contagem absoluta
+    const delta = input - current;
+    txType = delta >= 0 ? 'in' : 'out'; txQty = Math.abs(delta); newQty = input; reason = 'ajuste';
+  }
+  if (newQty < 0) return toast('A saída deixaria o estoque negativo.', 'warning');
+  if (txQty === 0) return toast('Sem alteração de quantidade.', 'warning');
+
+  const submit = form.querySelector('[type="submit"]');
+  busy(submit, true, 'Registrando…');
+  // ponytail: lê a quantidade carregada e regrava (read-then-write). Single-tenant
+  // owner, sem corrida real; se virar multi-dispositivo, mover p/ RPC atômica.
+  const tx = await supabase.from('stock_transactions').insert({
+    user_id: ctx.session.user.id, stock_item_id: it.id, type: txType,
+    quantity: txQty, reason, notes: (fd.get('notes') || '').toString().trim() || null,
+  });
+  if (tx.error) { busy(submit, false); console.error(tx.error); return toast('Erro ao registrar.', 'error'); }
+  const up = await supabase.from('stock_items').update({ quantity: newQty }).eq('id', it.id);
+  busy(submit, false);
+  if (up.error) { console.error(up.error); return toast('Movimento gravado, mas falhou ao atualizar a quantidade.', 'error'); }
+  toast('Movimentação registrada.');
+  onDone();
+}
+
+async function loadHistory(itemId, pane) {
+  const { data, error } = await supabase.from('stock_transactions')
+    .select('created_at, type, quantity, reason, notes')
+    .eq('stock_item_id', itemId).order('created_at', { ascending: false }).limit(100);
+  if (error) { console.error(error); pane.innerHTML = `<div class="empty"><p class="neg">Erro ao carregar o histórico.</p></div>`; return; }
+  if (!data.length) { pane.innerHTML = `<div class="empty"><p>Nenhuma movimentação ainda.</p></div>`; return; }
+  pane.innerHTML = `
+    <table class="data">
+      <thead><tr><th>Data</th><th>Tipo</th><th class="num">Qtd.</th><th>Obs.</th></tr></thead>
+      <tbody>${data.map((t) => `<tr>
+        <td class="nowrap">${fmtDateTime(t.created_at)}</td>
+        <td>${esc(REASONS[t.reason] || t.reason || (t.type === 'in' ? 'entrada' : 'saída'))}</td>
+        <td class="num ${t.type === 'in' ? 'pos' : 'neg'}">${t.type === 'in' ? '+' : '−'}${fmtQty(t.quantity)}</td>
+        <td>${esc(t.notes || '—')}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+// ----------------------------------------------------------- anexos / links --
+async function signedUrl(path) {
+  if (!path) return null;
+  const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
+  return data?.signedUrl || null;
+}
+
+async function renderAttachments(it, el) {
+  const parts = [];
+  if (it.photo_url) {
+    const u = await signedUrl(it.photo_url);
+    if (u) parts.push(`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="foto" style="height:72px;border-radius:8px;object-fit:cover"></a>`);
+  }
+  if (it.nf_attachment_url) {
+    const u = await signedUrl(it.nf_attachment_url);
+    if (u) parts.push(`<a class="btn btn--ghost btn--sm" href="${esc(u)}" target="_blank" rel="noopener">Ver nota fiscal</a>`);
+  }
+  el.innerHTML = parts.join('');
+}
+
+function renderLinks(links, el) {
+  const list = Array.isArray(links) ? links : [];
+  el.innerHTML = list.map((l) =>
+    `<a class="btn btn--secondary btn--sm" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name || 'Comprar')}</a>`).join('');
+}
+
+async function uploadFile(uid, file) {
+  const safe = file.name.replace(/[^\w.\-]+/g, '_');
+  const path = `${uid}/${crypto.randomUUID()}-${safe}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false });
+  if (error) throw error;
+  return path;
+}
+
+// --------------------------------------------------------------- formulário --
+function openForm(ctx, it, onSaved) {
+  const editing = !!it;
+  const form = document.createElement('form');
+  form.id = 'stk-form';
+  form.innerHTML = `
+    <div class="field">
+      <label>Nome <span class="req">*</span></label>
+      <input class="input" name="name" required value="${esc(it?.name || '')}" />
+    </div>
+    <div class="field">
+      <label>Descrição</label>
+      <textarea class="textarea" name="description">${esc(it?.description || '')}</textarea>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>${editing ? 'Quantidade atual' : 'Quantidade inicial'}</label>
+        <input class="input" name="quantity" type="number" step="0.001" min="0"
+          value="${it?.quantity ?? 0}" ${editing ? 'disabled' : ''} />
+        ${editing ? '<span class="hint">Ajuste pelas movimentações.</span>' : ''}</div>
+      <div class="field"><label>Estoque mínimo</label>
+        <input class="input" name="min_quantity" type="number" step="0.001" min="0" value="${it?.min_quantity ?? 0}" /></div>
+      <div class="field"><label>Unidade</label>
+        <input class="input" name="unit" placeholder="un, ml, g…" value="${esc(it?.unit || '')}" /></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Custo unitário (R$)</label>
+        <input class="input" name="cost_price" type="number" step="0.01" min="0" value="${it?.cost_price ?? ''}" /></div>
+    </div>
+
+    <div class="field">
+      <label>Links de recompra</label>
+      <div id="mlinks"></div>
+      <button type="button" class="btn btn--ghost btn--sm mt-4" id="mlink-add">+ adicionar link</button>
+    </div>
+
+    <div class="field-row">
+      <div class="field"><label>Foto do item</label>
+        <input class="input" name="photo" type="file" accept="image/*" />
+        ${it?.photo_url ? '<span class="hint">Já há uma foto; enviar substitui.</span>' : ''}</div>
+      <div class="field"><label>Nota fiscal</label>
+        <input class="input" name="nf" type="file" />
+        ${it?.nf_attachment_url ? '<span class="hint">Já há um anexo; enviar substitui.</span>' : ''}</div>
+    </div>
+
+    <div class="field">
+      <label class="flex" style="cursor:pointer">
+        <span class="switch"><input type="checkbox" name="active" ${it?.active !== false ? 'checked' : ''}><span class="track"></span></span>
+        Item ativo
+      </label>
+    </div>`;
+
+  // editor de marketplace_links (jsonb): linhas {name, url} adicionáveis/removíveis
+  const mwrap = form.querySelector('#mlinks');
+  const addLink = (l = {}) => {
+    const rowEl = h(`<div class="field-row" style="align-items:center; margin-bottom:8px">
+      <input class="input" data-ml="name" placeholder="Loja" style="flex:1" value="${esc(l.name || '')}" />
+      <input class="input" data-ml="url" placeholder="https://…" style="flex:2" value="${esc(l.url || '')}" />
+      <button type="button" class="btn btn--icon btn--ghost" data-rm aria-label="Remover">×</button>
+    </div>`);
+    rowEl.querySelector('[data-rm]').onclick = () => rowEl.remove();
+    mwrap.appendChild(rowEl);
+  };
+  (Array.isArray(it?.marketplace_links) ? it.marketplace_links : []).forEach(addLink);
+  form.querySelector('#mlink-add').onclick = () => addLink();
+
+  const foot = document.createElement('div');
+  foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Cancelar</button>
+                    <button class="btn btn--primary" type="submit" form="stk-form">${editing ? 'Salvar' : 'Criar'}</button>`;
+
+  const m = openModal({ title: editing ? 'Editar item' : 'Novo item', body: form, footer: foot, wide: true });
+  foot.querySelector('[data-x]').onclick = () => m.close();
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const name = (fd.get('name') || '').toString().trim();
+    if (!name) return toast('Informe o nome.', 'warning');
+
+    const links = [...mwrap.querySelectorAll('.field-row')].map((r) => ({
+      name: r.querySelector('[data-ml="name"]').value.trim(),
+      url: r.querySelector('[data-ml="url"]').value.trim(),
+    })).filter((l) => l.url);
+
+    const submit = foot.querySelector('[type="submit"]');
+    busy(submit, true);
+    try {
+      const uid = ctx.session.user.id;
+      const photo = form.querySelector('[name="photo"]').files[0];
+      const nf = form.querySelector('[name="nf"]').files[0];
+      const payload = {
+        user_id: uid,
+        name,
+        description: (fd.get('description') || '').toString().trim() || null,
+        min_quantity: Number(fd.get('min_quantity') || 0),
+        unit: (fd.get('unit') || '').toString().trim() || null,
+        cost_price: fd.get('cost_price') ? Number(fd.get('cost_price')) : null,
+        marketplace_links: links.length ? links : null,
+        active: fd.get('active') === 'on',
+      };
+      if (!editing) payload.quantity = Number(fd.get('quantity') || 0); // ponytail: estoque inicial direto na coluna; histórico começa no 1º movimento.
+      if (photo) payload.photo_url = await uploadFile(uid, photo);
+      if (nf) payload.nf_attachment_url = await uploadFile(uid, nf);
+
+      const res = editing
+        ? await supabase.from('stock_items').update(payload).eq('id', it.id)
+        : await supabase.from('stock_items').insert(payload);
+      if (res.error) throw res.error;
+      toast(editing ? 'Item atualizado.' : 'Item criado.');
+      m.markClean(); m.close(true); onSaved();
+    } catch (err) {
+      console.error(err);
+      toast('Erro ao salvar o item.', 'error');
+    } finally {
+      busy(submit, false);
+    }
+  };
+}
+
+// ----------------------------------------------------------- lista de compras -
+function openShoppingList(lowItems) {
+  const body = h(`<div></div>`);
+  if (!lowItems.length) {
+    body.innerHTML = `<div class="empty"><div class="icon">✅</div>
+      <p>Nenhum item abaixo do mínimo. Estoque em dia!</p></div>`;
+  } else {
+    body.innerHTML = `
+      <table class="data">
+        <thead><tr><th>Item</th><th class="num">Atual</th><th class="num">Mínimo</th>
+          <th class="num">Comprar</th><th>Onde</th></tr></thead>
+        <tbody>${lowItems.map((it) => {
+          const need = Math.max(Number(it.min_quantity || 0) - Number(it.quantity || 0), 0);
+          const links = (Array.isArray(it.marketplace_links) ? it.marketplace_links : [])
+            .map((l) => `<a class="btn btn--secondary btn--sm" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name || 'Comprar')}</a>`).join(' ');
+          return `<tr>
+            <td>${esc(it.name)}</td>
+            <td class="num">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
+            <td class="num">${fmtQty(it.min_quantity)}</td>
+            <td class="num">${fmtQty(need)} ${esc(it.unit || '')}</td>
+            <td>${links || '<span class="faint">—</span>'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  }
+
+  const foot = document.createElement('div');
+  foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Fechar</button>
+    ${lowItems.length ? '<button class="btn btn--primary" type="button" data-csv>Exportar CSV</button>' : ''}`;
+  const m = openModal({ title: 'Lista de compras', body, footer: foot, wide: true });
+  foot.querySelector('[data-x]').onclick = () => m.close();
+
+  const csv = foot.querySelector('[data-csv]');
+  if (csv) csv.onclick = () => {
+    const rows = [['Item', 'Atual', 'Mínimo', 'Comprar', 'Unidade', 'Links']];
+    lowItems.forEach((it) => {
+      const need = Math.max(Number(it.min_quantity || 0) - Number(it.quantity || 0), 0);
+      const urls = (Array.isArray(it.marketplace_links) ? it.marketplace_links : []).map((l) => l.url).join(' ');
+      rows.push([it.name, fmtQty(it.quantity), fmtQty(it.min_quantity), fmtQty(need), it.unit || '', urls]);
+    });
+    download(`lista-compras-${new Date().toISOString().slice(0, 10)}.csv`, toCSV(rows), 'text/csv;charset=utf-8');
+  };
+}

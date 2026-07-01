@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Harmon IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <link rel="stylesheet" href="assets/css/theme.css" />
+</head>
+<body>
+  <div class="shell" id="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <b class="brand-mark">✦</b><span>Harmon&nbsp;<b>IA</b></span>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div class="sidebar__user" id="user-footer"></div>
+    </aside>
+
+    <div class="content">
+      <header class="header">
+        <div class="header__left">
+          <button class="collapse-btn" id="collapse" title="Recolher menu">☰</button>
+          <div class="header__title" id="header-title">…</div>
+        </div>
+        <div class="header__actions" id="header-actions"></div>
+      </header>
+      <div class="module" id="module-root"></div>
+    </div>
+  </div>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

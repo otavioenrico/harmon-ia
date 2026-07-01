@@ -1,0 +1,87 @@
+/* ============================================================================
+   tokens.css — variáveis da marca Harmon IA
+   Paleta crua + tokens semânticos. O tema escuro (theme.css) só troca os
+   tokens semânticos; nenhum componente referencia cor crua direto.
+   ============================================================================ */
+
+:root {
+  /* -------- paleta crua (nunca usar #000000 puro) -------- */
+  --color-black:    #1a1a18;
+  --color-beige:    #e2dbd3;
+  --color-white:    #ffffff;
+  --color-gray-100: #f5f4f2;
+  --color-gray-200: #e8e5e1;
+  --color-gray-400: #9e9892;
+  --color-gray-600: #6b6760;
+  --color-success:  #4a7c59;
+  --color-warning:  #c9923a;
+  --color-danger:   #b85450;
+
+  /* -------- tokens semânticos (tema claro = padrão) -------- */
+  --bg:            var(--color-gray-100);
+  --surface:       var(--color-white);
+  --surface-2:     var(--color-gray-100);
+  --text:          var(--color-black);
+  --text-muted:    var(--color-gray-600);
+  --text-faint:    var(--color-gray-400);
+  --border:        var(--color-gray-200);
+  --border-strong: var(--color-gray-400);
+  --accent:        var(--color-beige);
+  --accent-text:   var(--color-black);
+
+  /* botões primários: fundo escuro, texto branco */
+  --btn-primary-bg:   var(--color-black);
+  --btn-primary-text: var(--color-white);
+  /* botões secundários: fundo bege, texto escuro */
+  --btn-secondary-bg:   var(--color-beige);
+  --btn-secondary-text: var(--color-black);
+
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger:  var(--color-danger);
+
+  /* sobre fundo claro, versões suaves para badges */
+  --success-soft: #e7efe9;
+  --warning-soft: #f6ecd9;
+  --danger-soft:  #f4e3e2;
+
+  /* -------- tipografia -------- */
+  --font: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --fw-200: 200;
+  --fw-300: 300;
+  --fw-400: 400;
+  --fw-500: 500;   /* peso máximo — nunca 600+ */
+
+  --fs-xs:   0.75rem;
+  --fs-sm:   0.85rem;
+  --fs-base: 0.95rem;
+  --fs-lg:   1.15rem;
+  --fs-xl:   1.5rem;
+  --fs-2xl:  2rem;
+
+  /* -------- espaçamento (escala de 4px) -------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* -------- forma -------- */
+  --radius:    8px;     /* arredondamento padrão dos cards */
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* sombras sutis, nunca pesadas */
+  --shadow-sm: 0 1px 2px rgba(26, 26, 24, 0.04);
+  --shadow:    0 4px 16px rgba(26, 26, 24, 0.08);
+
+  --sidebar-w: 240px;
+  --sidebar-w-collapsed: 64px;
+  --header-h: 68px;
+
+  --transition: 160ms ease;
+}

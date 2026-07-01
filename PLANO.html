@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmon IA — Plano de Execução</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Identidade Harmon IA: Raleway 200–500, #1a1a18 (nunca preto puro), bege #e2dbd3,
+   cards 8px, sem sombra pesada. Arquivo único, sem build, sem dependências. */
+:root {
+  --bg: #f6f3ef;
+  --surface: #ffffff;
+  --surface-2: #f0ebe4;
+  --text: #1a1a18;
+  --text-muted: #6b6760;
+  --text-faint: #9e9892;
+  --border: #e6dfd6;
+  --border-strong: #d8cfc3;
+  --accent: #1a1a18;
+  --accent-text: #f6f3ef;
+  --done: #4a7c59;
+  --doing: #c9923a;
+  --todo: #a79f95;
+  --blocked: #b85450;
+  --done-soft: #e7efe8;
+  --doing-soft: #f6ecda;
+  --todo-soft: #ece7e0;
+  --blocked-soft: #f4e4e2;
+  --radius: 8px;
+  --radius-pill: 999px;
+}
+[data-theme="dark"] {
+  --bg: #1a1a18;
+  --surface: #232320;
+  --surface-2: #2b2a26;
+  --text: #e2dbd3;
+  --text-muted: #a59e95;
+  --text-faint: #7c766d;
+  --border: #34322d;
+  --border-strong: #423f39;
+  --accent: #e2dbd3;
+  --accent-text: #1a1a18;
+  --done-soft: #1e2a21;
+  --doing-soft: #2e2718;
+  --todo-soft: #2a2823;
+  --blocked-soft: #2e1f1e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Raleway', system-ui, -apple-system, sans-serif;
+  font-weight: 300;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+code {
+  font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* ---------------------------------------------------------------- header --- */
+header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky; top: 0; z-index: 10;
+}
+.head-row { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 12px; }
+.brand h1 { font-weight: 500; font-size: 20px; letter-spacing: 0.2px; }
+.brand .tag { font-size: 12px; color: var(--text-faint); font-weight: 300; }
+.head-links { display: flex; align-items: center; gap: 8px; }
+.lk {
+  font-size: 12px; color: var(--text-muted); text-decoration: none;
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  padding: 6px 12px; transition: background .15s, border-color .15s;
+}
+.lk:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.theme-btn {
+  background: none; border: 1px solid var(--border); color: var(--text);
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 15px;
+}
+.theme-btn:hover { background: var(--surface-2); }
+
+/* -------------------------------------------------------------- overview --- */
+.overview { padding: 28px 0 8px; }
+.overview .lead { font-size: 13px; color: var(--text-muted); max-width: 680px; margin-bottom: 20px; }
+.overview .lead a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+.prog-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 22px 24px; display: flex; gap: 28px; align-items: center; flex-wrap: wrap;
+}
+.prog-num { display: flex; align-items: baseline; gap: 6px; }
+.prog-num b { font-size: 44px; font-weight: 200; letter-spacing: -1px; }
+.prog-num span { font-size: 14px; color: var(--text-faint); }
+.prog-main { flex: 1; min-width: 240px; }
+.prog-main .cap { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.bar { background: var(--surface-2); border-radius: var(--radius-pill); height: 10px; overflow: hidden; }
+.bar__fill { height: 100%; background: var(--done); border-radius: var(--radius-pill); transition: width .6s ease; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip-stat {
+  display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted);
+  background: var(--surface-2); border-radius: var(--radius-pill); padding: 6px 12px;
+}
+.chip-stat b { color: var(--text); font-weight: 500; }
+
+/* --------------------------------------------------------------- filtros --- */
+.filters { display: flex; gap: 8px; padding: 24px 0 4px; flex-wrap: wrap; align-items: center; }
+.filters .lbl { font-size: 12px; color: var(--text-faint); margin-right: 4px; }
+.fchip {
+  font-family: inherit; font-size: 12.5px; cursor: pointer;
+  background: var(--surface); color: var(--text-muted);
+  border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 6px 14px;
+  transition: all .15s;
+}
+.fchip:hover { border-color: var(--border-strong); }
+.fchip.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+/* ---------------------------------------------------------------- board ---- */
+main { padding: 16px 0 64px; }
+.phase { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin-bottom: 16px; overflow: hidden; }
+.phase[hidden] { display: none; }
+.phase__head {
+  list-style: none; cursor: pointer; padding: 18px 22px;
+  display: flex; align-items: center; gap: 18px; justify-content: space-between; flex-wrap: wrap;
+}
+.phase__head::-webkit-details-marker { display: none; }
+.phase__head:hover { background: var(--surface-2); }
+.phase__id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.phase__chev { font-size: 11px; color: var(--text-faint); transition: transform .2s; }
+.phase[open] .phase__chev { transform: rotate(90deg); }
+.phase__etapa { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 1px; display: block; }
+.phase__title { font-size: 15.5px; font-weight: 500; }
+.phase__right { display: flex; align-items: center; gap: 14px; }
+.phase__count { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.phase__bar { width: 90px; }
+.note {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .7px; font-weight: 500;
+  padding: 3px 9px; border-radius: var(--radius-pill);
+}
+.note--concluída { background: var(--done-soft); color: var(--done); }
+.note--próximo { background: var(--doing-soft); color: var(--doing); }
+.note--externo { background: var(--blocked-soft); color: var(--blocked); }
+
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px;
+  padding: 4px 18px 20px;
+}
+.task {
+  border: 1px solid var(--border); border-left: 3px solid var(--todo);
+  border-radius: 6px; padding: 14px 16px; background: var(--bg);
+}
+.task[hidden] { display: none; }
+.task--done    { border-left-color: var(--done); }
+.task--doing   { border-left-color: var(--doing); }
+.task--todo    { border-left-color: var(--todo); }
+.task--blocked { border-left-color: var(--blocked); }
+.task__top { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.task__top h3 { font-size: 14px; font-weight: 500; flex: 1; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--todo); }
+.task--done .dot { background: var(--done); }
+.task--doing .dot { background: var(--doing); }
+.task--blocked .dot { background: var(--blocked); }
+.sbadge { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; padding: 2px 8px; border-radius: var(--radius-pill); white-space: nowrap; }
+.sbadge--done    { background: var(--done-soft); color: var(--done); }
+.sbadge--doing   { background: var(--doing-soft); color: var(--doing); }
+.sbadge--todo    { background: var(--todo-soft); color: var(--text-muted); }
+.sbadge--blocked { background: var(--blocked-soft); color: var(--blocked); }
+.task__desc { font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; }
+.task__meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.dep { font-size: 11px; color: var(--text-faint); font-style: italic; width: 100%; }
+.dep::before { content: "↳ depende de "; }
+
+footer { border-top: 1px solid var(--border); padding: 20px 0; font-size: 11.5px; color: var(--text-faint); }
+footer a { color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head-row">
+    <div class="brand">
+      <h1>Harmon IA</h1>
+      <span class="tag">Plano de Execução · CRM saúde estética</span>
+    </div>
+    <div class="head-links">
+      <a class="lk" href="HISTORICO.md">📄 HISTORICO.md</a>
+      <a class="lk" href="README.md">📘 README.md</a>
+      <button class="theme-btn" id="theme" title="Alternar tema">◐</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="overview">
+    <p class="lead">
+      Roadmap derivado direto do <a href="HISTORICO.md">HISTORICO.md</a>: cada etapa = uma sessão de
+      desenvolvimento. As Etapas 1 a 5 estão concluídas; as seguintes são o plano de execução até o
+      lançamento. Os status são a fonte da verdade do progresso abaixo.
+    </p>
+    <div class="prog-card">
+      <div class="prog-num"><b id="pct">0%</b></div>
+      <div class="prog-main">
+        <div class="cap"><span>Progresso de desenvolvimento</span><span id="ratio">0 / 0 tasks</span></div>
+        <div class="bar"><div class="bar__fill" id="overbar" style="width:0%"></div></div>
+      </div>
+      <div class="chips" id="stats"></div>
+    </div>
+  </section>
+
+  <div class="filters">
+    <span class="lbl">Filtrar:</span>
+    <button class="fchip active" data-f="all">Todos</button>
+    <button class="fchip" data-f="done">Concluído</button>
+    <button class="fchip" data-f="todo">A fazer</button>
+    <button class="fchip" data-f="blocked">Pré-requisito</button>
+  </div>
+
+  <main id="board"></main>
+
+  <footer>
+    Gerado a partir de <a href="HISTORICO.md">HISTORICO.md</a> · última atualização 2026-06-30 (deploy concluído — app no ar) ·
+    para atualizar o progresso, mude o campo <code>s</code> de cada task no array <code>TASKS</code> deste arquivo.
+  </footer>
+</div>
+
+<script>
+// ============================================================================
+// Fonte da verdade: edite o status (s) de cada task que o progresso recalcula.
+// s: 'done' | 'doing' | 'todo' | 'blocked'
+// ============================================================================
+const PHASES = [
+  { id:'p1', etapa:'Etapa 1', title:'Fundação · Auth · Shell · Serviços · Configurações', note:'concluída' },
+  { id:'p2', etapa:'Etapa 2', title:'Módulo Clientes', note:'concluída' },
+  { id:'p3', etapa:'Etapa 3', title:'Módulo Estoque', note:'concluída' },
+  { id:'p4', etapa:'Etapa 4', title:'Histórico · Registro de Procedimento', note:'concluída' },
+  { id:'p5', etapa:'Etapa 5', title:'Fluxo de Caixa', note:'concluída' },
+  { id:'p6', etapa:'Etapa 6', title:'Agenda · Integração Google', note:'concluída' },
+  { id:'p7', etapa:'Etapa 7', title:'Polish · Lançamento', note:'próximo' },
+  { id:'p0', etapa:'Pré-requisito', title:'Setup do ambiente — no ar ✅', note:'concluída' },
+];
+
+const TASKS = [
+  // ---- Etapa 1 (concluída) ----
+  { p:'p1', t:'Banco de dados', s:'done', f:['db/schema.sql'],
+    d:'Todas as tabelas com user_id, RLS (USING + WITH CHECK), triggers de updated_at e índices.' },
+  { p:'p1', t:'RPC register_procedure', s:'done', f:['db/schema.sql'],
+    d:'Registro atômico: procedimento + materiais + débito de estoque + lançamentos financeiros (1 ou N parcelas).' },
+  { p:'p1', t:'Storage (bucket uploads)', s:'done', f:['db/schema.sql'],
+    d:'Bucket privado com policy por usuário; caminho sempre prefixado por <uid>/.' },
+  { p:'p1', t:'Design system', s:'done', f:['assets/css/*'],
+    d:'Tokens, layout, componentes e tema. Raleway 200–500, paleta da marca, cards 8px, claro/escuro.' },
+  { p:'p1', t:'Auth Google', s:'done', f:['assets/js/auth.js','assets/js/supabase.js'],
+    d:'Login com Calendar no mesmo consentimento (offline + consent); captura e persiste o refresh token.' },
+  { p:'p1', t:'Shell + roteador', s:'done', f:['app.html','assets/js/app.js'],
+    d:'Sidebar, roteador por hash, colapso responsivo, rodapé com avatar/logout e badges de navegação.' },
+  { p:'p1', t:'Utils compartilhados', s:'done', f:['assets/js/utils.js'],
+    d:'Moeda, datas sem bug de fuso, máscaras tel/CPF, toast, modal, skeleton, CSV com BOM e download.' },
+  { p:'p1', t:'Módulo Serviços', s:'done', f:['assets/js/servicos.js'],
+    d:'CRUD completo, busca, filtro, color picker e inativação. Padrão de referência dos demais módulos.' },
+  { p:'p1', t:'Módulo Configurações', s:'done', f:['assets/js/configuracoes.js'],
+    d:'Conta, status do Google, toggle de tema persistido e backup em JSON.' },
+
+  // ---- Etapa 2 (concluída) ----
+  { p:'p2', t:'Lista de clientes', s:'done', f:['assets/js/clientes.js'],
+    d:'Tabela com nome, telefone, e-mail, cidade, último procedimento e total. Busca (debounce 300ms) e ordenação em memória.' },
+  { p:'p2', t:'Criar / editar cliente', s:'done', f:['assets/js/clientes.js'],
+    d:'Modal com nome*, telefone/CPF mascarados, nascimento, endereço completo, observações e switch Ativa/Inativa.' },
+  { p:'p2', t:'Perfil em drawer', s:'done', f:['assets/js/clientes.js'],
+    d:'Dados cadastrais + abas Procedimentos (com lucro) e Financeiro. Reaproveita .drawer + .modal-overlay.' },
+  { p:'p2', t:'Ganchos de navegação', s:'done', f:['assets/js/clientes.js'], dep:'Agenda e Histórico lerem/limparem',
+    d:'Botões Agendar / Novo procedimento gravam intent:agendar e intent:procedimento (client_id) no sessionStorage.' },
+
+  // ---- Etapa 3 — Estoque ----
+  { p:'p3', t:'Lista de itens + alerta de mínimo', s:'done', f:['assets/js/estoque.js'],
+    d:'Quantidade, mínimo, custo e unidade; destaque visual para itens abaixo de min_quantity.' },
+  { p:'p3', t:'Criar / editar item', s:'done', f:['assets/js/estoque.js'],
+    d:'Inclui marketplace_links (jsonb): lista de lojas com nome + URL para recompra rápida.' },
+  { p:'p3', t:'Upload de foto e NF', s:'done', f:['assets/js/estoque.js'], dep:'Storage (Etapa 1)',
+    d:'Enviar imagem do item e anexo de nota fiscal para o bucket uploads (<uid>/arquivo).' },
+  { p:'p3', t:'Movimentações de estoque', s:'done', f:['assets/js/estoque.js'],
+    d:'Entradas (compra), ajustes e descartes em stock_transactions, com histórico por item.' },
+  { p:'p3', t:'Lista de compras', s:'done', f:['assets/js/estoque.js'],
+    d:'Agrega os itens abaixo do mínimo com os respectivos links de marketplace; com export.' },
+  { p:'p3', t:'Badge de alerta no nav', s:'done', f:['assets/js/estoque.js','assets/js/app.js'],
+    d:'setBadge no menu Estoque com a contagem de itens em falta.' },
+
+  // ---- Etapa 4 — Histórico / Registro (concluída) ----
+  { p:'p4', t:'Ler intent:procedimento', s:'done', f:['assets/js/historico.js'], dep:'Clientes (Etapa 2)',
+    d:'Ao abrir, consumir e limpar o gancho deixado por Clientes para pré-selecionar a cliente.' },
+  { p:'p4', t:'Fluxo de registro (RPC)', s:'done', f:['assets/js/historico.js'], dep:'RPC + Serviços + Estoque',
+    d:'Cliente, serviço, data, valor, materiais e pagamento → chama register_procedure (atômico).' },
+  { p:'p4', t:'Seleção de materiais usados', s:'done', f:['assets/js/historico.js'], dep:'Estoque (Etapa 3)',
+    d:'Escolher itens e quantidades; a RPC debita o estoque e congela o custo no momento do uso. Valida saldo client-side.' },
+  { p:'p4', t:'Histórico de procedimentos', s:'done', f:['assets/js/historico.js'],
+    d:'Listagem com filtros por cliente, serviço e período (em memória); mostra valor e lucro.' },
+  { p:'p4', t:'Pagamento à vista vs parcelado', s:'done', f:['assets/js/historico.js'], dep:'decisão fechada',
+    d:'À vista = pago; crédito/parcelado = pendente com vencimentos mensais (reflete no Caixa).' },
+  { p:'p4', t:'Reativação de clientes', s:'done', f:['assets/js/historico.js'],
+    d:'Clientes sem retorno há X dias (default 60), com atalho de WhatsApp (waLink já no utils).' },
+
+  // ---- Etapa 5 — Fluxo de Caixa (concluída) ----
+  { p:'p5', t:'Lista de lançamentos', s:'done', f:['assets/js/financeiro.js'],
+    d:'financial_entries (parcelas do procedimento + manuais) com filtros tipo/status/período em memória; data de referência = vencimento ou criação.' },
+  { p:'p5', t:'Baixar parcela (marcar paga)', s:'done', f:['assets/js/financeiro.js'],
+    d:'Botão "Dar baixa" nas pendências: atualiza paid/paid_at=hoje. Quita as parcelas em aberto vindas do registro.' },
+  { p:'p5', t:'Lançamento manual', s:'done', f:['assets/js/financeiro.js'],
+    d:'Receita ou despesa avulsa (categoria, forma, data e switch "já pago"); 1 parcela. Insere com user_id (RLS).' },
+  { p:'p5', t:'Resumo financeiro', s:'done', f:['assets/js/financeiro.js'],
+    d:'Stat-cards Recebido / A receber / Despesas / Saldo, recalculados sobre o filtro (regime de caixa: só paid conta no saldo).' },
+  { p:'p5', t:'Export CSV', s:'done', f:['assets/js/financeiro.js'],
+    d:'Exporta o fluxo filtrado (CSV com BOM, helper toCSV/download do utils).' },
+
+  // ---- Etapa 6 — Agenda + Google ----
+  { p:'p6', t:'api/google-refresh.js', s:'done', f:['api/google-refresh.js'], dep:'env GOOGLE_CLIENT_ID/SECRET',
+    d:'Função serverless (Vercel) com o client_secret: renova o provider_token do Google (~1h) via refresh_token.' },
+  { p:'p6', t:'google-cal.js (wrapper)', s:'done', f:['assets/js/google-cal.js'], dep:'api/google-refresh.js',
+    d:'Camada de acesso: garante token válido e faz list/create/update/delete de eventos.' },
+  { p:'p6', t:'Ler intent:agendar', s:'done', f:['assets/js/agenda.js'], dep:'Clientes (Etapa 2)',
+    d:'Consumir e limpar o gancho de Clientes para pré-preencher o novo evento.' },
+  { p:'p6', t:'Agenda — view Lista', s:'done', f:['assets/js/agenda.js'],
+    d:'Próximos compromissos em lista, a partir do Google Calendar (fonte única).' },
+  { p:'p6', t:'Agenda — view Mês', s:'done', f:['assets/js/agenda.js'],
+    d:'Grade mensal com os eventos e navegação entre meses.' },
+  { p:'p6', t:'Criar / editar evento', s:'done', f:['assets/js/agenda.js','assets/js/google-cal.js'],
+    d:'Grava direto no Google Calendar; sem sync bidirecional evento↔procedure.' },
+  { p:'p6', t:'Reconectar Google', s:'done', f:['assets/js/configuracoes.js'],
+    d:'Botão em Configurações para refazer o consentimento se a agenda parar de sincronizar.' },
+
+  // ---- Etapa 7 — Polish ----
+  { p:'p7', t:'Export CSV completo', s:'todo', f:['assets/js/*'],
+    d:'Padronizar o export nos módulos que ainda não têm.' },
+  { p:'p7', t:'Skeletons e loading', s:'todo', f:['assets/css/*','assets/js/*'],
+    d:'Estados de carregamento finos e consistentes entre os módulos.' },
+  { p:'p7', t:'Animações e microinterações', s:'todo', f:['assets/css/*'],
+    d:'Transições suaves, foco visível e feedback claro das ações.' },
+  { p:'p7', t:'Responsivo (mobile)', s:'todo', f:['assets/css/*'],
+    d:'Revisar tabelas, drawer e sidebar em telas pequenas.' },
+  { p:'p7', t:'Acessibilidade', s:'todo', f:['assets/*'],
+    d:'Contraste, navegação por teclado e aria nos componentes.' },
+  { p:'p7', t:'Verificação fim-a-fim', s:'todo',
+    d:'Testar o fluxo completo (cliente → procedimento → estoque → caixa → agenda) com dados reais.' },
+
+  // ---- Pré-requisito (externo, você) — CONCLUÍDO no deploy 2026-06-30 ----
+  { p:'p0', t:'Supabase: projeto + schema.sql', s:'done', f:['db/schema.sql'],
+    d:'SETUP passo 1: projeto harmon-ia (ref cheglxwbposkrwwxdeam) criado e db/schema.sql rodado com sucesso (tabelas, RLS, RPC, bucket).' },
+  { p:'p0', t:'config.js', s:'done', f:['assets/js/config.js'],
+    d:'SETUP passo 5b: criado com SUPABASE_URL + anon key legada (eyJ...). Vai pro git de propósito.' },
+  { p:'p0', t:'GitHub: código enviado', s:'done', f:['—'],
+    d:'SETUP passo 2: push para github.com/otavioenrico/harmon-ia (branch main), via token temporário.' },
+  { p:'p0', t:'Vercel: site no ar', s:'done', f:['vercel.json'],
+    d:'SETUP passo 3: deploy sem build em https://harmon-ia-rouge.vercel.app (login ainda depende do Google).' },
+  { p:'p0', t:'Google Cloud: Calendar API + OAuth', s:'done', f:['—'],
+    d:'SETUP passo 4: Calendar API + tela de consentimento (Externo, escopo calendar, usuário de teste) + credencial OAuth (Aplicativo da Web) criada. Client ID/Secret no CREDENCIAIS.md.' },
+  { p:'p0', t:'Ligar Google no Supabase', s:'done', f:['—'],
+    d:'SETUP passo 5a: Providers → Google ativado (Client ID/Secret) + URL Configuration (Site URL + Redirect URLs com barra).' },
+  { p:'p0', t:'Vercel: env vars + redeploy', s:'done', f:['api/google-refresh.js'],
+    d:'SETUP passo 6: 4 variáveis (GOOGLE_CLIENT_ID/SECRET, SUPABASE_URL/ANON_KEY) em Production + redeploy.' },
+  { p:'p0', t:'Testar fim a fim', s:'done', f:['—'],
+    d:'SETUP passo 7: login Google OK → painel → serviço/cliente/agendamento criados; evento apareceu no Google Calendar (integração confirmada).' },
+];
+
+const SLABEL = { done:'Concluído', doing:'Em andamento', todo:'A fazer', blocked:'Pré-requisito' };
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]));
+
+// ------------------------------------------------------------------ render --
+const board = document.getElementById('board');
+board.innerHTML = PHASES.map((ph) => {
+  const items = TASKS.filter((t) => t.p === ph.id);
+  if (!items.length) return '';
+  const total = items.length;
+  const done = items.filter((t) => t.s === 'done').length;
+  const pct = Math.round((done / total) * 100);
+  const cards = items.map((t) => `
+    <article class="task task--${t.s}" data-status="${t.s}">
+      <div class="task__top">
+        <span class="dot"></span>
+        <h3>${esc(t.t)}</h3>
+        <span class="sbadge sbadge--${t.s}">${SLABEL[t.s]}</span>
+      </div>
+      <p class="task__desc">${esc(t.d)}</p>
+      <div class="task__meta">
+        ${(t.f || []).map((f) => `<code>${esc(f)}</code>`).join('')}
+        ${t.dep ? `<span class="dep">${esc(t.dep)}</span>` : ''}
+      </div>
+    </article>`).join('');
+  return `
+    <details class="phase" ${ph.note === 'concluída' ? '' : 'open'}>
+      <summary class="phase__head">
+        <span class="phase__id">
+          <span class="phase__chev">▶</span>
+          <span>
+            <span class="phase__etapa">${esc(ph.etapa)}</span>
+            <span class="phase__title">${esc(ph.title)}</span>
+          </span>
+        </span>
+        <span class="phase__right">
+          ${ph.note ? `<span class="note note--${ph.note}">${ph.note}</span>` : ''}
+          <span class="phase__count">${done}/${total}</span>
+          <span class="phase__bar bar"><span class="bar__fill" style="width:${pct}%"></span></span>
+        </span>
+      </summary>
+      <div class="grid">${cards}</div>
+    </details>`;
+}).join('');
+
+// ----------------------------------------------------------------- stats ---
+const counts = TASKS.reduce((a, t) => (a[t.s] = (a[t.s] || 0) + 1, a), {});
+const devTotal = TASKS.filter((t) => t.s !== 'blocked').length;
+const devDone = counts.done || 0;
+const devPct = Math.round((devDone / devTotal) * 100);
+document.getElementById('pct').textContent = devPct + '%';
+document.getElementById('ratio').textContent = `${devDone} / ${devTotal} tasks`;
+document.getElementById('overbar').style.width = devPct + '%';
+document.getElementById('stats').innerHTML = [
+  ['done', 'concluídas'], ['todo', 'a fazer'], ['blocked', 'pré-requisito'],
+].map(([k, lbl]) => `<span class="chip-stat"><span class="dot dot--${k}" style="background:var(--${k})"></span><b>${counts[k] || 0}</b> ${lbl}</span>`).join('');
+
+// ---------------------------------------------------------------- filtros ---
+document.querySelector('.filters').addEventListener('click', (e) => {
+  const b = e.target.closest('.fchip'); if (!b) return;
+  document.querySelectorAll('.fchip').forEach((x) => x.classList.toggle('active', x === b));
+  const f = b.dataset.f;
+  document.querySelectorAll('.task').forEach((el) => {
+    el.hidden = f !== 'all' && el.dataset.status !== f;
+  });
+  document.querySelectorAll('.phase').forEach((ph) => {
+    const visible = ph.querySelectorAll('.task:not([hidden])').length;
+    ph.hidden = visible === 0;
+    if (f !== 'all' && visible) ph.open = true;
+  });
+});
+
+// ------------------------------------------------------------------ tema ----
+const root = document.documentElement;
+const saved = localStorage.getItem('plano-theme');
+if (saved === 'dark' || (!saved && matchMedia('(prefers-color-scheme: dark)').matches)) root.dataset.theme = 'dark';
+document.getElementById('theme').onclick = () => {
+  root.dataset.theme = root.dataset.theme === 'dark' ? '' : 'dark';
+  localStorage.setItem('plano-theme', root.dataset.theme || 'light');
+};
+</script>
+</body>
+</html>

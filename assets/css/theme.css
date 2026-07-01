@@ -1,0 +1,34 @@
+/* ============================================================================
+   theme.css — tema escuro. Aplica-se com <html data-theme="dark">.
+   Só redefine tokens semânticos; nenhum componente precisa saber do tema.
+   ============================================================================ */
+
+[data-theme="dark"] {
+  --bg:            #131311;
+  --surface:       #1f1f1d;
+  --surface-2:     #272723;
+  --text:          #f1eee9;
+  --text-muted:    #b3ada4;
+  --text-faint:    #837d74;
+  --border:        #322f2b;
+  --border-strong: #4a4640;
+  --accent:        #2e2a25;
+  --accent-text:   var(--color-beige);
+
+  /* primário inverte para o bege (texto escuro) — destaque sem #fff puro */
+  --btn-primary-bg:   var(--color-beige);
+  --btn-primary-text: var(--color-black);
+  --btn-secondary-bg:   #2e2a25;
+  --btn-secondary-text: var(--color-beige);
+
+  --success-soft: #1d2a22;
+  --warning-soft: #2c2417;
+  --danger-soft:  #2c1d1c;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow:    0 6px 22px rgba(0, 0, 0, 0.45);
+}
+
+/* o switch fica bege no escuro */
+[data-theme="dark"] .switch input:checked + .track { background: var(--color-beige); }
+[data-theme="dark"] .switch .track::before { background: #131311; }
