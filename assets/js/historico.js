@@ -41,7 +41,7 @@ export async function render(root, ctx) {
         <button data-v="ret">Retornos</button>
       </div>
       <div class="spacer"></div>
-      <div id="h-filters" class="flex" style="gap:8px; flex-wrap:wrap"></div>
+      <div id="h-filters" class="filters"></div>
     </div>
     <div class="table-wrap" id="h-table"></div>`;
 

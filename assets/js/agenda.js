@@ -108,7 +108,7 @@ export async function render(root, ctx) {
       const [evs, procs] = await Promise.all([
         listEvents(min, max),
         supabase.from('procedures')
-          .select('id, google_event_id, status, price_charged, client_id, service_id, procedure_materials(quantity_used, unit_cost_at_time)')
+          .select('id, google_event_id, status, price_charged, client_id, service_id, procedure_materials(stock_item_id, quantity_used, unit_cost_at_time)')
           .not('google_event_id', 'is', null)
           .gte('date', isoDay(min)).lt('date', isoDay(max)),
       ]);
@@ -292,9 +292,9 @@ export async function render(root, ctx) {
 
   // --------------------------------------------------------------- form ------
   // openForm(presetDay)                 -> criar (autocomplete + materiais + valor)
-  // openForm(null, editEvent)           -> editar evento Google (título/hora/notas)
+  // openForm(null, editEvent)           -> editar (completo se ainda 'scheduled', senão só título/hora/notas)
   // openForm(null, null, draft)         -> criar a partir de rascunho
-  function openForm(presetDay, editEvent, draft) {
+  async function openForm(presetDay, editEvent, draft) {
     const isEdit = !!editEvent;
     const p = draft?.payload || {};
     const prefClient = isEdit ? null : (p.client_id || sessionStorage.getItem('intent:agendar'));
@@ -314,19 +314,36 @@ export async function render(root, ctx) {
       editProc = state.procByEvent.get(editEvent.id) || null;
     }
 
+    // edição completa (cliente/serviço/materiais/pagamento) só é segura enquanto
+    // 'scheduled' — nada foi debitado/pago ainda (ver update_scheduled_procedure).
+    // completed/cancelled continuam com a edição restrita (título/hora/notas/valor).
+    const fullEdit = isEdit && editProc && editProc.status === 'scheduled';
+    let editMaterials = [];
+    let editPayment = { method: null, installments: 1 };
+    if (fullEdit) {
+      editMaterials = (editProc.procedure_materials || [])
+        .map((m) => ({ stock_item_id: m.stock_item_id, quantity_used: m.quantity_used }));
+      const { data: feRow } = await supabase.from('financial_entries')
+        .select('payment_method, installments').eq('procedure_id', editProc.id).limit(1).maybeSingle();
+      if (feRow) editPayment = { method: feRow.payment_method, installments: feRow.installments || 1 };
+    }
+    const showClientService = !isEdit || fullEdit;
+
     const form = document.createElement('form'); form.id = 'ag-form';
-    const pickers = isEdit
-      ? `<div class="field"><label>Título <span class="req">*</span></label>
-           <input class="input" name="title" required value="${esc(titleVal)}"></div>
-         ${editProc && editProc.price_charged != null ? `<div class="field"><label>Valor cobrado (R$)</label>
-           <input class="input" name="price" type="number" step="0.01" min="0" value="${editProc.price_charged}"></div>` : ''}`
-      : `<div class="field"><label>Cliente</label><div data-client-slot></div></div>
-         <div class="field"><label>Serviço</label>
-           <select class="select" name="service">
-             <option value="">— selecionar —</option>
-             ${state.services.map((s) => `<option value="${s.id}" data-dur="${s.duration_min || ''}" data-price="${s.default_price ?? ''}" ${s.id === p.service_id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-           </select>
-         </div>`;
+    const pickers = `
+      ${isEdit ? `<div class="field"><label>Título <span class="req">*</span></label>
+        <input class="input" name="title" required value="${esc(titleVal)}"></div>` : ''}
+      ${isEdit && !fullEdit && editProc && editProc.price_charged != null
+        ? `<div class="field"><label>Valor cobrado (R$)</label>
+             <input class="input" name="price" type="number" step="0.01" min="0" value="${editProc.price_charged}"></div>` : ''}
+      ${showClientService ? `
+      <div class="field"><label>Cliente</label><div data-client-slot></div></div>
+      <div class="field"><label>Serviço</label>
+        <select class="select" name="service">
+          <option value="">— selecionar —</option>
+          ${state.services.map((s) => `<option value="${s.id}" data-dur="${s.duration_min || ''}" data-price="${s.default_price ?? ''}" ${s.id === (fullEdit ? editProc.service_id : p.service_id) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+        </select>
+      </div>` : ''}`;
 
     form.innerHTML = `
       ${pickers}
@@ -338,9 +355,9 @@ export async function render(root, ctx) {
         <div class="field"><label>Duração (min)</label>
           <input class="input" type="number" min="5" step="5" name="dur" value="${durVal}"></div>
       </div>
-      ${isEdit ? '' : `
+      ${showClientService ? `
       <div class="field"><label>Valor cobrado (R$)</label>
-        <input class="input" name="price" type="number" step="0.01" min="0" value="${p.price ?? ''}"></div>
+        <input class="input" name="price" type="number" step="0.01" min="0" value="${fullEdit ? (editProc.price_charged ?? '') : (p.price ?? '')}"></div>
 
       <div class="field">
         <label>Materiais reservados <span class="faint">(baixa do estoque só na conclusão)</span></label>
@@ -351,17 +368,17 @@ export async function render(root, ctx) {
 
       <div class="field-row">
         <div class="field"><label>Pagamento</label>
-          <select class="select" name="method">${METHODS.map(([v, l]) => `<option value="${v}" ${v === p.method ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+          <select class="select" name="method">${METHODS.map(([v, l]) => `<option value="${v}" ${v === (fullEdit ? editPayment.method : p.method) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="field" id="inst-wrap" hidden><label>Parcelas</label>
-          <input class="input" name="installments" type="number" min="2" value="${p.installments || 2}"></div>
-      </div>`}
+          <input class="input" name="installments" type="number" min="2" value="${fullEdit ? (editPayment.installments || 2) : (p.installments || 2)}"></div>
+      </div>` : ''}
       <div class="field"><label>Observações</label>
         <textarea class="textarea" name="notes">${esc(notesVal)}</textarea></div>`;
 
-    // autocomplete de cliente (modo criar)
+    // autocomplete de cliente + materiais dinâmicos (criar ou edição completa)
     let clientPicker = null;
-    if (!isEdit) {
-      clientPicker = clientAutocomplete(state.clients, prefClient || '');
+    if (showClientService) {
+      clientPicker = clientAutocomplete(state.clients, fullEdit ? (editProc.client_id || '') : (prefClient || ''));
       form.querySelector('[data-client-slot]').appendChild(clientPicker.el);
 
       // serviço → herda duração e sugere preço
@@ -401,7 +418,7 @@ export async function render(root, ctx) {
         matRows.appendChild(r);
       };
       form.querySelector('#mat-add').onclick = () => addMat();
-      (p.materials || []).forEach(addMat);
+      (fullEdit ? editMaterials : (p.materials || [])).forEach(addMat);
       priceEl.oninput = recalc;
       recalc();
 
@@ -416,7 +433,7 @@ export async function render(root, ctx) {
     foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Cancelar</button>
       ${isEdit ? '' : '<button class="btn btn--secondary" type="button" data-draft>Salvar rascunho</button>'}
       <button class="btn btn--primary" type="submit" form="ag-form">${isEdit ? 'Salvar' : 'Agendar'}</button>`;
-    const m = openModal({ title: isEdit ? 'Editar agendamento' : 'Novo agendamento', body: form, footer: foot, wide: !isEdit });
+    const m = openModal({ title: isEdit ? 'Editar agendamento' : 'Novo agendamento', body: form, footer: foot, wide: showClientService });
     foot.querySelector('[data-x]').onclick = () => m.close();
 
     // coleta os campos do form (usada por agendar e por salvar rascunho)
@@ -460,11 +477,23 @@ export async function render(root, ctx) {
 
       busy(submit, true, isEdit ? 'Salvando…' : 'Agendando…');
       try {
-        if (isEdit) {
+        if (isEdit && !fullEdit) {
           await updateEvent(editEvent.id, { summary: form.title.value.trim() || '(sem título)', description: form.notes.value.trim(), start, end });
           if (editProc && form.price) {
             await supabase.from('procedures').update({ price_charged: form.price.value ? Number(form.price.value) : null, date: form.date.value }).eq('id', editProc.id);
           }
+          toast('Agendamento atualizado.');
+        } else if (fullEdit) {
+          await updateEvent(editEvent.id, { summary: form.title.value.trim() || '(sem título)', description: form.notes.value.trim(), start, end });
+          const d = collect();
+          const { error } = await supabase.rpc('update_scheduled_procedure', {
+            p_procedure_id: editProc.id,
+            p_client_id: d.client_id, p_service_id: d.service_id, p_date: d.date,
+            p_price_charged: d.price, p_notes: d.notes || null,
+            p_materials: d.materials.length ? d.materials : null,
+            p_payment_method: d.method, p_installments: d.installments,
+          });
+          if (error) { console.error(error); toast('Erro ao salvar as alterações.', 'error'); return; }
           toast('Agendamento atualizado.');
         } else {
           const d = collect();
@@ -539,6 +568,7 @@ export async function render(root, ctx) {
 
   await load();
   if (sessionStorage.getItem('intent:agendar')) openForm();
+  else if (sessionStorage.getItem('intent:novoAgendamento')) { sessionStorage.removeItem('intent:novoAgendamento'); openForm(); }
 }
 
 // ---------------------------------------------------------------- ranges -----

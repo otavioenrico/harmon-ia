@@ -159,9 +159,22 @@ create table if not exists public.agenda_drafts (
   updated_at    timestamptz default now()
 );
 
+-- shopping_list_items -----------------------------------------------------------
+-- Item de estoque adicionado manualmente à lista de compras (além dos que já
+-- entram automaticamente por estar abaixo do mínimo). Só marca presença —
+-- "quanto comprar" continua vindo do cálculo min−atual quando aplicável.
+create table if not exists public.shopping_list_items (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references auth.users(id) on delete cascade not null,
+  stock_item_id uuid references public.stock_items(id) on delete cascade not null,
+  created_at    timestamptz default now(),
+  unique (user_id, stock_item_id)
+);
+
 -- migrações p/ bancos já implantados (idempotente) ----------------------------
 alter table public.clients add column if not exists address_complement text;
 alter table public.user_settings add column if not exists accent text default 'rose';
+alter table public.user_settings add column if not exists whatsapp_number text;
 
 -- =================================================== updated_at triggers ======
 do $$
@@ -192,6 +205,7 @@ create index if not exists idx_fin_due             on public.financial_entries(d
 create index if not exists idx_fin_proc            on public.financial_entries(procedure_id);
 create index if not exists idx_proc_status         on public.procedures(status, date);
 create index if not exists idx_drafts_user         on public.agenda_drafts(user_id);
+create index if not exists idx_shopping_user        on public.shopping_list_items(user_id);
 
 -- ============================================================ RLS =============
 -- Cada conta Google só enxerga os próprios dados. USING + WITH CHECK explícitos
@@ -201,7 +215,8 @@ declare t text;
 begin
   foreach t in array array[
     'user_settings','services','clients','stock_items','stock_transactions',
-    'procedures','procedure_materials','financial_entries','agenda_drafts'
+    'procedures','procedure_materials','financial_entries','agenda_drafts',
+    'shopping_list_items'
   ] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists "own_data" on public.%I', t);
@@ -371,6 +386,79 @@ begin
   end if;
 
   return v_proc;
+end $$;
+
+-- ===================== RPC: editar procedimento agendado (aprimoramento 6) =====
+-- Só age sobre procedures.status='scheduled' (nada foi debitado/pago ainda —
+-- ver schedule_procedure acima). Apaga e recria procedure_materials e as
+-- parcelas pendentes com os dados novos, espelhando schedule_procedure.
+-- completed/cancelled não passam por aqui (edição fica restrita no app).
+create or replace function public.update_scheduled_procedure(
+  p_procedure_id    uuid,
+  p_client_id       uuid,
+  p_service_id      uuid,
+  p_date            date,
+  p_price_charged   numeric,
+  p_notes           text,
+  p_materials       jsonb,
+  p_payment_method  text,
+  p_installments    int
+) returns void
+language plpgsql as $$
+declare
+  v_user uuid := auth.uid();
+  v_mat  jsonb;
+  v_item uuid;
+  v_qty  numeric;
+  v_cost numeric;
+  v_n    int := greatest(coalesce(p_installments, 1), 1);
+  v_each numeric;
+  v_acc  numeric := 0;
+  v_amt  numeric;
+  i      int;
+begin
+  if v_user is null then raise exception 'not authenticated'; end if;
+
+  update public.procedures
+    set client_id = p_client_id, service_id = p_service_id, date = p_date,
+        price_charged = p_price_charged, notes = p_notes
+    where id = p_procedure_id and user_id = v_user and status = 'scheduled';
+  if not found then
+    raise exception 'procedimento não encontrado ou não está mais agendado';
+  end if;
+
+  delete from public.procedure_materials
+    where procedure_id = p_procedure_id and user_id = v_user;
+  if p_materials is not null then
+    for v_mat in select * from jsonb_array_elements(p_materials) loop
+      v_item := (v_mat->>'stock_item_id')::uuid;
+      v_qty  := (v_mat->>'quantity_used')::numeric;
+      select cost_price into v_cost
+        from public.stock_items where id = v_item and user_id = v_user;
+      insert into public.procedure_materials(
+        user_id, procedure_id, stock_item_id, quantity_used, unit_cost_at_time)
+      values (v_user, p_procedure_id, v_item, v_qty, v_cost);
+    end loop;
+  end if;
+
+  -- só as parcelas pendentes existem para um procedimento scheduled — seguro
+  -- apagar e recriar do zero com os novos valores.
+  delete from public.financial_entries
+    where procedure_id = p_procedure_id and user_id = v_user and paid = false;
+  if p_price_charged is not null and p_price_charged > 0 then
+    v_each := round(p_price_charged / v_n, 2);
+    for i in 1..v_n loop
+      if i < v_n then v_amt := v_each; v_acc := v_acc + v_each;
+      else v_amt := p_price_charged - v_acc; end if;
+      insert into public.financial_entries(
+        user_id, type, amount, description, category, payment_method,
+        installments, installment_of, due_date, paid, client_id, procedure_id)
+      values (
+        v_user, 'income', v_amt, 'Agendamento', 'Agendamentos', p_payment_method,
+        v_n, i, (p_date + ((i - 1) || ' month')::interval)::date,
+        false, p_client_id, p_procedure_id);
+    end loop;
+  end if;
 end $$;
 
 -- ============================= RPC: completar procedimento (item 8/14/1.1) =====

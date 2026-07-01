@@ -103,7 +103,12 @@ export async function render(root, ctx) {
           ? `${upcoming.length} agendamento${upcoming.length > 1 ? 's' : ''} pela frente.`
           : 'Nenhum agendamento futuro no momento.'}</div>
       </div>
-      <button class="btn btn--primary btn--pill" id="go-agenda">${icon('plus')} Agendar</button>
+      <div class="hero__actions">
+        <button class="btn btn--secondary" id="go-cliente">${icon('users')} Novo cliente</button>
+        <button class="btn btn--secondary" id="go-produto">${icon('box')} Novo produto</button>
+        <button class="btn btn--secondary" id="go-lancamento">${icon('wallet')} Novo lançamento</button>
+        <button class="btn btn--primary" id="go-agenda">${icon('plus')} Agendar</button>
+      </div>
     </div>
 
     <div class="mini-cards">
@@ -146,6 +151,17 @@ export async function render(root, ctx) {
         : '<p class="faint">Ninguém parado há 60+ dias.</p>'}
     </div>`;
 
-  root.querySelector('#go-agenda')?.addEventListener('click', () => ctx.navigate('agenda'));
+  root.querySelector('#go-agenda')?.addEventListener('click', () => {
+    sessionStorage.setItem('intent:novoAgendamento', '1'); ctx.navigate('agenda');
+  });
+  root.querySelector('#go-cliente')?.addEventListener('click', () => {
+    sessionStorage.setItem('intent:novoCliente', '1'); ctx.navigate('clientes');
+  });
+  root.querySelector('#go-produto')?.addEventListener('click', () => {
+    sessionStorage.setItem('intent:novoProduto', '1'); ctx.navigate('estoque');
+  });
+  root.querySelector('#go-lancamento')?.addEventListener('click', () => {
+    sessionStorage.setItem('intent:novoLancamento', '1'); ctx.navigate('financeiro');
+  });
   aside.querySelector('#go-estoque')?.addEventListener('click', () => ctx.navigate('estoque'));
 }

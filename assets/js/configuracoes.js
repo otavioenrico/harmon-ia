@@ -4,7 +4,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { profile, signOut, signInWithGoogle } from './auth.js';
-import { toast, esc, initials, download, todayISO, icon, confirmDialog } from './utils.js';
+import { toast, esc, initials, download, todayISO, icon, confirmDialog, maskPhone, bindMask } from './utils.js';
 
 const TABLES = ['user_settings', 'services', 'clients', 'stock_items',
   'stock_transactions', 'procedures', 'procedure_materials', 'financial_entries'];
@@ -35,6 +35,12 @@ export async function render(root, ctx) {
           </div>
         </div>
         <p class="hint mt-4">O acesso é exclusivamente via Google — não há senha para alterar.</p>
+        <div class="field mt-4">
+          <label>WhatsApp do administrador</label>
+          <input class="input" id="wa-number" placeholder="(11) 91234-5678" value="${esc(ctx.settings?.whatsapp_number || '')}">
+          <span class="hint">Usado nos botões de enviar resumo por WhatsApp (ex.: lista de compras).</span>
+        </div>
+        <button class="btn btn--secondary mt-4" id="wa-save">Salvar WhatsApp</button>
         <button class="btn btn--ghost mt-4" id="logout">Sair da conta</button>
       </section>
 
@@ -70,6 +76,18 @@ export async function render(root, ctx) {
     </div>`;
 
   root.querySelector('#logout').onclick = () => signOut();
+
+  bindMask(root.querySelector('#wa-number'), maskPhone);
+  root.querySelector('#wa-save').onclick = async (e) => {
+    const whatsapp_number = root.querySelector('#wa-number').value.trim() || null;
+    e.target.disabled = true;
+    const { error } = await supabase.from('user_settings')
+      .upsert({ user_id: ctx.session.user.id, whatsapp_number }, { onConflict: 'user_id' });
+    e.target.disabled = false;
+    if (error) { console.error(error); return toast('Não foi possível salvar o WhatsApp.', 'error'); }
+    ctx.settings.whatsapp_number = whatsapp_number;
+    toast('WhatsApp salvo.');
+  };
 
   root.querySelector('#reconnect').onclick = async (e) => {
     const ok = await confirmDialog({

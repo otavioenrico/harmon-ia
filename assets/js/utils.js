@@ -187,9 +187,9 @@ export function openModal({ title = '', body = '', footer = '', wide = false, on
 // ---------------------------------------------------------------- drawer ----
 // painel lateral reaproveitando .modal-overlay (backdrop) + .drawer. ESC e
 // clique-fora fecham; mesmo trap/restauração de foco do modal.
-export function openDrawer(bodyEl) {
+export function openDrawer(bodyEl, { center = false } = {}) {
   const overlay = h(`<div class="modal-overlay"></div>`);
-  const aside = h(`<aside class="drawer" role="dialog" aria-modal="true" tabindex="-1"></aside>`);
+  const aside = h(`<aside class="drawer${center ? ' drawer--center' : ''}" role="dialog" aria-modal="true" tabindex="-1"></aside>`);
   aside.appendChild(bodyEl);
   overlay.appendChild(aside);
   document.body.appendChild(overlay);
@@ -241,9 +241,9 @@ export const guard = (fn) => {
 // item 15: seleção de cliente por busca (nome ou telefone). Componente único —
 // Agendamento e Histórico usam o mesmo. Devolve { el, value() } onde value() é
 // o id selecionado (ou ''). Mesma lógica p/ qualquer lista {id,name,phone}.
-export function clientAutocomplete(clients, selectedId = '') {
+export function clientAutocomplete(clients, selectedId = '', placeholder = 'Buscar cliente…') {
   const wrap = h(`<div class="autocomplete">
-    <input class="input" type="text" placeholder="Buscar cliente…" autocomplete="off">
+    <input class="input" type="text" placeholder="${esc(placeholder)}" autocomplete="off">
     <input type="hidden">
     <div class="autocomplete__list" hidden></div>
   </div>`);

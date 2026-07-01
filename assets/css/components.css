@@ -206,6 +206,14 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .drawer { position: fixed; top: 0; right: 0; height: 100vh; width: 460px; max-width: 92vw;
   background: var(--surface); border-left: 1px solid var(--border); z-index: 100;
   overflow-y: auto; animation: slideLeft var(--dur-base) var(--ease-out); }
+/* variante central (perfil de cliente, item de estoque): mesmo componente,
+   mas centralizado pelo grid do .modal-overlay em vez de fixo à direita */
+.drawer--center {
+  position: static; top: auto; right: auto; height: auto; max-height: 88vh;
+  width: 640px; max-width: 92vw; border-left: none; border-radius: var(--radius-lg);
+  animation: slideUp var(--dur-base) var(--ease-out);
+}
+.closing .drawer.drawer--center { animation: slideDownOut var(--dur-exit) var(--ease-out) forwards; }
 
 @keyframes fade { from { opacity: 0; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } }
@@ -257,6 +265,10 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .right { text-align: right; }
 .nowrap { white-space: nowrap; }
 .flex { display: flex; gap: var(--sp-3); align-items: center; }
+/* linha de filtros (Fluxo de Caixa, Histórico, Clientes…): sempre lado a lado,
+   nunca empilha — rolagem horizontal como fallback em telas estreitas. */
+.filters { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+.filters > * { flex-shrink: 0; }
 .mt-4 { margin-top: var(--sp-4); }
 .search-input { max-width: 280px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -269,14 +281,15 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 @media (max-width: 1200px) { .home-grid { grid-template-columns: 1fr; } }
 
 .hero {
-  background: linear-gradient(135deg, var(--color-mauve-300), var(--color-mauve-500));
-  border-radius: var(--radius-xl); padding: var(--sp-7) var(--sp-6);
-  color: var(--hero-text); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5);
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-xl); padding: var(--sp-6);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5); flex-wrap: wrap;
 }
-.hero__label { text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; opacity: 0.85; }
-.hero__title { font-size: var(--fs-2xl); font-weight: var(--fw-700); margin-top: var(--sp-2); color: var(--hero-text); }
+.hero__label { text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-faint); }
+.hero__title { font-size: var(--fs-2xl); font-weight: var(--fw-700); margin-top: var(--sp-2); color: var(--text); }
 .hero__title svg { width: 24px; height: 24px; vertical-align: -3px; }
-.hero__sub { opacity: 0.9; margin-top: var(--sp-2); }
+.hero__sub { color: var(--text-muted); margin-top: var(--sp-2); }
+.hero__actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 
 /* mini stat-cards da Home (ícone em círculo pastel) */
 .mini-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
@@ -316,7 +329,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .wa-link svg { width: 15px; height: 15px; }
 
 /* thumbnail de item (estoque) */
-.thumb { width: 40px; height: 40px; border-radius: var(--radius-sm); object-fit: cover; background: var(--surface-2); flex-shrink: 0; }
+.thumb { width: 56px; height: 56px; border-radius: var(--radius-sm); object-fit: cover; background: var(--surface-2); flex-shrink: 0; }
 
 /* -------------------------------------------------------------- agenda ----- */
 .mb-3 { margin-bottom: var(--sp-3); }

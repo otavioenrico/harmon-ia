@@ -6,8 +6,8 @@
 // clientes.js; a RLS isola por usuário (user_id nos inserts).
 // ============================================================================
 import { supabase } from './supabase.js';
-import { money, fmtDateTime, openModal, openDrawer, toast, busy, debounce,
-  esc, skeletonRows, h, toCSV, download, icon, emptyBox } from './utils.js';
+import { money, fmtDateTime, openModal, openDrawer, toast, busy, debounce, guard,
+  esc, skeletonRows, h, toCSV, download, icon, emptyBox, clientAutocomplete, waLink } from './utils.js';
 
 const BUCKET = 'uploads';
 const isLow = (it) => it.active !== false && Number(it.quantity || 0) <= Number(it.min_quantity || 0);
@@ -22,13 +22,18 @@ export async function render(root, ctx) {
   const buy = document.createElement('button');
   buy.className = 'btn btn--secondary';
   buy.textContent = 'Lista de compras';
-  buy.onclick = () => openShoppingList(state.all.filter(isLow));
+  buy.onclick = () => openShoppingList(ctx, state.all);
+
+  const addToList = document.createElement('button');
+  addToList.className = 'btn btn--secondary';
+  addToList.textContent = '+ Adicionar produto';
+  addToList.onclick = () => openAddToShoppingList(ctx, state.all);
 
   const add = document.createElement('button');
   add.className = 'btn btn--primary';
   add.textContent = '+ Novo Item';
   add.onclick = () => openForm(ctx, null, load);
-  ctx.actions.append(buy, add);
+  ctx.actions.append(buy, addToList, add);
 
   root.innerHTML = `
     <div class="module__toolbar">
@@ -133,6 +138,7 @@ export async function render(root, ctx) {
 
         <div class="flex mt-4">
           <button class="btn btn--ghost btn--sm" data-edit>Editar item</button>
+          <button class="btn btn--ghost btn--sm" data-add-list>${icon('plus')} Lista de compras</button>
         </div>
 
         <h3 style="margin:20px 0 8px">Registrar movimentação</h3>
@@ -162,10 +168,16 @@ export async function render(root, ctx) {
         <div id="hist"><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
       </div>`);
 
-    drawer = openDrawer(body);
+    drawer = openDrawer(body, { center: true });
     body.querySelector('[data-close]').onclick = () => drawer.close();
     body.querySelector('[data-edit]').onclick = () =>
       openForm(ctx, it, async () => { await load(); openItem(id); });
+    body.querySelector('[data-add-list]').onclick = guard(async () => {
+      const { error } = await supabase.from('shopping_list_items')
+        .upsert({ user_id: ctx.session.user.id, stock_item_id: it.id }, { onConflict: 'user_id,stock_item_id' });
+      if (error) { console.error(error); return toast('Erro ao adicionar à lista.', 'error'); }
+      toast('Adicionado à lista de compras.');
+    });
 
     // ajuste usa contagem absoluta; entrada/saída usam delta
     const qlbl = body.querySelector('#qlbl');
@@ -189,6 +201,10 @@ export async function render(root, ctx) {
   }
 
   await load();
+  if (sessionStorage.getItem('intent:novoProduto')) {
+    sessionStorage.removeItem('intent:novoProduto');
+    openForm(ctx, null, load);
+  }
 }
 
 // ------------------------------------------------------------ movimentação --
@@ -409,44 +425,102 @@ function openForm(ctx, it, onSaved) {
 }
 
 // ----------------------------------------------------------- lista de compras -
-function openShoppingList(lowItems) {
-  const body = h(`<div></div>`);
-  if (!lowItems.length) {
-    body.innerHTML = emptyBox(icon('check'), 'Nenhum item abaixo do mínimo. Estoque em dia!');
-  } else {
-    body.innerHTML = `
-      <table class="data">
-        <thead><tr><th>Item</th><th class="num">Atual</th><th class="num">Mínimo</th>
-          <th class="num">Comprar</th><th>Onde</th></tr></thead>
-        <tbody>${lowItems.map((it) => {
-          const need = Math.max(Number(it.min_quantity || 0) - Number(it.quantity || 0), 0);
-          const links = (Array.isArray(it.marketplace_links) ? it.marketplace_links : [])
-            .map((l) => `<a class="btn btn--secondary btn--sm" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name || 'Comprar')}</a>`).join(' ');
-          return `<tr>
-            <td>${esc(it.name)}</td>
-            <td class="num">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
-            <td class="num">${fmtQty(it.min_quantity)}</td>
-            <td class="num">${fmtQty(need)} ${esc(it.unit || '')}</td>
-            <td>${links || '<span class="faint">—</span>'}</td>
-          </tr>`;
-        }).join('')}</tbody>
-      </table>`;
-  }
-
+// une os itens abaixo do mínimo (automáticos) com os adicionados manualmente
+// via shopping_list_items — dedup por id (item já em falta não duplica).
+async function openShoppingList(ctx, allItems) {
+  const body = h(`<div><table class="data"><tbody>${skeletonRows(5, 4)}</tbody></table></div>`);
   const foot = document.createElement('div');
-  foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Fechar</button>
-    ${lowItems.length ? '<button class="btn btn--primary" type="button" data-csv>Exportar CSV</button>' : ''}`;
+  foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Fechar</button>`;
   const m = openModal({ title: 'Lista de compras', body, footer: foot, wide: true });
   foot.querySelector('[data-x]').onclick = () => m.close();
 
-  const csv = foot.querySelector('[data-csv]');
-  if (csv) csv.onclick = () => {
-    const rows = [['Item', 'Atual', 'Mínimo', 'Comprar', 'Unidade', 'Links']];
-    lowItems.forEach((it) => {
-      const need = Math.max(Number(it.min_quantity || 0) - Number(it.quantity || 0), 0);
+  const lowItems = allItems.filter(isLow);
+  const { data: manualRows, error } = await supabase.from('shopping_list_items')
+    .select('id, stock_item_id, stock_items(*)');
+  if (error) console.error(error);
+  const manualItems = (manualRows || [])
+    .filter((r) => r.stock_items && !lowItems.some((it) => it.id === r.stock_item_id))
+    .map((r) => ({ ...r.stock_items, _listRowId: r.id }));
+  const items = [...lowItems, ...manualItems];
+
+  if (!items.length) {
+    body.innerHTML = emptyBox(icon('check'), 'Nenhum item abaixo do mínimo. Estoque em dia!');
+    return;
+  }
+
+  const rowHTML = (it) => {
+    const low = isLow(it);
+    const need = low ? Math.max(Number(it.min_quantity || 0) - Number(it.quantity || 0), 0) : null;
+    const links = (Array.isArray(it.marketplace_links) ? it.marketplace_links : [])
+      .map((l) => `<a class="btn btn--secondary btn--sm" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name || 'Comprar')}</a>`).join(' ');
+    return `<tr>
+      <td>${esc(it.name)}</td>
+      <td class="num">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
+      <td class="num">${fmtQty(it.min_quantity)}</td>
+      <td class="num">${need != null ? `${fmtQty(need)} ${esc(it.unit || '')}` : '—'}</td>
+      <td>${links || '<span class="faint">—</span>'}</td>
+      <td class="num">${it._listRowId ? `<button class="btn btn--icon btn--ghost" data-rm="${it._listRowId}" title="Remover">${icon('x')}</button>` : ''}</td>
+    </tr>`;
+  };
+  body.innerHTML = `
+    <table class="data">
+      <thead><tr><th>Item</th><th class="num">Atual</th><th class="num">Mínimo</th>
+        <th class="num">Comprar</th><th>Onde</th><th></th></tr></thead>
+      <tbody>${items.map(rowHTML).join('')}</tbody>
+    </table>`;
+  body.querySelectorAll('[data-rm]').forEach((b) => b.onclick = guard(async () => {
+    const { error } = await supabase.from('shopping_list_items').delete().eq('id', b.dataset.rm);
+    if (error) { console.error(error); return toast('Erro ao remover.', 'error'); }
+    b.closest('tr').remove();
+  }));
+
+  const waNumber = ctx.settings?.whatsapp_number;
+  const waMsg = () => items.map((it) => {
+    const need = isLow(it) ? Math.max(Number(it.min_quantity || 0) - Number(it.quantity || 0), 0) : null;
+    return `• ${it.name}${need != null ? ` — ${fmtQty(need)} ${it.unit || ''}` : ''}`;
+  }).join('\n');
+  const waBtn = waNumber
+    ? `<a class="btn btn--secondary" target="_blank" rel="noopener" href="${waLink(waNumber, `Lista de compras:\n\n${waMsg()}`)}">${icon('whatsapp')} Enviar no WhatsApp</a>` : '';
+  foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Fechar</button>
+    ${waBtn}<button class="btn btn--primary" type="button" data-csv>Exportar CSV</button>`;
+  foot.querySelector('[data-x]').onclick = () => m.close();
+
+  foot.querySelector('[data-csv]').onclick = () => {
+    const rowsOut = [['Item', 'Atual', 'Mínimo', 'Comprar', 'Unidade', 'Links']];
+    items.forEach((it) => {
+      const need = isLow(it) ? Math.max(Number(it.min_quantity || 0) - Number(it.quantity || 0), 0) : '';
       const urls = (Array.isArray(it.marketplace_links) ? it.marketplace_links : []).map((l) => l.url).join(' ');
-      rows.push([it.name, fmtQty(it.quantity), fmtQty(it.min_quantity), fmtQty(need), it.unit || '', urls]);
+      rowsOut.push([it.name, fmtQty(it.quantity), fmtQty(it.min_quantity), need !== '' ? fmtQty(need) : '', it.unit || '', urls]);
     });
-    download(`lista-compras-${new Date().toISOString().slice(0, 10)}.csv`, toCSV(rows), 'text/csv;charset=utf-8');
+    download(`lista-compras-${new Date().toISOString().slice(0, 10)}.csv`, toCSV(rowsOut), 'text/csv;charset=utf-8');
+  };
+}
+
+// adicionar produto já cadastrado no estoque à lista de compras manualmente
+function openAddToShoppingList(ctx, allItems) {
+  const form = document.createElement('form');
+  form.id = 'shop-add-form';
+  const picker = clientAutocomplete(allItems, '', 'Buscar produto…');
+  form.innerHTML = `<div class="field"><label>Produto</label></div>`;
+  form.querySelector('.field').appendChild(picker.el);
+
+  const foot = document.createElement('div');
+  foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Cancelar</button>
+    <button class="btn btn--primary" type="submit" form="shop-add-form">Adicionar</button>`;
+  const m = openModal({ title: 'Adicionar produto à lista', body: form, footer: foot });
+  foot.querySelector('[data-x]').onclick = () => m.close();
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const id = picker.value();
+    if (!id) return toast('Escolha um produto.', 'warning');
+    const submit = foot.querySelector('[type="submit"]');
+    busy(submit, true);
+    const { error } = await supabase.from('shopping_list_items')
+      .upsert({ user_id: ctx.session.user.id, stock_item_id: id }, { onConflict: 'user_id,stock_item_id' });
+    busy(submit, false);
+    if (error) { console.error(error); return toast('Erro ao adicionar.', 'error'); }
+    toast('Adicionado à lista de compras.');
+    m.markClean(); m.close(true);
   };
 }

@@ -139,7 +139,7 @@ export async function render(root, ctx) {
         <div id="pane-fin" hidden><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
       </div>`);
 
-    drawer = openDrawer(body);
+    drawer = openDrawer(body, { center: true });
 
     body.querySelector('[data-close]').onclick = () => drawer.close();
     body.querySelector('[data-edit]').onclick = () =>
@@ -163,6 +163,10 @@ export async function render(root, ctx) {
   }
 
   await load();
+  if (sessionStorage.getItem('intent:novoCliente')) {
+    sessionStorage.removeItem('intent:novoCliente');
+    openForm(ctx, null, load);
+  }
 }
 
 // ------------------------------------------------------------------ helpers --

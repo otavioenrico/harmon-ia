@@ -19,6 +19,19 @@ const methodLabel = (v) => (METHODS.find(([k]) => k === v) || [, '—'])[1];
 // data de referência da linha p/ filtro/ordenação: vencimento, senão criação
 const refDate = (e) => (e.due_date || e.created_at || '').slice(0, 10);
 
+// lucro da parcela: lucro do procedimento (preço − custo dos materiais)
+// rateado pela fração do preço que essa parcela representa. Lançamento
+// manual (sem procedimento) não tem lucro aplicável -> null ("—").
+function lucroOf(e) {
+  const proc = e.procedures;
+  const price = Number(proc?.price_charged);
+  if (!proc || !price || !e.amount) return null;
+  const custo = (proc.procedure_materials || []).reduce(
+    (s, m) => s + Number(m.quantity_used || 0) * Number(m.unit_cost_at_time || 0), 0);
+  const lucroTotal = price - custo;
+  return lucroTotal * (Number(e.amount) / price);
+}
+
 export async function render(root, ctx) {
   const state = { all: [], tab: 'resumo', fStatus: '', fDe: '', fAte: '' };
 
@@ -43,7 +56,7 @@ export async function render(root, ctx) {
       <button data-t="planilha">Planilha</button>
     </div>
     <div class="module__toolbar">
-      <div id="f-filters" class="flex" style="gap:8px; flex-wrap:wrap"></div>
+      <div id="f-filters" class="filters"></div>
     </div>
     <div id="f-pane"></div>`;
 
@@ -81,7 +94,7 @@ export async function render(root, ctx) {
     // ponytail: busca tudo e filtra em memória (igual historico/clientes); vira
     // RPC/view se uma profissional acumular milhares de lançamentos.
     const { data, error } = await supabase.from('financial_entries')
-      .select('id, type, amount, description, category, payment_method, installments, installment_of, due_date, paid, paid_at, client_id, created_at, clients(name)')
+      .select('id, type, amount, description, category, payment_method, installments, installment_of, due_date, paid, paid_at, client_id, procedure_id, created_at, clients(name), procedures(price_charged, procedure_materials(quantity_used, unit_cost_at_time))')
       .order('due_date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
     if (error) { console.error(error); toast('Erro ao carregar lançamentos.', 'error'); return; }
@@ -97,10 +110,10 @@ export async function render(root, ctx) {
     const subset = state.tab === 'entradas' ? rows.filter((e) => e.type === 'income')
                  : state.tab === 'saidas'   ? rows.filter((e) => e.type === 'expense')
                  : rows;
-    paintTable(subset);
+    paintTable(subset, state.tab === 'entradas');
   }
 
-  function paintTable(rows) {
+  function paintTable(rows, showLucro = false) {
     if (!rows.length) {
       pane.innerHTML = emptyBox(finIcon, 'Nenhum lançamento no filtro.');
       return;
@@ -108,8 +121,8 @@ export async function render(root, ctx) {
     pane.innerHTML = `
       <div class="table-wrap"><table class="data">
         <thead><tr><th>Data</th><th>Descrição</th><th>Cliente</th><th>Forma</th>
-          <th class="num">Valor</th><th>Status</th><th></th></tr></thead>
-        <tbody>${rows.map(rowHTML).join('')}</tbody>
+          <th class="num">Valor</th>${showLucro ? '<th class="num">Lucro</th>' : ''}<th>Status</th><th></th></tr></thead>
+        <tbody>${rows.map((e) => rowHTML(e, showLucro)).join('')}</tbody>
       </table></div>`;
     pane.querySelectorAll('[data-pay]').forEach((b) => b.onclick = () => settle(b.dataset.pay, load));
   }
@@ -167,16 +180,18 @@ export async function render(root, ctx) {
       }).join('')}</div>`;
   }
 
-  function rowHTML(e) {
+  function rowHTML(e, showLucro = false) {
     const inc = e.type === 'income';
     const parc = (e.installments || 1) > 1 ? ` <span class="faint">(${e.installment_of}/${e.installments})</span>` : '';
     const desc = e.description || (inc ? 'Receita' : 'Despesa');
+    const lucro = showLucro ? lucroOf(e) : null;
     return `<tr>
       <td class="nowrap">${fmtDate(refDate(e))}</td>
       <td>${esc(desc)}${parc}</td>
       <td>${esc(e.clients?.name || '—')}</td>
       <td>${e.payment_method ? esc(methodLabel(e.payment_method)) : '—'}</td>
       <td class="num ${inc ? 'pos' : 'neg'}">${inc ? '' : '−'}${money(e.amount)}</td>
+      ${showLucro ? `<td class="num ${lucro != null && lucro < 0 ? 'neg' : 'pos'}">${lucro != null ? money(lucro) : '—'}</td>` : ''}
       <td>${e.paid
         ? `<span class="badge badge--success">pago</span>`
         : `<span class="badge badge--warning">pendente</span>`}</td>
@@ -186,6 +201,10 @@ export async function render(root, ctx) {
   }
 
   await load();
+  if (sessionStorage.getItem('intent:novoLancamento')) {
+    sessionStorage.removeItem('intent:novoLancamento');
+    openForm(ctx.session.user.id, load);
+  }
 }
 
 // dá baixa numa pendência: paid=true, paid_at=hoje

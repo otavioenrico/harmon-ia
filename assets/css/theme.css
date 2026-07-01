@@ -36,8 +36,3 @@
 /* o switch fica bege no escuro */
 [data-theme="dark"] .switch input:checked + .track { background: var(--color-mauve-300); }
 
-/* hero: gradiente mais fundo no escuro — mantém o texto claro legível
-   (no claro o gradiente 300→500 é o da referência; aqui desce p/ 500→700) */
-[data-theme="dark"] .hero {
-  background: linear-gradient(135deg, var(--color-mauve-500), var(--color-mauve-700));
-}

@@ -96,7 +96,7 @@
   --shadow-sm: 0 1px 2px rgba(26, 26, 24, 0.04);
   --shadow:    0 4px 16px rgba(26, 26, 24, 0.08);
 
-  --sidebar-w: 240px;
+  --sidebar-w: 272px;
   --sidebar-w-collapsed: 64px;
   --header-h: 68px;
 
@@ -115,5 +115,4 @@
   --focus-ring: 2px solid var(--color-mauve-700);
   --overlay-bg: rgba(26, 26, 24, 0.45);
   --switch-thumb: var(--color-white);
-  --hero-text: var(--color-white);
 }

@@ -69,7 +69,7 @@ button { font-family: inherit; }
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: 0 var(--sp-5);
+  padding: 0 var(--sp-4) 0 var(--sp-5);
   font-size: var(--fs-lg);
   font-weight: var(--fw-200);
   letter-spacing: 0.04em;
@@ -78,8 +78,12 @@ button { font-family: inherit; }
 }
 .sidebar__brand b { font-weight: var(--fw-500); display: inline-flex; }
 .sidebar__brand svg { width: 22px; height: 22px; }
+.sidebar__brand .collapse-btn { margin-left: auto; flex-shrink: 0; }
 
-.nav { flex: 1; padding: var(--sp-3) var(--sp-3); overflow-y: auto; }
+.nav {
+  flex: 1; padding: var(--sp-3) var(--sp-3); overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--sp-1);
+}
 .nav__item {
   display: flex;
   align-items: center;
@@ -130,8 +134,11 @@ button { font-family: inherit; }
 .sidebar__user-info .email { font-size: var(--fs-xs); color: var(--text-faint); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 
 .collapsed .sidebar__brand span,
+.collapsed .sidebar__brand b.brand-mark,
 .collapsed .nav__item .label,
 .collapsed .sidebar__user-info { display: none; }
+.collapsed .sidebar__brand { justify-content: center; padding: 0 var(--sp-2); }
+.collapsed .sidebar__brand .collapse-btn { margin-left: 0; }
 .collapsed .nav__item { justify-content: center; }
 
 /* ------------------------------------------------------------- content ---- */
@@ -173,7 +180,9 @@ button { font-family: inherit; }
 /* -------------------------------------------------------- responsivo ------ */
 @media (max-width: 1200px) {
   .shell { grid-template-columns: var(--sidebar-w-collapsed) 1fr; }
-  .sidebar__brand span, .nav__item .label, .sidebar__user-info { display: none; }
+  .sidebar__brand span, .sidebar__brand b.brand-mark, .nav__item .label, .sidebar__user-info { display: none; }
+  .sidebar__brand { justify-content: center; padding: 0 var(--sp-2); }
+  .sidebar__brand .collapse-btn { margin-left: 0; }
   .nav__item { justify-content: center; }
 }
 
@@ -191,8 +200,11 @@ button { font-family: inherit; }
   .shell.sidebar-open .sidebar { transform: translateX(0); box-shadow: var(--shadow); }
   /* drawer sempre mostra a sidebar cheia — anula o modo colapsado (inclusive se
      ficou ligado ao encolher a janela vindo do desktop) */
-  .collapsed .sidebar__brand span, .collapsed .nav__item .label, .collapsed .sidebar__user-info,
-  .sidebar__brand span, .nav__item .label, .sidebar__user-info { display: revert; }
+  .collapsed .sidebar__brand span, .collapsed .sidebar__brand b.brand-mark,
+  .collapsed .nav__item .label, .collapsed .sidebar__user-info,
+  .sidebar__brand span, .sidebar__brand b.brand-mark, .nav__item .label, .sidebar__user-info { display: revert; }
+  .collapsed .sidebar__brand, .sidebar__brand { justify-content: flex-start; padding: 0 var(--sp-4) 0 var(--sp-5); }
+  .collapsed .sidebar__brand .collapse-btn, .sidebar__brand .collapse-btn { margin-left: auto; }
   .collapsed .nav__item, .nav__item { justify-content: flex-start; }
   .scrim { position: fixed; inset: 0; background: var(--overlay-bg); z-index: 55; }
 }
