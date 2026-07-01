@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
   <title>Harmon IA</title>
   <link rel="stylesheet" href="assets/css/tokens.css" />
   <link rel="stylesheet" href="assets/css/accent.css" />
@@ -16,19 +17,20 @@
       <div class="sidebar__brand">
         <b class="brand-mark">✦</b><span>Harmon&nbsp;<b>IA</b></span>
       </div>
-      <nav class="nav" id="nav"></nav>
+      <nav class="nav" id="nav" aria-label="Navegação principal"></nav>
       <div class="sidebar__user" id="user-footer"></div>
     </aside>
 
     <div class="content">
       <header class="header">
         <div class="header__left">
-          <button class="collapse-btn" id="collapse" title="Recolher menu">☰</button>
-          <div class="header__title" id="header-title">…</div>
+          <button class="collapse-btn" id="collapse" title="Recolher menu"
+                  aria-label="Recolher menu" aria-expanded="true">☰</button>
+          <h1 class="header__title" id="header-title">…</h1>
         </div>
         <div class="header__actions" id="header-actions"></div>
       </header>
-      <div class="module" id="module-root"></div>
+      <main class="module" id="module-root"></main>
     </div>
   </div>
 

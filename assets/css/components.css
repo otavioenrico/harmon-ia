@@ -23,7 +23,7 @@
 .btn--danger    { background: transparent; color: var(--danger); border-color: var(--danger); }
 .btn--danger:hover:not(:disabled)    { background: var(--danger-soft); }
 .btn--sm { padding: var(--sp-2) var(--sp-3); font-size: var(--fs-sm); }
-.btn--icon { padding: var(--sp-2); width: 34px; height: 34px; }
+.btn--icon { padding: var(--sp-2); width: 40px; height: 40px; }
 .btn--block { width: 100%; }
 /* CTA em destaque (banner/hero): pill. Botões do dia-a-dia continuam retângulo. */
 .btn--pill { border-radius: var(--radius-pill); padding: var(--sp-3) var(--sp-5); }
@@ -56,7 +56,7 @@
   transition: border-color var(--transition);
 }
 .input:focus, .select:focus, .textarea:focus {
-  outline: none; border-color: var(--border-strong);
+  border-color: var(--border-strong);
 }
 .textarea { resize: vertical; min-height: 80px; }
 .field-row { display: flex; gap: var(--sp-3); }
@@ -73,10 +73,12 @@
 }
 .switch .track::before {
   content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px;
-  background: #fff; border-radius: 50%; transition: transform var(--transition);
+  background: var(--switch-thumb); border-radius: 50%; transition: transform var(--transition);
 }
 .switch input:checked + .track { background: var(--color-black); }
 .switch input:checked + .track::before { transform: translateX(20px); }
+/* o input é invisível (opacity:0) — o anel de foco vai no trilho */
+.switch input:focus-visible + .track { outline: var(--focus-ring); outline-offset: 2px; }
 
 /* segmented — padrão único de abas/toggle do app (estilo iOS): trilho neutro,
    indicador em pill deslocado pela classe .active. Rola na horizontal quando não
@@ -172,14 +174,14 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 /* -------------------------------------------------------------- modais ---- */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
-  background: rgba(26, 26, 24, 0.45); backdrop-filter: blur(3px);
+  background: var(--overlay-bg); backdrop-filter: blur(3px);
   display: grid; place-items: center; padding: var(--sp-5);
-  animation: fade 160ms ease;
+  animation: fade var(--dur-fast) var(--ease-out);
 }
 .modal {
   background: var(--surface); border-radius: var(--radius-lg);
   width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
-  animation: slideUp 200ms ease;
+  animation: slideUp var(--dur-base) var(--ease-out);
 }
 .modal--wide { max-width: 720px; }
 .modal__head {
@@ -188,7 +190,12 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   position: sticky; top: 0; background: var(--surface);
 }
 .modal__title { font-size: var(--fs-lg); font-weight: var(--fw-400); }
-.modal__close { background: none; border: none; font-size: var(--fs-xl); cursor: pointer; color: var(--text-muted); line-height: 1; }
+.modal__close {
+  background: none; border: none; font-size: var(--fs-xl); cursor: pointer;
+  color: var(--text-muted); line-height: 1;
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: var(--radius-sm); margin: calc(-1 * var(--sp-2));
+}
 .modal__body { padding: var(--sp-5); }
 .modal__foot {
   display: flex; justify-content: flex-end; gap: var(--sp-3);
@@ -198,11 +205,22 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 /* drawer lateral (perfil da cliente) */
 .drawer { position: fixed; top: 0; right: 0; height: 100vh; width: 460px; max-width: 92vw;
   background: var(--surface); border-left: 1px solid var(--border); z-index: 100;
-  overflow-y: auto; animation: slideLeft 200ms ease; }
+  overflow-y: auto; animation: slideLeft var(--dur-base) var(--ease-out); }
 
 @keyframes fade { from { opacity: 0; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } }
 @keyframes slideLeft { from { transform: translateX(40px); opacity: 0; } }
+
+/* saída: keyframes próprios só com `to` — partem do estado computado atual
+   (interruptível se a entrada ainda estiver rodando) e mantêm o ease-out
+   (reverse inverteria a curva → ease-in). JS remove o nó no animationend. */
+@keyframes fadeOut { to { opacity: 0; } }
+@keyframes slideDownOut { to { opacity: 0; transform: translateY(12px); } }
+@keyframes slideRightOut { to { opacity: 0; transform: translateX(40px); } }
+.modal-overlay.closing { animation: fadeOut var(--dur-exit) var(--ease-out) forwards; }
+.closing .modal { animation: slideDownOut var(--dur-exit) var(--ease-out) forwards; }
+.closing .drawer { animation: slideRightOut var(--dur-exit) var(--ease-out) forwards; }
+.toast.closing { animation: slideDownOut var(--dur-exit) var(--ease-out) forwards; }
 
 /* -------------------------------------------------------------- toasts ---- */
 .toasts { position: fixed; bottom: var(--sp-5); right: var(--sp-5); z-index: 200; display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -211,7 +229,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   border-left: 3px solid var(--text-muted);
   border-radius: var(--radius-sm); padding: var(--sp-3) var(--sp-4);
   box-shadow: var(--shadow); min-width: 240px; max-width: 340px;
-  animation: slideUp 200ms ease; font-size: var(--fs-sm);
+  animation: slideUp var(--dur-base) var(--ease-out); font-size: var(--fs-sm);
 }
 .toast--success { border-left-color: var(--success); }
 .toast--warning { border-left-color: var(--warning); }
@@ -253,10 +271,10 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .hero {
   background: linear-gradient(135deg, var(--color-mauve-300), var(--color-mauve-500));
   border-radius: var(--radius-xl); padding: var(--sp-7) var(--sp-6);
-  color: #fff; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5);
+  color: var(--hero-text); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5);
 }
 .hero__label { text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; opacity: 0.85; }
-.hero__title { font-size: var(--fs-2xl); font-weight: var(--fw-700); margin-top: var(--sp-2); color: #fff; }
+.hero__title { font-size: var(--fs-2xl); font-weight: var(--fw-700); margin-top: var(--sp-2); color: var(--hero-text); }
 .hero__title svg { width: 24px; height: 24px; vertical-align: -3px; }
 .hero__sub { opacity: 0.9; margin-top: var(--sp-2); }
 
@@ -320,3 +338,14 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .ag-cell__n { font-size: 12px; align-self: flex-start; }
 .ag-chip { font-size: 11px; background: var(--accent); color: var(--accent-text); border-radius: var(--radius-sm); padding: 1px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .ag-more { font-size: 11px; color: var(--text-muted); }
+
+/* ------------------------------------------------- reduced motion ---------- */
+/* respeita a preferência do SO: mata transições/animações (o shimmer do
+   skeleton vira estático — continua sinalizando "carregando" pela cor) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

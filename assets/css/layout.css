@@ -19,6 +19,9 @@ h1 { font-size: var(--fs-2xl); font-weight: var(--fw-300); }
 a { color: inherit; }
 button { font-family: inherit; }
 
+/* foco visível por teclado — anel único e consistente no app inteiro */
+:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+
 /* -------------------------------------------------------------- login ----- */
 .login {
   min-height: 100vh;
@@ -157,6 +160,10 @@ button { font-family: inherit; }
 .collapse-btn svg { width: 20px; height: 20px; display: block; }
 
 .module { padding: var(--sp-6); flex: 1; }
+/* transição de rota: fade + subida sutil. Navegar é ação frequente (dezenas/
+   dia) → curto e discreto (160ms/6px), nunca "vistoso" */
+.module.module-enter { animation: moduleIn var(--dur-fast) var(--ease-out); }
+@keyframes moduleIn { from { opacity: 0; transform: translateY(6px); } }
 .module__toolbar {
   display: flex; align-items: center; gap: var(--sp-3);
   margin-bottom: var(--sp-5); flex-wrap: wrap;
@@ -187,7 +194,7 @@ button { font-family: inherit; }
   .collapsed .sidebar__brand span, .collapsed .nav__item .label, .collapsed .sidebar__user-info,
   .sidebar__brand span, .nav__item .label, .sidebar__user-info { display: revert; }
   .collapsed .nav__item, .nav__item { justify-content: flex-start; }
-  .scrim { position: fixed; inset: 0; background: rgba(26, 26, 24, 0.45); z-index: 55; }
+  .scrim { position: fixed; inset: 0; background: var(--overlay-bg); z-index: 55; }
 }
 
 /* telas estreitas: header não quebra em 3 linhas (título menor, menos padding) */

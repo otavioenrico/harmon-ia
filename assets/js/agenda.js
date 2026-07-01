@@ -11,7 +11,7 @@
 import { supabase } from './supabase.js';
 import { listEvents, createEvent, updateEvent, deleteEvent, NeedsReconnect } from './google-cal.js';
 import { signInWithGoogle } from './auth.js';
-import { openModal, toast, busy, esc, todayISO, icon, waLink, money, clientAutocomplete } from './utils.js';
+import { openModal, confirmDialog, guard, toast, busy, esc, todayISO, icon, waLink, money, clientAutocomplete, emptyBox } from './utils.js';
 
 const WD = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MO = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -99,7 +99,11 @@ export async function render(root, ctx) {
       state.view === 'month' ? `${MO[state.cursor.getMonth()]} ${state.cursor.getFullYear()}`
       : state.view === 'day' ? state.cursor.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
       : `${min.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${new Date(max - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`;
-    body.innerHTML = `<div class="card"><div class="skeleton" style="height:240px"></div></div>`;
+    // skeleton na forma de linhas de evento (hora + resumo), não um bloco cego
+    body.innerHTML = `<div class="card">${`<div class="ag-row">
+      <div class="skeleton" style="width:48px"></div>
+      <div class="skeleton" style="flex:1;max-width:60%"></div>
+    </div>`.repeat(5)}</div>`;
     try {
       const [evs, procs] = await Promise.all([
         listEvents(min, max),
@@ -125,10 +129,12 @@ export async function render(root, ctx) {
   }
 
   function reconnect() {
-    body.innerHTML = `<div class="empty"><div class="icon">${icon('plug')}</div>
-      <p>Reconecte sua conta Google para liberar a Agenda.</p>
-      <button class="btn btn--primary mt-4" id="ag-reconnect">Conectar Google</button></div>`;
-    body.querySelector('#ag-reconnect').onclick = () => signInWithGoogle().catch((e) => toast(e.message, 'error'));
+    body.innerHTML = emptyBox(icon('plug'), 'Reconecte sua conta Google para liberar a Agenda.',
+      `<button class="btn btn--primary mt-4" id="ag-reconnect">Conectar Google</button>`);
+    body.querySelector('#ag-reconnect').onclick = () => {
+      sessionStorage.setItem('google:reconnecting', '1'); // app.js confirma com toast na volta
+      signInWithGoogle().catch((e) => { sessionStorage.removeItem('google:reconnecting'); toast(e.message, 'error'); });
+    };
   }
 
   // eventos após a busca textual (item 3: busca por título do Google)
@@ -145,7 +151,7 @@ export async function render(root, ctx) {
   function renderList() {
     const evs = visibleEvents();
     if (!evs.length) {
-      body.innerHTML = `<div class="empty"><div class="icon">${icon('calendar')}</div><p>Nenhum agendamento ${state.q ? 'encontrado' : 'nesta semana'}.</p></div>`;
+      body.innerHTML = emptyBox(icon('calendar'), `Nenhum agendamento ${state.q ? 'encontrado' : 'nesta semana'}.`);
       return;
     }
     const byDay = new Map();
@@ -166,9 +172,8 @@ export async function render(root, ctx) {
       .filter((e) => sameDay(evStart(e), state.cursor))
       .sort((a, b) => evStart(a) - evStart(b));
     if (!evs.length) {
-      body.innerHTML = `<div class="empty"><div class="icon">${icon('calendar')}</div>
-        <p>Nenhum agendamento neste dia.</p>
-        <button class="btn btn--secondary mt-4" id="ag-day-new">Agendar neste dia</button></div>`;
+      body.innerHTML = emptyBox(icon('calendar'), 'Nenhum agendamento neste dia.',
+        `<button class="btn btn--secondary mt-4" id="ag-day-new">Agendar neste dia</button>`);
       body.querySelector('#ag-day-new').onclick = () => openForm(isoDay(state.cursor));
       return;
     }
@@ -223,8 +228,13 @@ export async function render(root, ctx) {
   }
 
   // ----------------------------------------------------------- cancelar ------
-  async function cancelEvent(evId) {
-    if (!confirm('Cancelar este agendamento? O evento sai do Google Calendar.')) return;
+  const cancelEvent = guard(async (evId) => {
+    const ok = await confirmDialog({
+      title: 'Cancelar agendamento',
+      message: 'O evento sai do Google Calendar e o procedimento é marcado como cancelado.',
+      confirmLabel: 'Cancelar agendamento', cancelLabel: 'Voltar', danger: true,
+    });
+    if (!ok) return;
     const proc = state.procByEvent.get(evId);
     try {
       await deleteEvent(evId);
@@ -232,14 +242,14 @@ export async function render(root, ctx) {
       toast('Agendamento cancelado.');
       load();
     } catch (err) { toast(err.message, 'error'); }
-  }
+  });
 
-  async function completeProc(procId) {
+  const completeProc = guard(async (procId) => {
     const { error } = await supabase.rpc('complete_procedure', { p_procedure_id: procId });
     if (error) { console.error(error); return toast('Erro ao concluir.', 'error'); }
     toast('Procedimento concluído — estoque e caixa atualizados.');
     load();
-  }
+  });
 
   // ------------------------------------------------------------- detalhe -----
   function openDetail(ev) {
@@ -429,12 +439,14 @@ export async function render(root, ctx) {
     };
 
     // salvar rascunho (item 17) — não cria evento no Google nem procedimento
-    if (!isEdit) foot.querySelector('[data-draft]').onclick = async () => {
+    if (!isEdit) foot.querySelector('[data-draft]').onclick = async (e) => {
+      busy(e.target, true);
       const payload = collect();
       const row = { user_id: ctx.session.user.id, payload };
       const res = draft?.id
         ? await supabase.from('agenda_drafts').update({ payload }).eq('id', draft.id)
         : await supabase.from('agenda_drafts').insert(row);
+      busy(e.target, false);
       if (res.error) { console.error(res.error); return toast('Erro ao salvar rascunho.', 'error'); }
       toast('Rascunho salvo.'); m.close();
     };
@@ -466,8 +478,15 @@ export async function render(root, ctx) {
             p_materials: d.materials.length ? d.materials : null,
             p_payment_method: d.method, p_installments: d.installments,
           });
-          if (error) { console.error(error); toast('Evento criado, mas falhou ao gravar o procedimento.', 'error'); }
-          else toast('Agendamento criado.');
+          if (error) {
+            // rollback: sem a linha em procedures o evento seria um órfão no
+            // Google (apareceria no calendário mas não no app) — desfaz.
+            console.error(error);
+            await deleteEvent(ev.id).catch((e) => console.error('rollback falhou', e));
+            toast('Não foi possível agendar — nada foi criado. Tente de novo.', 'error');
+            return;
+          }
+          toast('Agendamento criado.');
           if (draft?.id) await supabase.from('agenda_drafts').delete().eq('id', draft.id);
         }
         m.close();
@@ -498,7 +517,7 @@ export async function render(root, ctx) {
           <button class="btn btn--secondary btn--sm" data-open="${d.id}">Abrir</button>
           <button class="btn btn--icon btn--ghost" data-rm="${d.id}" title="Excluir">${icon('trash')}</button>
         </div>`).join('')
-      : `<div class="empty"><div class="icon">${icon('clipboard')}</div><p>Nenhum rascunho.</p></div>`;
+      : emptyBox(icon('clipboard'), 'Nenhum rascunho.');
     const foot = document.createElement('div');
     foot.innerHTML = `<button class="btn btn--primary" type="button" data-x>Fechar</button>`;
     const m = openModal({ title: 'Rascunhos de agendamento', body: bodyEl, footer: foot });
@@ -506,10 +525,16 @@ export async function render(root, ctx) {
     bodyEl.querySelectorAll('[data-open]').forEach((b) => b.onclick = () => {
       const d = drafts.find((x) => x.id === b.dataset.open); m.close(); openForm(null, null, d);
     });
-    bodyEl.querySelectorAll('[data-rm]').forEach((b) => b.onclick = async () => {
-      await supabase.from('agenda_drafts').delete().eq('id', b.dataset.rm);
+    bodyEl.querySelectorAll('[data-rm]').forEach((b) => b.onclick = guard(async () => {
+      const ok = await confirmDialog({
+        title: 'Excluir rascunho', message: 'Este rascunho será apagado. Essa ação não tem desfazer.',
+        confirmLabel: 'Excluir', danger: true,
+      });
+      if (!ok) return;
+      const { error } = await supabase.from('agenda_drafts').delete().eq('id', b.dataset.rm);
+      if (error) { console.error(error); return toast('Erro ao excluir o rascunho.', 'error'); }
       b.closest('[data-id]').remove(); toast('Rascunho excluído.');
-    });
+    }));
   }
 
   await load();

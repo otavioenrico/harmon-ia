@@ -20,9 +20,24 @@ export async function render(root, ctx) {
   const month = new Date().toISOString().slice(0, 7);   // YYYY-MM
   const today = new Date().toLocaleDateString('en-CA');
 
+  // skeleton com a forma do layout final (hero + 3 minis + painel + aside):
+  // a troca por conteúdo real não "pula" — cada bloco já ocupa o próprio lugar
+  const skMini = `<div class="mini">
+    <div class="skeleton" style="width:40px;height:40px;border-radius:50%"></div>
+    <div class="skeleton" style="width:70%;margin-top:12px"></div>
+    <div class="skeleton" style="width:45%;margin-top:8px;height:18px"></div>
+  </div>`;
+  const skPanel = (rows) => `<div class="panel">
+    <div class="skeleton" style="width:45%"></div>
+    ${`<div class="skeleton" style="margin-top:16px"></div>`.repeat(rows)}
+  </div>`;
   root.innerHTML = `<div class="home-grid">
-    <div class="home-main"><div class="skeleton" style="height:140px;border-radius:20px"></div></div>
-    <div class="home-aside"></div>
+    <div class="home-main">
+      <div class="skeleton" style="height:148px;border-radius:var(--radius-xl)"></div>
+      <div class="mini-cards">${skMini.repeat(3)}</div>
+      ${skPanel(4)}
+    </div>
+    <div class="home-aside">${skPanel(3)}${skPanel(3)}</div>
   </div>`;
   const main = root.querySelector('.home-main');
   const aside = root.querySelector('.home-aside');

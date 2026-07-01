@@ -100,5 +100,20 @@
   --sidebar-w-collapsed: 64px;
   --header-h: 68px;
 
+  /* -------- motion -------- */
+  /* hovers/estados: ease genérico e rápido; entradas de overlay: ease-out com
+     desaceleração natural; saídas sempre mais curtas que entradas */
   --transition: 160ms ease;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 160ms;
+  --dur-base: 200ms;
+  --dur-exit: 150ms;
+
+  /* -------- acessibilidade / overlays -------- */
+  /* anel de foco: acompanha a cor de destaque (accent.css redefine mauve-700);
+     todos os tons 700 têm ≥3:1 sobre branco (mínimo WCAG p/ indicador de UI) */
+  --focus-ring: 2px solid var(--color-mauve-700);
+  --overlay-bg: rgba(26, 26, 24, 0.45);
+  --switch-thumb: var(--color-white);
+  --hero-text: var(--color-white);
 }

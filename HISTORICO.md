@@ -393,3 +393,59 @@ Esta etapa revisou os arquivos prontos e completou o que faltava.
   (config de máquina, descartável e já no `.gitignore`).
 - Resolvido com **`git push --force-with-lease`**: a Etapa 6 virou o estado
   canônico no GitHub (`bb57c34` → `cfad5a0`). Redeploy na Vercel disparado pelo push.
+
+## Rodada 3 — Acessibilidade, robustez de UX e motion polish (2026-07-01)
+
+Auditoria dupla (design system via web-design-guidelines + camada JS/UX) seguida
+de execução em 3 fases. Plano em `~/.claude/plans/elegant-toasting-sprout.md`;
+galeria de verificação em `improvements/preview-rodada3.html` (sem Supabase).
+
+### Fase 1 — Fundação de acessibilidade
+- **`:focus-visible` global** (não havia NENHUM no app): anel `--focus-ring`
+  (mauve-700, ≥3:1 em todas as 5 paletas de acento; mauve-300 no escuro), regra
+  única em `layout.css`; caso especial p/ o switch (`input:focus-visible + .track`).
+- **`prefers-reduced-motion`**: bloco global em `components.css` zera animações/
+  transições (shimmer do skeleton vira estático).
+- Tokens novos: `--overlay-bg` (modal-overlay + scrim), `--switch-thumb`,
+  `--hero-text`; dark mode do hero desce o gradiente p/ 500→700 (texto claro legível).
+- Shell: `<meta color-scheme>`, `<main>`, `<h1>` no header, `aria-label` no nav,
+  `aria-label`+`aria-expanded` (sincronizado no JS) no botão da sidebar.
+- Touch targets: `.btn--icon` 34→40px; `.modal__close` com área de 40px.
+
+### Fase 2 — Robustez de UX
+- **`confirmDialog()`** em utils.js (Promise<boolean>, foco no botão seguro,
+  perigo em `.btn--danger`) — zero `confirm()` nativo restante. Usado em:
+  cancelar agendamento, dar baixa, reconectar Google, excluir rascunho (que
+  antes excluía SEM confirmação).
+- **`guard(fn)`**: proteção de duplo clique nas ações diretas (cancelar,
+  concluir, dar baixa, excluir rascunho).
+- **Focus trap + restauração** em modal e drawer; ESC/keydown no overlay (não no
+  document) → modais empilhados não fecham juntos; foco inicial no 1º campo do corpo.
+- **Rollbacks**: agendar desfaz o evento Google se `schedule_procedure` falhar
+  (sem órfão no calendário); estoque remove uploads se o insert falhar; tema/
+  acento revertem o DOM se o upsert falhar.
+- Reconexão Google com feedback: flag `google:reconnecting` em sessionStorage →
+  toast de sucesso/aviso no boot do app.js.
+- `emptyBox` promovido a utils.js (era duplicado em historico/clientes e
+  improvisado inline); `scrollIntoView` no item ativo do autocomplete.
+
+### Fase 3 — Motion polish
+- Tokens: `--ease-out` (cubic-bezier .16,1,.3,1), `--dur-fast/base/exit`
+  (160/200/150ms — saída sempre mais curta que entrada).
+- **Saídas animadas** de modal/drawer/toast: keyframes só com `to` (partem do
+  estado atual = interruptível; `reverse` inverteria a curva → ease-in, vetado),
+  nó removido no `animationend` (fallback timeout + curto-circuito reduced-motion).
+- Skeletons fiéis ao layout: Home (hero+minis+painéis fantasma) e Agenda (linhas
+  de evento) — sem "pulo" na troca por conteúdo.
+- Transição de rota: fade+rise 160ms/6px (ação frequente → discreta).
+- Auto-review com o critério da skill review-animations pegou 2 achados
+  (easing invertido na saída; rota longa demais) — corrigidos.
+
+### Verificação (agent-browser, sem dados reais)
+- Galeria + login: foco visível ✓, trap/ESC/restauração ✓, confirmDialog ✓,
+  dark mode (hero legível) ✓, reduced-motion emulado (durações → 0.01ms) ✓.
+- Screenshots: `improvements/rodada3-claro.png` / `rodada3-escuro.png`.
+
+### Fora do escopo (registrado p/ depois)
+Persistência de filtros, histórico de busca no autocomplete, preview de anexos,
+UI otimista, RPC atômica p/ movimentação de estoque (comentário `ponytail:` mantido).

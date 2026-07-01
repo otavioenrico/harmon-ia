@@ -7,7 +7,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, todayISO, daysSince, openModal, toast, busy, esc,
-  debounce, waLink, icon, clientAutocomplete } from './utils.js';
+  debounce, waLink, icon, clientAutocomplete, emptyBox } from './utils.js';
 
 const STATUS_BADGE = {
   scheduled: '<span class="badge badge--warning">agendado</span>',
@@ -225,8 +225,6 @@ const table = (cols, bodyHTML, numFrom = 3) => `
       `<th${i >= numFrom ? ' class="num"' : ''}>${esc(c)}</th>`).join('')}</tr></thead>
     <tbody>${bodyHTML}</tbody>
   </table>`;
-const emptyBox = (iconHTML, msg) =>
-  `<div class="empty"><div class="icon">${iconHTML}</div><p>${esc(msg)}</p></div>`;
 
 // --------------------------------------------------------------- formulário --
 function openForm(ctx, state, clientId, onSaved) {

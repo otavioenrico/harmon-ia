@@ -7,7 +7,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDateTime, openModal, openDrawer, toast, busy, debounce,
-  esc, skeletonRows, h, toCSV, download, icon } from './utils.js';
+  esc, skeletonRows, h, toCSV, download, icon, emptyBox } from './utils.js';
 
 const BUCKET = 'uploads';
 const isLow = (it) => it.active !== false && Number(it.quantity || 0) <= Number(it.min_quantity || 0);
@@ -89,8 +89,8 @@ export async function render(root, ctx) {
     else if (state.filter === 'inactive') rows = rows.filter((i) => i.active === false);
     if (state.q) rows = rows.filter((i) => (i.name || '').toLowerCase().includes(state.q));
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="icon">${icon('box')}</div>
-        <p>Nenhum item ${state.q || state.filter !== 'all' ? 'encontrado' : 'cadastrado ainda'}.</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5">${emptyBox(icon('box'),
+        `Nenhum item ${state.q || state.filter !== 'all' ? 'encontrado' : 'cadastrado ainda'}.`)}</td></tr>`;
       return;
     }
     tbody.innerHTML = rows.map(row).join('');
@@ -239,8 +239,8 @@ async function loadHistory(itemId, pane) {
   const { data, error } = await supabase.from('stock_transactions')
     .select('created_at, type, quantity, reason, notes')
     .eq('stock_item_id', itemId).order('created_at', { ascending: false }).limit(100);
-  if (error) { console.error(error); pane.innerHTML = `<div class="empty"><p class="neg">Erro ao carregar o histórico.</p></div>`; return; }
-  if (!data.length) { pane.innerHTML = `<div class="empty"><p>Nenhuma movimentação ainda.</p></div>`; return; }
+  if (error) { console.error(error); pane.innerHTML = emptyBox(icon('warning'), 'Erro ao carregar o histórico.'); return; }
+  if (!data.length) { pane.innerHTML = emptyBox('', 'Nenhuma movimentação ainda.'); return; }
   pane.innerHTML = `
     <table class="data">
       <thead><tr><th>Data</th><th>Tipo</th><th class="num">Qtd.</th><th>Obs.</th></tr></thead>
@@ -372,6 +372,7 @@ function openForm(ctx, it, onSaved) {
 
     const submit = foot.querySelector('[type="submit"]');
     busy(submit, true);
+    const uploaded = []; // paths enviados nesta submissão — removidos se o save falhar
     try {
       const uid = ctx.session.user.id;
       const photo = form.querySelector('[name="photo"]').files[0];
@@ -387,8 +388,8 @@ function openForm(ctx, it, onSaved) {
         active: fd.get('active') === 'on',
       };
       if (!editing) payload.quantity = Number(fd.get('quantity') || 0); // ponytail: estoque inicial direto na coluna; histórico começa no 1º movimento.
-      if (photo) payload.photo_url = await uploadFile(uid, photo);
-      if (nf) payload.nf_attachment_url = await uploadFile(uid, nf);
+      if (photo) { payload.photo_url = await uploadFile(uid, photo); uploaded.push(payload.photo_url); }
+      if (nf) { payload.nf_attachment_url = await uploadFile(uid, nf); uploaded.push(payload.nf_attachment_url); }
 
       const res = editing
         ? await supabase.from('stock_items').update(payload).eq('id', it.id)
@@ -398,6 +399,8 @@ function openForm(ctx, it, onSaved) {
       m.markClean(); m.close(true); onSaved();
     } catch (err) {
       console.error(err);
+      // rollback: arquivos enviados sem item salvo virariam órfãos no bucket
+      if (uploaded.length) supabase.storage.from(BUCKET).remove(uploaded).catch(() => {});
       toast('Erro ao salvar o item.', 'error');
     } finally {
       busy(submit, false);
@@ -409,8 +412,7 @@ function openForm(ctx, it, onSaved) {
 function openShoppingList(lowItems) {
   const body = h(`<div></div>`);
   if (!lowItems.length) {
-    body.innerHTML = `<div class="empty"><div class="icon">${icon('check')}</div>
-      <p>Nenhum item abaixo do mínimo. Estoque em dia!</p></div>`;
+    body.innerHTML = emptyBox(icon('check'), 'Nenhum item abaixo do mínimo. Estoque em dia!');
   } else {
     body.innerHTML = `
       <table class="data">

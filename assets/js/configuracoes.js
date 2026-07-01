@@ -4,7 +4,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { profile, signOut, signInWithGoogle } from './auth.js';
-import { toast, esc, initials, download, todayISO, icon } from './utils.js';
+import { toast, esc, initials, download, todayISO, icon, confirmDialog } from './utils.js';
 
 const TABLES = ['user_settings', 'services', 'clients', 'stock_items',
   'stock_transactions', 'procedures', 'procedure_materials', 'financial_entries'];
@@ -72,32 +72,57 @@ export async function render(root, ctx) {
   root.querySelector('#logout').onclick = () => signOut();
 
   root.querySelector('#reconnect').onclick = async (e) => {
-    if (!confirm('Reconectar sua conta Google? Você será levado ao consentimento do Google.')) return;
+    const ok = await confirmDialog({
+      title: 'Reconectar Google',
+      message: 'Você será levado ao consentimento do Google e volta para o app em seguida.',
+      confirmLabel: 'Reconectar',
+    });
+    if (!ok) return;
     e.target.disabled = true; e.target.textContent = 'Redirecionando…';
+    sessionStorage.setItem('google:reconnecting', '1'); // app.js confirma com toast na volta
     try { await signInWithGoogle(); }
-    catch (err) { toast(err.message, 'error'); e.target.disabled = false; e.target.textContent = 'Reconectar Google'; }
+    catch (err) {
+      sessionStorage.removeItem('google:reconnecting');
+      toast(err.message, 'error');
+      e.target.disabled = false; e.target.textContent = 'Reconectar Google';
+    }
   };
 
   root.querySelector('#theme').onchange = async (e) => {
+    const prev = ctx.settings.theme || 'light';
     const theme = e.target.checked ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : '';
     ctx.settings.theme = theme;
     const { error } = await supabase.from('user_settings')
       .upsert({ user_id: ctx.session.user.id, theme }, { onConflict: 'user_id' });
-    if (error) { console.error(error); toast('Não foi possível salvar o tema.', 'error'); }
-    else toast('Tema atualizado.');
+    if (error) {
+      // rollback: não deixa o visual dizer "salvo" quando não salvou
+      console.error(error);
+      document.documentElement.dataset.theme = prev === 'dark' ? 'dark' : '';
+      ctx.settings.theme = prev;
+      e.target.checked = prev === 'dark';
+      toast('Não foi possível salvar o tema.', 'error');
+    } else toast('Tema atualizado.');
   };
 
   root.querySelector('#accent').onclick = async (e) => {
     const s = e.target.closest('[data-a]'); if (!s) return;
+    const prev = ctx.settings.accent || 'rose';
     const accent = s.dataset.a;
+    const mark = (id) => root.querySelectorAll('#accent .swatch')
+      .forEach((x) => x.classList.toggle('selected', x.dataset.a === id));
     document.documentElement.dataset.accent = accent;
     ctx.settings.accent = accent;
-    root.querySelectorAll('#accent .swatch').forEach((x) => x.classList.toggle('selected', x === s));
+    mark(accent);
     const { error } = await supabase.from('user_settings')
       .upsert({ user_id: ctx.session.user.id, accent }, { onConflict: 'user_id' });
-    if (error) { console.error(error); toast('Não foi possível salvar a cor.', 'error'); }
-    else toast('Cor de destaque atualizada.');
+    if (error) {
+      console.error(error);
+      document.documentElement.dataset.accent = prev;
+      ctx.settings.accent = prev;
+      mark(prev);
+      toast('Não foi possível salvar a cor.', 'error');
+    } else toast('Cor de destaque atualizada.');
   };
 
   root.querySelector('#backup').onclick = async (e) => {

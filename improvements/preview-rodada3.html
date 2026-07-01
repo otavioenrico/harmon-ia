@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Harmon IA — galeria de componentes (Rodada 3)</title>
+  <link rel="stylesheet" href="../assets/css/tokens.css" />
+  <link rel="stylesheet" href="../assets/css/accent.css" />
+  <link rel="stylesheet" href="../assets/css/layout.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <link rel="stylesheet" href="../assets/css/theme.css" />
+</head>
+<body data-accent="rose">
+  <main class="module" style="max-width:960px;margin:0 auto">
+    <h1>Galeria — Rodada 3</h1>
+    <p class="muted">Página de verificação visual sem Supabase. Não usa dados reais.</p>
+
+    <div class="module__toolbar">
+      <button class="btn btn--primary" id="open-modal">Abrir modal</button>
+      <button class="btn btn--secondary" id="open-drawer">Abrir drawer</button>
+      <button class="btn btn--danger" id="open-confirm">Confirmar (perigo)</button>
+      <button class="btn btn--ghost" id="fire-toast">Toast</button>
+      <button class="btn btn--icon btn--ghost" id="icon-btn" aria-label="Botão de ícone">×</button>
+      <label class="flex" style="cursor:pointer">
+        <span class="switch"><input type="checkbox" id="dark"><span class="track"></span></span>
+        Tema escuro
+      </label>
+    </div>
+
+    <div class="hero mt-4">
+      <div>
+        <div class="hero__label">Boa tarde</div>
+        <div class="hero__title">Olá, Ana ✦</div>
+        <div class="hero__sub">2 agendamentos pela frente.</div>
+      </div>
+      <button class="btn btn--primary btn--pill">+ Agendar</button>
+    </div>
+
+    <h2 class="mt-4">Skeleton</h2>
+    <div class="card"><div class="ag-row">
+      <div class="skeleton" style="width:48px"></div>
+      <div class="skeleton" style="flex:1;max-width:60%"></div>
+    </div><div class="ag-row">
+      <div class="skeleton" style="width:48px"></div>
+      <div class="skeleton" style="flex:1;max-width:60%"></div>
+    </div></div>
+
+    <h2 class="mt-4">Inputs</h2>
+    <div class="field-row">
+      <div class="field"><label>Nome</label><input class="input" placeholder="foco visível?"></div>
+      <div class="field"><label>Data</label><input class="input" type="date"></div>
+    </div>
+    <div id="empty-slot"></div>
+  </main>
+
+  <script type="module">
+    import { openModal, openDrawer, confirmDialog, toast, h, emptyBox, icon } from '../assets/js/utils.js';
+
+    document.getElementById('open-modal').onclick = () => {
+      const foot = h(`<div style="display:contents">
+        <button class="btn btn--ghost" data-x>Cancelar</button>
+        <button class="btn btn--primary">Salvar</button></div>`);
+      const m = openModal({ title: 'Modal de teste', footer: foot, body:
+        `<div class="field"><label>Campo 1</label><input class="input"></div>
+         <div class="field"><label>Campo 2</label><input class="input"></div>` });
+      foot.querySelector('[data-x]').onclick = () => m.close();
+    };
+    document.getElementById('open-drawer').onclick = () => {
+      const b = h(`<div style="padding:24px"><h3>Drawer de teste</h3>
+        <button class="btn btn--secondary mt-4">Um botão</button></div>`);
+      openDrawer(b);
+    };
+    document.getElementById('open-confirm').onclick = async () => {
+      const ok = await confirmDialog({
+        title: 'Cancelar agendamento',
+        message: 'O evento sai do Google Calendar e o procedimento é marcado como cancelado.',
+        confirmLabel: 'Cancelar agendamento', danger: true,
+      });
+      toast(ok ? 'Confirmou' : 'Voltou', ok ? 'warning' : 'success');
+    };
+    document.getElementById('fire-toast').onclick = () => toast('Agendamento criado.');
+    document.getElementById('dark').onchange = (e) =>
+      document.documentElement.dataset.theme = e.target.checked ? 'dark' : '';
+    document.getElementById('empty-slot').innerHTML =
+      `<h2 class="mt-4">Empty state</h2><div class="card">${emptyBox(icon('calendar'), 'Nenhum agendamento nesta semana.')}</div>`;
+  </script>
+</body>
+</html>

@@ -6,7 +6,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, maskPhone, maskCPF, bindMask, openModal, openDrawer,
-  toast, busy, debounce, esc, initials, skeletonRows, h, waLink, icon } from './utils.js';
+  toast, busy, debounce, esc, initials, skeletonRows, h, waLink, icon, emptyBox } from './utils.js';
 
 export async function render(root, ctx) {
   const state = { all: [], q: '', sort: 'name' };
@@ -73,8 +73,8 @@ export async function render(root, ctx) {
       `${c.name} ${c.phone || ''} ${c.email || ''}`.toLowerCase().includes(state.q));
     rows = [...rows].sort(SORTERS[state.sort]);
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="icon">${icon('users')}</div>
-        <p>Nenhuma cliente ${state.q ? 'encontrada' : 'cadastrada ainda'}.</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6">${emptyBox(icon('users'),
+        `Nenhuma cliente ${state.q ? 'encontrada' : 'cadastrada ainda'}.`)}</td></tr>`;
       return;
     }
     tbody.innerHTML = rows.map(row).join('');
@@ -181,7 +181,7 @@ async function loadProcedures(clientId, pane) {
     .select('date, price_charged, services(name), procedure_materials(quantity_used, unit_cost_at_time)')
     .eq('client_id', clientId).order('date', { ascending: false });
   if (error) { console.error(error); pane.innerHTML = errBox('Erro ao carregar procedimentos.'); return; }
-  if (!data.length) { pane.innerHTML = emptyBox('Nenhum procedimento ainda.'); return; }
+  if (!data.length) { pane.innerHTML = emptyBox('', 'Nenhum procedimento ainda.'); return; }
   pane.innerHTML = `
     <table class="data">
       <thead><tr><th>Data</th><th>Serviço</th><th class="num">Valor</th><th class="num">Lucro</th></tr></thead>
@@ -204,7 +204,7 @@ async function loadFinancial(clientId, pane) {
     .select('due_date, amount, type, paid, description')
     .eq('client_id', clientId).order('due_date', { ascending: false });
   if (error) { console.error(error); pane.innerHTML = errBox('Erro ao carregar financeiro.'); return; }
-  if (!data.length) { pane.innerHTML = emptyBox('Nenhum lançamento ainda.'); return; }
+  if (!data.length) { pane.innerHTML = emptyBox('', 'Nenhum lançamento ainda.'); return; }
   pane.innerHTML = `
     <table class="data">
       <thead><tr><th>Venc.</th><th>Descrição</th><th class="num">Valor</th><th>Status</th></tr></thead>
@@ -217,7 +217,6 @@ async function loadFinancial(clientId, pane) {
     </table>`;
 }
 
-const emptyBox = (msg) => `<div class="empty"><p>${esc(msg)}</p></div>`;
 const errBox = (msg) => `<div class="empty"><p class="neg">${esc(msg)}</p></div>`;
 
 // --------------------------------------------------------------- formulário --

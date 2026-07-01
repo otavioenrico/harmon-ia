@@ -6,8 +6,8 @@
 // RLS isola por usuário (user_id nos inserts).
 // ============================================================================
 import { supabase } from './supabase.js';
-import { money, fmtDate, todayISO, openModal, toast, busy, esc, parseMoney,
-  toCSV, download, icon } from './utils.js';
+import { money, fmtDate, todayISO, openModal, confirmDialog, guard, toast, busy, esc, parseMoney,
+  toCSV, download, icon, emptyBox } from './utils.js';
 
 const finIcon = icon('wallet');
 
@@ -102,7 +102,7 @@ export async function render(root, ctx) {
 
   function paintTable(rows) {
     if (!rows.length) {
-      pane.innerHTML = `<div class="empty"><div class="icon">${finIcon}</div><p>Nenhum lançamento no filtro.</p></div>`;
+      pane.innerHTML = emptyBox(finIcon, 'Nenhum lançamento no filtro.');
       return;
     }
     pane.innerHTML = `
@@ -153,7 +153,7 @@ export async function render(root, ctx) {
       (byMonth[m] = byMonth[m] || { income: 0, expense: 0 })[e.type] += Number(e.amount) || 0;
     }
     const months = Object.keys(byMonth).sort().reverse().slice(0, 12);
-    if (!months.length) { pane.innerHTML = `<div class="empty"><div class="icon">${finIcon}</div><p>Sem dados no período.</p></div>`; return; }
+    if (!months.length) { pane.innerHTML = emptyBox(finIcon, 'Sem dados no período.'); return; }
     const max = Math.max(...months.map((m) => Math.max(byMonth[m].income, byMonth[m].expense)), 1);
     const bar = (v, cls) => `<div class="bar"><span class="bar__fill ${cls}" style="width:${(v / max * 100).toFixed(1)}%"></span><span class="bar__val">${money(v)}</span></div>`;
     pane.innerHTML = `<div class="panel"><div class="panel__title">Receitas × Despesas por mês</div>
@@ -189,14 +189,19 @@ export async function render(root, ctx) {
 }
 
 // dá baixa numa pendência: paid=true, paid_at=hoje
-async function settle(id, onSaved) {
-  if (!confirm('Confirmar o recebimento/pagamento deste lançamento?')) return;
+const settle = guard(async (id, onSaved) => {
+  const ok = await confirmDialog({
+    title: 'Dar baixa',
+    message: 'Confirmar o recebimento/pagamento deste lançamento? Ele passa a contar no saldo de hoje.',
+    confirmLabel: 'Confirmar baixa',
+  });
+  if (!ok) return;
   const { error } = await supabase.from('financial_entries')
     .update({ paid: true, paid_at: todayISO() }).eq('id', id);
   if (error) { console.error(error); return toast('Erro ao dar baixa.', 'error'); }
   toast('Baixa registrada.');
   onSaved();
-}
+});
 
 function exportCSV(rows) {
   if (!rows.length) return toast('Nada para exportar no filtro.', 'warning');

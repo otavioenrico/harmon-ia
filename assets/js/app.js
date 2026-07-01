@@ -30,6 +30,13 @@ const moduleCache = {};
   session = await requireSession();
   if (!session) return; // requireSession já redirecionou
 
+  // volta do consentimento Google (Agenda/Configurações): confirma o resultado
+  if (sessionStorage.getItem('google:reconnecting')) {
+    sessionStorage.removeItem('google:reconnecting');
+    if (session.provider_token) toast('Google reconectado — agenda liberada.');
+    else toast('A reconexão com o Google não foi concluída.', 'warning');
+  }
+
   settings = await loadSettings();
   applyTheme(settings?.theme || 'light');
   applyAccent(settings?.accent || 'rose');
@@ -89,14 +96,18 @@ function wireChrome() {
   const shell = $('shell');
   const mobile = window.matchMedia('(max-width: 900px)');
   let scrim = null;
-  const closeDrawer = () => { shell.classList.remove('sidebar-open'); scrim?.remove(); scrim = null; };
+  const syncAria = () => collapse.setAttribute('aria-expanded',
+    String(mobile.matches ? shell.classList.contains('sidebar-open')
+                          : !shell.classList.contains('collapsed')));
+  const closeDrawer = () => { shell.classList.remove('sidebar-open'); scrim?.remove(); scrim = null; syncAria(); };
   collapse.addEventListener('click', () => {
-    if (!mobile.matches) return shell.classList.toggle('collapsed');
+    if (!mobile.matches) { shell.classList.toggle('collapsed'); return syncAria(); }
     if (shell.classList.toggle('sidebar-open')) {
       scrim = document.createElement('div');
       scrim.className = 'scrim';
       scrim.addEventListener('click', closeDrawer);
       document.body.appendChild(scrim);
+      syncAria();
     } else closeDrawer();
   });
   navEl.addEventListener('click', () => { if (mobile.matches) closeDrawer(); });
@@ -117,6 +128,12 @@ async function route() {
   titleEl.textContent = def.title;
   actionsEl.innerHTML = '';
   rootEl.innerHTML = '';
+
+  // transição de rota: re-dispara o fade+rise do conteúdo (uma vez por navegação
+  // — o skeleton entra animado e a troca por conteúdo real não re-anima)
+  rootEl.classList.remove('module-enter');
+  void rootEl.offsetWidth;
+  rootEl.classList.add('module-enter');
 
   const ctx = { session, settings, actions: actionsEl, navigate, setBadge };
   try {

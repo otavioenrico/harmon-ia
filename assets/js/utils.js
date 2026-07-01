@@ -103,6 +103,20 @@ export const h = (html) => {
   return t.content.firstElementChild;
 };
 
+// ---------------------------------------------------------------- motion ----
+// saída animada: adiciona .closing (keyframes reversos no CSS) e chama done()
+// no fim da animação. Curto-circuito com prefers-reduced-motion + fallback de
+// timeout caso animationend nunca dispare.
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)');
+function animateOut(el, done) {
+  if (REDUCED.matches) return done();
+  let called = false;
+  const fin = () => { if (!called) { called = true; done(); } };
+  el.classList.add('closing');
+  el.addEventListener('animationend', fin, { once: true });
+  setTimeout(fin, 250);
+}
+
 // ----------------------------------------------------------------- toast ----
 export function toast(message, type = 'success') {
   let box = document.querySelector('.toasts');
@@ -110,16 +124,33 @@ export function toast(message, type = 'success') {
   while (box.children.length >= 3) box.firstElementChild.remove();
   const t = h(`<div class="toast toast--${type}">${esc(message)}</div>`);
   box.appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 200); }, 4000);
+  setTimeout(() => animateOut(t, () => t.remove()), 4000);
 }
 
 // ----------------------------------------------------------------- modal ----
-// openModal({title, body(HTMLElement|string), footer, wide}) -> {overlay, close, body}
-// ESC e clique fora fecham; confirma se algum campo foi alterado.
-export function openModal({ title = '', body = '', footer = '', wide = false } = {}) {
+// foco: trap de Tab dentro do container + restauração ao fechar (a11y)
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function wireFocus(container, preferred) {
+  const prev = document.activeElement;
+  (preferred?.querySelector(FOCUSABLE) || container.querySelector(FOCUSABLE) || container).focus();
+  const onTab = (e) => {
+    if (e.key !== 'Tab') return;
+    const els = [...container.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+  };
+  return { onTab, restore: () => { if (prev?.isConnected) prev.focus(); } };
+}
+
+// openModal({title, body(HTMLElement|string), footer, wide, onClose}) ->
+// {overlay, close, body}. ESC e clique fora fecham; Tab fica preso no modal e
+// o foco volta ao elemento de origem ao fechar.
+export function openModal({ title = '', body = '', footer = '', wide = false, onClose } = {}) {
   const overlay = h(`<div class="modal-overlay"></div>`);
   const modal = h(`
-    <div class="modal ${wide ? 'modal--wide' : ''}">
+    <div class="modal ${wide ? 'modal--wide' : ''}" role="dialog" aria-modal="true" tabindex="-1">
       <div class="modal__head">
         <div class="modal__title">${esc(title)}</div>
         <button class="modal__close" aria-label="Fechar">×</button>
@@ -135,14 +166,19 @@ export function openModal({ title = '', body = '', footer = '', wide = false } =
   }
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+  // foco inicial no corpo (1º campo), senão rodapé/fechar
+  const focus = wireFocus(modal, bodyEl);
 
   // item 16: sem confirmação de "descartar alterações" — fecha direto.
+  let closed = false;
   const close = () => {
-    document.removeEventListener('keydown', onKey);
-    overlay.remove();
+    if (closed) return;
+    closed = true;
+    animateOut(overlay, () => { overlay.remove(); focus.restore(); onClose?.(); });
   };
-  const onKey = (e) => { if (e.key === 'Escape') close(); };
-  document.addEventListener('keydown', onKey);
+  // keydown no overlay (não no document): com o foco preso dentro, só o modal
+  // do topo recebe ESC — modais empilhados (ex.: confirmação) não fecham juntos.
+  overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); else focus.onTab(e); });
   overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(); });
   modal.querySelector('.modal__close').addEventListener('click', () => close());
   return { overlay, modal, body: bodyEl, close, markClean: () => {} };
@@ -150,19 +186,56 @@ export function openModal({ title = '', body = '', footer = '', wide = false } =
 
 // ---------------------------------------------------------------- drawer ----
 // painel lateral reaproveitando .modal-overlay (backdrop) + .drawer. ESC e
-// clique-fora fecham. Recebe o conteúdo (HTMLElement) e devolve { close }.
+// clique-fora fecham; mesmo trap/restauração de foco do modal.
 export function openDrawer(bodyEl) {
   const overlay = h(`<div class="modal-overlay"></div>`);
-  const aside = h(`<aside class="drawer"></aside>`);
+  const aside = h(`<aside class="drawer" role="dialog" aria-modal="true" tabindex="-1"></aside>`);
   aside.appendChild(bodyEl);
   overlay.appendChild(aside);
   document.body.appendChild(overlay);
-  const close = () => { document.removeEventListener('keydown', onKey); overlay.remove(); };
-  const onKey = (e) => { if (e.key === 'Escape') close(); };
-  document.addEventListener('keydown', onKey);
+  const focus = wireFocus(aside);
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    animateOut(overlay, () => { overlay.remove(); focus.restore(); });
+  };
+  overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); else focus.onTab(e); });
   overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(); });
   return { close };
 }
+
+// --------------------------------------------------------- confirmação ------
+// confirmDialog({title, message, confirmLabel, cancelLabel, danger}) ->
+// Promise<boolean>. Substitui o confirm() nativo com a identidade do app.
+// O foco inicial cai no botão seguro ("Voltar") — confirmar exige intenção.
+export function confirmDialog({ title = 'Confirmar', message = '', confirmLabel = 'Confirmar', cancelLabel = 'Voltar', danger = false } = {}) {
+  return new Promise((resolve) => {
+    let answered = false;
+    const answer = (v) => { if (!answered) { answered = true; resolve(v); } };
+    const foot = h(`<div style="display:contents">
+      <button class="btn btn--ghost" data-no>${esc(cancelLabel)}</button>
+      <button class="btn ${danger ? 'btn--danger' : 'btn--primary'}" data-yes>${esc(confirmLabel)}</button>
+    </div>`);
+    const m = openModal({ title, body: `<p style="margin:0">${esc(message)}</p>`, footer: foot, onClose: () => answer(false) });
+    const no = foot.querySelector('[data-no]');
+    no.focus(); // foco no botão seguro — confirmar exige intenção
+    no.onclick = () => m.close();
+    foot.querySelector('[data-yes]').onclick = () => { answer(true); m.close(); };
+  });
+}
+
+// ------------------------------------------------------ guard anti-duplo ----
+// guard(fn) -> versão de fn que ignora chamadas enquanto a anterior não
+// terminar (proteção de duplo clique em ações diretas; forms já usam busy()).
+export const guard = (fn) => {
+  let running = false;
+  return async (...a) => {
+    if (running) return;
+    running = true;
+    try { return await fn(...a); } finally { running = false; }
+  };
+};
 
 // -------------------------------------------------------- autocomplete -----
 // item 15: seleção de cliente por busca (nome ou telefone). Componente único —
@@ -191,10 +264,11 @@ export function clientAutocomplete(clients, selectedId = '') {
   };
   input.addEventListener('focus', render);
   input.addEventListener('input', () => { hidden.value = ''; active = -1; render(); });
+  const scrollActive = () => list.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
   input.addEventListener('keydown', (e) => {
     if (list.hidden) return;
-    if (e.key === 'ArrowDown') { active = Math.min(active + 1, matches.length - 1); render(); e.preventDefault(); }
-    else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
+    if (e.key === 'ArrowDown') { active = Math.min(active + 1, matches.length - 1); render(); scrollActive(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); render(); scrollActive(); e.preventDefault(); }
     else if (e.key === 'Enter' && matches[active]) { pick(matches[active]); list.hidden = true; e.preventDefault(); }
     else if (e.key === 'Escape') { list.hidden = true; }
   });
@@ -211,6 +285,12 @@ export const skeletonRows = (cols, rows = 5) =>
   Array.from({ length: rows }, () =>
     `<tr>${Array.from({ length: cols }, () => '<td><div class="skeleton"></div></td>').join('')}</tr>`
   ).join('');
+
+// ------------------------------------------------------------ estado vazio --
+// componente único de empty state (era duplicado em historico/clientes e
+// improvisado inline nos demais módulos). extraHTML: CTA opcional (botão etc.).
+export const emptyBox = (iconHTML, msg, extraHTML = '') =>
+  `<div class="empty">${iconHTML ? `<div class="icon">${iconHTML}</div>` : ''}<p>${esc(msg)}</p>${extraHTML}</div>`;
 
 // ------------------------------------------------------------- download/CSV -
 export function download(filename, content, mime = 'text/plain') {
