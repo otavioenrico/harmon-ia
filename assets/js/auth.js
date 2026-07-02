@@ -6,6 +6,14 @@ import { supabase } from './supabase.js';
 
 const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar';
 
+// Pré-lançamento: só e-mails aprovados entram no app.
+// TODO: migrar p/ tabela allowlist quando abrir beta.
+const ALLOWLIST = ['otavio.enrico@gmail.com'];
+
+export function isAllowed(email) {
+  return !!email && ALLOWLIST.includes(email.toLowerCase());
+}
+
 // Inicia o OAuth. access_type=offline + prompt=consent são OBRIGATÓRIOS para
 // o Google devolver provider_refresh_token (sem eles, só vem token de ~1h).
 export async function signInWithGoogle() {
@@ -43,7 +51,7 @@ export async function ensureSettings(session) {
 // Usado em app.html: sem sessão -> volta ao login.
 export async function requireSession() {
   const session = await getSession();
-  if (!session) { location.replace('/index.html'); return null; }
+  if (!session) { location.replace('/entrar.html'); return null; }
   return session;
 }
 
@@ -58,5 +66,5 @@ export function profile(session) {
 
 export async function signOut() {
   await supabase.auth.signOut();
-  location.replace('/index.html');
+  location.replace('/');
 }

@@ -928,3 +928,121 @@ neutro, imagem + marca d'água legível, coluna direita some ≤820px.
 - `improvements/preview-rodada8.html` é só uma galeria de verificação (como a
   da Rodada 3); pode ficar no repo como referência ou ser removida depois.
 - Verificação visual (mobile 390×844 + regressão desktop) em produção.
+
+## Etapa 7 — Landing (site comercial, pré-lançamento) (2026-07-02)
+
+### Contexto
+Spec em `PLANO-LANDING.md` (fonte de verdade da etapa). Objetivo: transformar
+o app (hoje só login → app) num site comercial de 3 páginas em modo
+pré-lançamento, sem quebrar o auth existente. `index.html` (login) vira a
+home pública; login migra pra `entrar.html`.
+
+### Feito
+1. **Remanejo de rotas (§3):** `index.html` → `entrar.html` (login, conteúdo
+   intacto); novo `index.html` = home. `auth.js`: `requireSession()` e
+   `signOut()` passam a apontar pra `/entrar.html` e `/` respectivamente (não
+   mais `/index.html`). `vercel.json`: rewrite `/auth/callback` →
+   `/entrar.html`. **Decisão:** `redirectTo` do OAuth **não mudou** (continua
+   `${location.origin}/`) pra não exigir reconfigurar Redirect URLs no painel
+   do Supabase — em vez disso, o novo `index.html` tem um shim de 1 linha que
+   detecta `?code=` (retorno do Google) e repassa pra `/entrar.html`.
+2. **Modo pré-lançamento (§2.5):** badge "Em breve" no header. **Allowlist
+   hardcoded** em `auth.js` (decisão do usuário, não a tabela — default do
+   PLANO): array `ALLOWLIST` no topo, `isAllowed(email)`; gate no
+   `onAuthStateChange` de `entrar.html` — e-mail fora da lista → `signOut()` +
+   toast + volta pra `/`. `// TODO: migrar p/ tabela allowlist quando abrir
+   beta.` **Waitlist real**: tabela `waitlist` (RLS própria, insert liberado
+   pra `anon`/`authenticated`, sem policy de select — `db/schema.sql` +
+   `db/migration-waitlist.sql` avulso) + `assets/js/waitlist.js`
+   (`initWaitlistForms()`, valida e-mail, honeypot, `upsert` idempotente,
+   troca o form por confirmação inline no sucesso).
+3. **3 páginas** (`index.html`/Início, `planos.html`, `sobre.html`), header e
+   footer repetidos (HTML, sem framework). Design novo em
+   `assets/css/landing.css` — reusa tokens/`.btn`/`.badge`/`.card` existentes,
+   zero hex cru, zero token novo (exceção: tamanho do título do hero via
+   `clamp()` direto em `landing.css`, não virou `--fs-*` novo). Hero alto
+   contraste + CTA de waitlist, grid de 4 features (módulos reais do app),
+   "como funciona" em 3 passos, faixa CTA final com `data-theme="dark"`
+   escopado. `planos.html`: **2 planos** (Personal/Team, spec revisada — era
+   3), Team destacado (borda accent + badge), preços/features placeholder
+   `<!-- TROCAR -->`, FAQ de 5 perguntas. `sobre.html`: 3 blocos de texto
+   placeholder. Menu mobile ≤900px via `<details>/<summary>` nativo (zero JS).
+4. **Responsivo + a11y:** heading hierarchy corrigida (`feature__title`,
+   `step__title`, `plan-card__name`, `faq__q` eram `<div>` → viraram `<h3>`;
+   `entrar.html` ganhou `<h1 class="sr-only">`, removido visualmente na
+   Rodada 8 de propósito). Skip link ("Pular para o conteúdo") nas 3 páginas
+   da landing. `name`+`spellcheck="false"` nos campos de e-mail. `text-wrap:
+   balance` nos títulos grandes. `fetchpriority="high"` na imagem do hero
+   (candidato a LCP).
+
+### Bugs achados e corrigidos durante a verificação visual (não só no código)
+- **Colisão de classe `.hero`/`.hero__*`:** já existia no `components.css` do
+  app (hero do dashboard) — vazava `background`/`border`/`shadow`/`padding`
+  indesejados no hero da landing. Renomeado tudo pra `.lp-hero*` (namespace
+  próprio da landing).
+- **Texto invisível na faixa CTA escura:** `data-theme="dark"` escopado numa
+  `<section>` troca os tokens certo, mas `color` é herdado como *valor já
+  computado* do `<body>` — filho sem `color` próprio não reavalia
+  `var(--text)`. Fix: `color: var(--text)` explícito em `.cta-band`.
+- **Menu mobile ancorado no botão hambúrguer** (40px) em vez do header
+  inteiro: dois `position:relative` concorrentes (`.landing-header__inner` e
+  `.landing-nav-mobile`) — removido o duplicado.
+- **`.plan-card__badge`** só tinha posicionamento, sem cor/fundo — corrigido
+  antes de vazar pro usuário.
+
+### Verificação
+`node --check` limpo em todo `.js` tocado; balanceamento de tags (parser
+Python — `tidy` do macOS é HTML4, não reconhece `<header>`/`<details>`/
+`<svg>`) OK nas 4 páginas. Visual real via `agent-browser` (extensão do
+Chrome seguiu desconectada a etapa toda) em 1280px, 390×844 e uma faixa
+intermediária (820px) — inclui teste de teclado ao vivo (skip link, menu
+mobile via `<details>` nativo) e validação client-side da waitlist (regex +
+toast, sem precisar da tabela existir).
+
+### Decisões / pegadinhas
+- **`redirectTo` do OAuth não mudou** — ver item 1. Se um dia a Rodada trocar
+  pra `/entrar.html` direto, precisa adicionar a URL no painel do Supabase
+  antes, senão quebra o login.
+- **Skills do PLANO não existem no projeto:** `boas-praticas-design`
+  (GERAR SPECS e VALIDAR CHECKLIST) foi citado na spec mas não está
+  instalado — substituído por `ui-ux-pro-max` (modo plan) pra gerar a spec do
+  hero/grid/cards e por `web-design-guidelines` pra validar. Mesma situação
+  do `PLANO-LANDING.md`/`LAUNCH-LANDING.md` no início da etapa: não existiam
+  no repo, o usuário colou o conteúdo na conversa.
+- **Colisão de nome de classe é um risco real** quando CSS novo compartilha
+  arquivos (`components.css`) com um app maior — qualquer nome genérico
+  (`.hero`, `.card-title` etc.) pode já existir. Daqui pra frente, CSS da
+  landing usa namespace `.lp-*` pra qualquer coisa que não seja
+  inequivocamente exclusiva (tipo `.plan-card`, que não existe em lugar
+  nenhum do app).
+
+### Pendente / próximo — BLOQUEADO
+- **Verificação end-to-end da waitlist bloqueada por incidente externo do
+  Supabase** (falhas em restart/resize de projeto, várias regiões — não é bug
+  do código). O banco foi checado via `psql` e está correto (policy, grants,
+  role membership, schema — tudo validado por leitura direta), mas o insert
+  via API/PostgREST como `anon` ainda retorna 401 mesmo após reload de schema
+  cache; o remédio provável (restart do projeto) está inseguro durante o
+  incidente. **Refazer o teste de insert anon (e o reenvio idempotente) via
+  `waitlist.js`/`supabase-js` assim que o incidente do Supabase for
+  resolvido** — o código do form já está validado e correto, só falta
+  confirmar a ponta do banco.
+- `sobre.html`/`planos.html` ainda usam `<!-- TROCAR -->` em preços, features
+  e copy de marketing — placeholders intencionais desta etapa.
+- Schema mudou (`waitlist`) → precisa rodar `db/migration-waitlist.sql` (ou o
+  `db/schema.sql` completo) — já aplicado pelo usuário nesta sessão.
+- `aria-live` ausente no container de toast (`utils.js`, compartilhado com o
+  app inteiro) — observado durante a auditoria de a11y, não corrigido por
+  estar fora do escopo de arquivos editáveis desta etapa.
+
+### Pontos onde o nome "Harmon IA" aparece (§8 — guia pro rename futuro)
+- `entrar.html`: `<title>`, `<h1 class="sr-only">`, `.login__logo`,
+  `.login-visual__mark`.
+- `index.html`, `planos.html`, `sobre.html`: `<title>`, `<meta
+  name="description">`, `<meta property="og:title">`, `.wordmark` (header e
+  footer), linha de copyright do footer (`<!-- TROCAR nome -->`).
+- `sobre.html` também cita o nome no corpo do texto ("O Harmon IA junta...").
+- Todos usam o mesmo padrão de marcação:
+  `<span class="wordmark">Harmon&nbsp;<b>IA</b></span>` — rename é
+  find-replace de `Harmon` + ajuste do `<b>IA</b>` se o nome novo não tiver
+  duas palavras.

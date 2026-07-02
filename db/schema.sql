@@ -186,6 +186,26 @@ create table if not exists public.return_dismissals (
     unique (user_id, client_id, service_id, months)
 );
 
+-- waitlist ----------------------------------------------------------------
+-- Etapa 7 (landing pré-lançamento): captura de e-mail de interessados. Sem
+-- user_id — não é dado de conta, é formulário público. RLS própria (fora do
+-- loop "own_data" abaixo): INSERT liberado pra anon/authenticated, SELECT/
+-- UPDATE/DELETE negados por padrão (RLS enabled sem policy pra eles) — a
+-- lista só é lida no painel do Supabase, nunca pelo client.
+create table if not exists public.waitlist (
+  id         uuid primary key default gen_random_uuid(),
+  email      text not null unique,
+  source     text,                      -- 'home' | 'planos' | ...
+  created_at timestamptz default now()
+);
+
+alter table public.waitlist enable row level security;
+
+drop policy if exists "waitlist_insert" on public.waitlist;
+create policy "waitlist_insert" on public.waitlist
+  for insert to anon, authenticated
+  with check (true);
+
 -- migrações p/ bancos já implantados (idempotente) ----------------------------
 alter table public.clients add column if not exists address_complement text;
 alter table public.user_settings add column if not exists accent text default 'rose'; -- valores: rose | sand | sky | lilac | mint | neutral

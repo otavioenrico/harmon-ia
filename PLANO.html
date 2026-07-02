@@ -205,8 +205,9 @@ footer a { color: var(--text-muted); }
   <section class="overview">
     <p class="lead">
       Roadmap derivado direto do <a href="HISTORICO.md">HISTORICO.md</a>: cada etapa/rodada = uma sessão de
-      desenvolvimento. Etapas 1 a 6 e as Rodadas 3–4 (polish + aprimoramentos de UI) estão concluídas;
-      só falta a Etapa 7 (Polish · Lançamento) pra fechar o roadmap. Os status são a fonte da verdade do progresso abaixo.
+      desenvolvimento. Etapas 1 a 7 (app completo + landing comercial em pré-lançamento) e as Rodadas 3–8
+      de polish/aprimoramentos estão concluídas — só falta reconfirmar o insert da waitlist quando o
+      incidente externo do Supabase passar. Os status são a fonte da verdade do progresso abaixo.
     </p>
     <div class="prog-card">
       <div class="prog-num"><b id="pct">0%</b></div>
@@ -229,7 +230,7 @@ footer a { color: var(--text-muted); }
   <main id="board"></main>
 
   <footer>
-    Gerado a partir de <a href="HISTORICO.md">HISTORICO.md</a> · última atualização 2026-07-01 (Rodada 4 no ar — 11 itens de UI; falta a Etapa 7 · Polish) ·
+    Gerado a partir de <a href="HISTORICO.md">HISTORICO.md</a> · última atualização 2026-07-02 (Etapa 7 · Landing no ar — falta só reconfirmar a waitlist pós-incidente do Supabase) ·
     para atualizar o progresso, mude o campo <code>s</code> de cada task no array <code>TASKS</code> deste arquivo.
   </footer>
 </div>
@@ -246,7 +247,7 @@ const PHASES = [
   { id:'p4', etapa:'Etapa 4', title:'Histórico · Registro de Procedimento', note:'concluída' },
   { id:'p5', etapa:'Etapa 5', title:'Fluxo de Caixa', note:'concluída' },
   { id:'p6', etapa:'Etapa 6', title:'Agenda · Integração Google', note:'concluída' },
-  { id:'p7', etapa:'Etapa 7', title:'Polish · Lançamento', note:'próximo' },
+  { id:'p7', etapa:'Etapa 7', title:'Landing · Site comercial (pré-lançamento)', note:'concluída' },
   { id:'p8', etapa:'Rodada 4', title:'Aprimoramentos de UI (11 itens)', note:'concluída' },
   { id:'p0', etapa:'Pré-requisito', title:'Setup do ambiente — no ar ✅', note:'concluída' },
 ];
@@ -338,19 +339,10 @@ const TASKS = [
   { p:'p6', t:'Reconectar Google', s:'done', f:['assets/js/configuracoes.js'],
     d:'Botão em Configurações para refazer o consentimento se a agenda parar de sincronizar.' },
 
-  // ---- Etapa 7 — Polish ----
-  { p:'p7', t:'Export CSV completo', s:'todo', f:['assets/js/*'],
-    d:'Padronizar o export nos módulos que ainda não têm.' },
-  { p:'p7', t:'Skeletons e loading', s:'todo', f:['assets/css/*','assets/js/*'],
-    d:'Estados de carregamento finos e consistentes entre os módulos.' },
-  { p:'p7', t:'Animações e microinterações', s:'todo', f:['assets/css/*'],
-    d:'Transições suaves, foco visível e feedback claro das ações.' },
-  { p:'p7', t:'Responsivo (mobile)', s:'todo', f:['assets/css/*'],
-    d:'Revisar tabelas, drawer e sidebar em telas pequenas.' },
-  { p:'p7', t:'Acessibilidade', s:'todo', f:['assets/*'],
-    d:'Contraste, navegação por teclado e aria nos componentes.' },
-  { p:'p7', t:'Verificação fim-a-fim', s:'todo',
-    d:'Testar o fluxo completo (cliente → procedimento → estoque → caixa → agenda) com dados reais.' },
+  // ---- Etapa 7 foi redefinida como "Landing" (ver bloco mais abaixo) — as
+  // tasks antigas de "Polish" genérico (export CSV, skeletons, animações,
+  // responsivo, a11y, verificação fim-a-fim) já foram cobertas ao longo das
+  // Rodadas 3–8 e removidas daqui pra não duplicar/confundir o board.
 
   // ---- Rodada 4 — Aprimoramentos de UI, 11 itens (concluída 2026-07-01) ----
   { p:'p8', t:'Sidebar: botão de recolher + largura', s:'done', f:['app.html','assets/css/layout.css','assets/css/tokens.css'],
@@ -391,6 +383,18 @@ const TASKS = [
     d:'SETUP passo 6: 4 variáveis (GOOGLE_CLIENT_ID/SECRET, SUPABASE_URL/ANON_KEY) em Production + redeploy.' },
   { p:'p0', t:'Testar fim a fim', s:'done', f:['—'],
     d:'SETUP passo 7: login Google OK → painel → serviço/cliente/agendamento criados; evento apareceu no Google Calendar (integração confirmada).' },
+
+  // ---- Etapa 7 — Landing (pré-lançamento) ----
+  { p:'p7', t:'Remanejo de rotas', s:'done', f:['entrar.html','index.html','assets/js/auth.js','vercel.json'],
+    d:'index.html (login) → entrar.html; novo index.html = home pública. Shim de ?code= no lugar de mudar o redirectTo (evita reconfigurar Supabase).' },
+  { p:'p7', t:'Modo pré-lançamento: allowlist + waitlist', s:'done', f:['assets/js/auth.js','assets/js/waitlist.js','db/schema.sql'],
+    d:'Allowlist hardcoded em auth.js (gate no login); tabela waitlist com RLS própria (insert anon, sem select) + captura de e-mail com honeypot.' },
+  { p:'p7', t:'3 páginas do site', s:'done', f:['index.html','planos.html','sobre.html','assets/css/landing.css'],
+    d:'Início, Planos (2 cards: Personal/Team) e Sobre, header/footer repetidos, hero + features + FAQ. Preços e copy de marketing = placeholder.' },
+  { p:'p7', t:'Responsivo + acessibilidade', s:'done', f:['index.html','planos.html','sobre.html','entrar.html','assets/css/landing.css'],
+    d:'Heading hierarchy corrigida, skip link, menu mobile via <details> nativo, name/spellcheck nos e-mails, text-wrap:balance.' },
+  { p:'p7', t:'Verificação end-to-end da waitlist (insert anon)', s:'blocked', f:['assets/js/waitlist.js'], dep:'incidente externo do Supabase (restart/resize instável)',
+    d:'Banco checado via psql e está correto (policy/grants/RLS); falta confirmar o insert real via API assim que o incidente do Supabase passar.' },
 ];
 
 const SLABEL = { done:'Concluído', doing:'Em andamento', todo:'A fazer', blocked:'Pré-requisito' };

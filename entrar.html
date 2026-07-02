@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Harmon IA — Entrar</title>
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <link rel="stylesheet" href="assets/css/theme.css" />
+  <!-- a11y: h1 só pra leitor de tela — a Rodada 8 removeu o <h1> visível de
+       propósito (design), mas a página precisa de um heading de nível 1 -->
+  <style>
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  </style>
+</head>
+<body>
+  <main class="login">
+    <div class="login-card">
+      <!-- coluna esquerda: formulário -->
+      <section class="login-form">
+        <h1 class="sr-only">Entrar — Harmon IA</h1>
+        <div class="login__logo">Harmon&nbsp;<b>IA</b></div>
+        <p class="login-form__sub">Gestão inteligente para saúde estética.</p>
+
+        <!-- Rodada 6: e-mail/senha são só visuais — a auth real é 100% Google.
+             Submeter mostra um toast "Em breve"; nada de validação/fluxo aqui. -->
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="lf-email">E-mail</label>
+            <input class="input" id="lf-email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com" spellcheck="false" />
+          </div>
+          <div class="field">
+            <div class="login-form__labelrow">
+              <label for="lf-pass">Senha</label>
+              <a href="#" id="lf-forgot">Esqueceu a senha?</a>
+            </div>
+            <div class="login-form__pass">
+              <input class="input" id="lf-pass" name="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+              <button type="button" id="lf-eye" aria-label="Mostrar senha">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button class="btn btn--primary btn--block" type="submit">Entrar&nbsp;→</button>
+        </form>
+
+        <div class="login-form__divider"><span>ou</span></div>
+
+        <button id="google" class="btn btn-google">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+          Entrar com Google
+        </button>
+
+        <p class="login-form__signup">Ainda não tem conta? <a href="#" id="lf-signup">Criar conta</a></p>
+      </section>
+
+      <!-- coluna direita: render fotográfico (gradiente metálico) — mantido
+           como PNG (não vetorizado, perderia o efeito). -->
+      <aside class="login-visual" aria-hidden="true">
+        <img src="assets/img/login-visual.png" alt="" />
+        <span class="login-visual__mark">Harmon&nbsp;<b>IA</b></span>
+      </aside>
+    </div>
+  </main>
+
+  <script type="module">
+    import { supabase } from './assets/js/supabase.js';
+    import { ensureSettings, signInWithGoogle, isAllowed } from './assets/js/auth.js';
+    import { toast } from './assets/js/utils.js';
+
+    const btn = document.getElementById('google');
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try { await signInWithGoogle(); }
+      catch (e) { toast(e.message, 'error'); btn.disabled = false; }
+    });
+
+    // e-mail/senha e "esqueci": só visuais nesta rodada
+    const soon = (e) => { e.preventDefault(); toast('Em breve — por enquanto, entre com o Google.', 'warning'); };
+    document.getElementById('login-form').addEventListener('submit', soon);
+    document.getElementById('lf-forgot').addEventListener('click', soon);
+    // "criar conta": pré-lançamento, cadastro público bloqueado -> lista de espera
+    document.getElementById('lf-signup').addEventListener('click', (e) => {
+      e.preventDefault();
+      location.href = '/#waitlist-hero';
+    });
+
+    // olho de mostrar/ocultar senha (funciona de verdade — é só UI local)
+    const pass = document.getElementById('lf-pass');
+    const eye = document.getElementById('lf-eye');
+    eye.addEventListener('click', () => {
+      const show = pass.type === 'password';
+      pass.type = show ? 'text' : 'password';
+      eye.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+      eye.classList.toggle('is-on', show);
+    });
+
+    // Entra direto se já há sessão, ou logo após voltar do consentimento Google.
+    let done = false;
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session && !done) {
+        done = true;
+        if (!isAllowed(session.user.email)) {
+          await supabase.auth.signOut();
+          toast('Estamos em desenvolvimento — entre na lista de espera.', 'warning');
+          location.replace('/');
+          return;
+        }
+        await ensureSettings(session);          // salva refresh_token na 1ª vez
+        location.replace('/app.html');
+      }
+    });
+  </script>
+</body>
+</html>
