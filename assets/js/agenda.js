@@ -13,7 +13,7 @@
 import { supabase } from './supabase.js';
 import { listEvents, createEvent, updateEvent, deleteEvent, NeedsReconnect } from './google-cal.js';
 import { signInWithGoogle } from './auth.js';
-import { openForm as openClientForm } from './clientes.js';
+import { quickCreate as quickCreateClient } from './clientes.js';
 import { openModal, confirmDialog, guard, toast, busy, esc, todayISO, icon, waLink, money, clientAutocomplete, emptyBox } from './utils.js';
 
 const WD = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -401,12 +401,12 @@ export async function render(root, ctx) {
       // busca sem match → "＋ Cadastrar": abre o form de Clientes por cima do
       // agendamento e, ao salvar, a cliente nova já fica selecionada aqui.
       clientPicker = clientAutocomplete(state.clients, fullEdit ? (editProc.client_id || '') : (prefClient || ''), undefined, {
-        onCreate: (name) => openClientForm(ctx, null, (created) => {
+        onCreate: (name) => quickCreateClient(ctx, name, (created) => {
           if (!created) return;
           state.clients.push(created);
           state.clients.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt'));
           clientPicker.set(created);
-        }, { name }),
+        }),
       });
       form.querySelector('[data-client-slot]').appendChild(clientPicker.el);
 

@@ -808,4 +808,123 @@ visual mobile (390×844) e regressão desktop ficam com o usuário.
 ### Pendente / próximo
 - ✅ Schema rodado no Supabase (RPC `delete_procedures` ativa) e commit/push
   autorizados pelo usuário em 2026-07-02.
+
+---
+
+## Rodada 8 — Contraste de tema, navegação mobile, hero do dashboard, cadastro rápido de cliente e login (2026-07-02)
+
+### Contexto
+9 itens de UI/UX levantados numa sessão de triagem com o usuário (prompt em
+`improvements/rodada8-prompt.md`), com causa raiz já investigada pra maioria.
+5 fases: tema (contraste), navegação mobile, dashboard, modal de agendamento,
+tela de login.
+
+### Feito
+1. **Checkboxes de seleção em massa** (`components.css` `.data .chk input`):
+   `accent-color` nativo trocado por checkbox custom (`appearance:none` +
+   `background`/`border` em `:checked`, check em `::after`) — cross-browser
+   confiável, sem depender de suporte inconsistente do navegador/webview.
+2. **Ícones dos mini-cards da Home somem no dark**: causa raiz confirmada —
+   `.mini__icon` herdava `--text` (quase branco no dark) num círculo sempre
+   claro (`--color-mauve-100` não muda por tema). Fix: `color:
+   var(--color-mauve-700)` fixo no `.mini__icon`, independente do tema.
+3. **Cor secundária do dark mode**: `#2e2a25` → `#2f2e2e` (`--accent` e
+   `--btn-secondary-bg` em `theme.css`).
+4. **Scrollbar temática**: não existia nenhuma regra global — o navegador
+   usava a scrollbar do SO. Adicionado `scrollbar-color`/`scrollbar-width` +
+   trio `::-webkit-scrollbar*` em `layout.css`, usando `--surface-2` (trilho)
+   e `--color-mauve-500`/`700` (polegar/hover) — acompanha tema e as 5 cores
+   de destaque automaticamente.
+5. **Menu "Mais" (mobile) sem títulos**: causa raiz confirmada — o seletor
+   `.nav__item .label` (dentro do bloco `@media ≤1200px` que colapsa a
+   sidebar) não estava escopado a `.sidebar`, então também escondia os labels
+   do sheet mobile (que reaproveita as mesmas classes). Fix: `.sidebar
+   .nav__item .label`. De brinde: itens do sheet agrupados em `.sheet-nav`
+   (gap entre eles, antes sem nenhum) + `.sheet-divider` antes de "Sair".
+6. **FAB "+" descentralizado (mobile)**: causa raiz confirmada — o botão
+   primário do header já tinha um SVG de ícone (`plus`) **e** um `::before`
+   com "+" via CSS; os dois renderizavam lado a lado no FAB circular. Fix:
+   `.header__actions .btn--primary svg { display:none }` nesse breakpoint —
+   só o `::before` sobrevive, perfeitamente centralizado.
+7. **Hero do dashboard vazando em larguras intermediárias**: causa raiz era o
+   "automatic minimum size" padrão do flexbox — sem `min-width:0`, um item
+   flex nunca encolhe abaixo do min-content do filho mais largo (o botão "Ver
+   agenda de hoje"), então em vez de quebrar linha ele estourava a largura do
+   card. Fix mínimo: `min-width:0` em `.hero__actions` e em `.btn` dentro
+   dele, + `overflow:hidden`/`text-overflow:ellipsis` como rede de segurança.
+   Testado em 1280/800/700/640px — nunca vaza, grid 2-colunas do ≤640px
+   preservado.
+8. **Modal "Novo agendamento" — autocomplete de cliente**:
+   - Lista abria sozinha: causa raiz confirmada — `openModal` autofoca o 1º
+     campo do form (a11y), e o campo Cliente é esse campo; o `focus`
+     programático disparava o `render()` do autocomplete. Fix:
+     `clientAutocomplete` (utils.js) só reage ao `focus` depois de um
+     `queueMicrotask` (separa o autofoco síncrono do mount de qualquer foco
+     real, que só chega num tick depois). Descoberto durante o teste que
+     clicar num campo **já** focado não reabre a lista (clique não gera novo
+     evento `focus`) — adicionado listener de `click` também.
+   - **Bug pré-existente encontrado na verificação** (fora do escopo original,
+     mas quebrava o item 4.2 na prática): o filtro de busca combinava nome OU
+     telefone com `onlyDigits(c.phone).includes(onlyDigits(q))` — para
+     qualquer busca sem dígitos, `onlyDigits(q)` é `''`, e `"".includes('')`
+     é sempre `true`, então TODO cliente com telefone "casava" e o filtro por
+     nome virava no-op (e "＋ Cadastrar" nunca aparecia). Fix: só compara
+     dígitos de telefone quando a busca tem algum dígito.
+   - **Cadastro rápido inline**: nova função `quickCreate(ctx, name, onSaved)`
+     em `clientes.js` — popup compacto (Nome/Telefone/E-mail, nome
+     pré-preenchido), reaproveita `bindMask(maskPhone)` do form completo (não
+     duplica a lógica de máscara). `agenda.js` e `historico.js` trocaram o
+     `onCreate` do autocomplete de `openForm` (form completo, wide) para
+     `quickCreate`. Cliente criado entra em `clients` com os demais campos em
+     branco, pra completar depois em Clientes.
+9. **Tela de login**: removido `<h1>Olá, novamente</h1>`; fundo do `<main
+   class="login">` trocado do `--bg` padrão (quase branco, se perdia atrás do
+   card) para `--color-gray-200` (token já existente, neutro); SVG abstrato
+   da coluna direita substituído pela imagem real (`assets/img/
+   login-visual.png`, redimensionada de 2200×3350 pra 578×880 via `sips`
+   — 5.8MB → 693KB, mantida como PNG porque `sips` não grava `.webp`, só lê;
+   instalar um conversor novo só pra essa imagem não valia a dependência).
+   `<img object-fit:cover>` preenche a coluna, `.login-visual__mark` (marca
+   d'água) preservada por cima. Login não tem toggle de tema (só existe
+   pós-auth) — usar token cru é intencional, não uma inconsistência.
+
+### Verificação
+`node --check` limpo em todos os `.js` tocados (`app.js`, `utils.js`,
+`clientes.js`, `agenda.js`, `historico.js`). Extensão Chrome não conectada —
+verificação visual feita via `agent-browser` (CLI instalada nesta sessão,
+já usada na Rodada 3): `improvements/preview-rodada8.html` (galeria nova,
+sem Supabase, mesmo padrão do `preview-rodada3.html`) + `index.html` direto.
+Confirmado visualmente: checkbox e ícone dos mini-cards respondendo à matriz
+tema×accent (testado claro/escuro × rose/sky via toggle da galeria); hero sem
+vazar em 1280/800/700/640px; FAB centralizado ≤900px; sheet "Mais" com
+títulos e espaçamento; modal de agendamento com autofoco no campo Cliente sem
+abrir a lista, clique abrindo, busca sem match oferecendo "＋ Cadastrar",
+popup de 3 campos com máscara de telefone funcionando; login sem o h1, fundo
+neutro, imagem + marca d'água legível, coluna direita some ≤820px.
+
+### Decisões / pegadinhas
+- **`onlyDigits(q) === ''` faz `.includes('')` sempre `true`** — qualquer
+  filtro que combine busca textual + busca numérica com esse helper precisa
+  checar se a query tem dígito antes de aplicar o lado numérico, senão o
+  filtro numérico "engole" o textual.
+- **`data-accent`/`data-theme` só devem existir no `<html>`, nunca também no
+  `<body>`** — um atributo duplicado num descendente reinicia a herança da
+  custom property a partir dali pra baixo, mesmo que `<html>` esteja correto
+  (causou uma falsa pista de bug de tema durante a verificação: era o preview
+  harness, não o app real).
+- **`sips` grava `.webp`? Não** (`--formats` lista `webp` sem `Writable`) —
+  só lê. Pra otimizar imagem sem instalar conversor novo, redimensionar +
+  manter PNG já reduz bastante (aqui, 88% menor).
+- Autofoco de modal (a11y, Rodada 3) + autocomplete que abre no `focus` é uma
+  combinação que se auto-sabota sem cuidado — qualquer autocomplete futuro
+  que vire "1º campo" de um modal herda esse risco; o padrão
+  `queueMicrotask` + listener de `click` em `clientAutocomplete` cobre isso
+  pra quem reusar o componente.
+
+### Pendente / próximo
+- Commit/push/deploy **não** feitos — aguardando revisão visual do usuário em
+  ambiente real (mesmo padrão de todas as rodadas anteriores).
+- Sem mudança de schema nesta rodada — não precisa re-rodar `db/schema.sql`.
+- `improvements/preview-rodada8.html` é só uma galeria de verificação (como a
+  da Rodada 3); pode ficar no repo como referência ou ser removida depois.
 - Verificação visual (mobile 390×844 + regressão desktop) em produção.

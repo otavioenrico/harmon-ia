@@ -16,7 +16,6 @@
       <!-- coluna esquerda: formulário -->
       <section class="login-form">
         <div class="login__logo">Harmon&nbsp;<b>IA</b></div>
-        <h1 class="login-form__title">Olá, novamente</h1>
         <p class="login-form__sub">Gestão inteligente para saúde estética.</p>
 
         <!-- Rodada 6: e-mail/senha são só visuais — a auth real é 100% Google.
@@ -51,39 +50,10 @@
         <p class="login-form__signup">Ainda não tem conta? <a href="#" id="lf-signup">Criar conta</a></p>
       </section>
 
-      <!-- coluna direita: visual abstrato (linha estética/moda) — SVG inline,
-           sem dependência externa; fácil trocar depois por uma foto real. -->
+      <!-- coluna direita: render fotográfico (gradiente metálico) — mantido
+           como PNG (não vetorizado, perderia o efeito). -->
       <aside class="login-visual" aria-hidden="true">
-        <svg viewBox="0 0 440 640" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <linearGradient id="lv-bg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="var(--color-mauve-100)"/>
-              <stop offset="0.55" stop-color="var(--color-mauve-300)"/>
-              <stop offset="1" stop-color="var(--color-mauve-500)"/>
-            </linearGradient>
-            <radialGradient id="lv-glow" cx="0.3" cy="0.25" r="0.7">
-              <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
-              <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <rect width="440" height="640" fill="url(#lv-bg)"/>
-          <rect width="440" height="640" fill="url(#lv-glow)"/>
-          <!-- curvas fluidas: gesto de contorno de rosto/pincelada -->
-          <g fill="none" stroke="#ffffff" stroke-linecap="round">
-            <path d="M-30 500 C 120 430, 90 300, 220 260 S 470 180, 480 60" stroke-width="1.5" opacity="0.55"/>
-            <path d="M-30 560 C 140 480, 120 340, 250 300 S 480 230, 500 110" stroke-width="1" opacity="0.35"/>
-            <path d="M-30 440 C 100 380, 70 260, 190 220 S 440 130, 460 10" stroke-width="1" opacity="0.35"/>
-            <path d="M300 640 C 320 520, 240 470, 260 380 S 420 300, 400 200" stroke-width="1.5" opacity="0.45"/>
-          </g>
-          <g fill="#ffffff">
-            <circle cx="330" cy="150" r="60" opacity="0.14"/>
-            <circle cx="110" cy="480" r="90" opacity="0.10"/>
-            <circle cx="360" cy="430" r="26" opacity="0.20"/>
-            <circle cx="90" cy="120" r="10" opacity="0.30"/>
-          </g>
-          <!-- brilho (sparkle da marca) -->
-          <path d="M352 96 l6 18 18 6 -18 6 -6 18 -6 -18 -18 -6 18 -6 Z" fill="#ffffff" opacity="0.6"/>
-        </svg>
+        <img src="assets/img/login-visual.png" alt="" />
         <span class="login-visual__mark">Harmon&nbsp;<b>IA</b></span>
       </aside>
     </div>

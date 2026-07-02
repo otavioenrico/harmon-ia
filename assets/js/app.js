@@ -144,10 +144,13 @@ function openMoreSheet() {
         <div class="email">${esc(p.email)}</div>
       </div>
     </div>
-    ${extras.map((key) => `
-      <button class="nav__item${key === current ? ' active' : ''}" data-go="${key}">
-        <span class="nav__icon">${icon(ROUTES[key].icon)}</span><span class="label">${ROUTES[key].title}</span>
-      </button>`).join('')}
+    <div class="sheet-nav">
+      ${extras.map((key) => `
+        <button class="nav__item${key === current ? ' active' : ''}" data-go="${key}">
+          <span class="nav__icon">${icon(ROUTES[key].icon)}</span><span class="label">${ROUTES[key].title}</span>
+        </button>`).join('')}
+    </div>
+    <div class="sheet-divider"></div>
     <button class="nav__item" data-logout>
       <span class="nav__icon">${icon('logout')}</span><span class="label">Sair</span>
     </button>

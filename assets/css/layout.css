@@ -22,19 +22,22 @@ button { font-family: inherit; }
 /* foco visível por teclado — anel único e consistente no app inteiro */
 :focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 
+/* scrollbar segue tema+acento em vez do padrão do SO, em qualquer área rolável */
+* { scrollbar-color: var(--color-mauve-500) var(--surface-2); scrollbar-width: thin; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--surface-2); }
+::-webkit-scrollbar-thumb { background: var(--color-mauve-500); border-radius: var(--radius-pill); border: 2px solid var(--surface-2); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-mauve-700); }
+
 /* -------------------------------------------------------------- login ----- */
-/* Rodada 6: card em 2 colunas (form + visual abstrato) flutuando sobre fundo
-   com gradiente suave desfocado, na paleta mauve/creme dos tokens. */
+/* Rodada 8: fundo neutro (cinza claro) atrás do card flutuante — antes usava
+   o --bg padrão do app, muito próximo do branco do próprio card. */
 .login {
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: var(--sp-5);
-  background:
-    radial-gradient(640px 420px at 12% 18%, var(--color-mauve-100) 0%, transparent 70%),
-    radial-gradient(720px 520px at 88% 85%, var(--color-mauve-300) 0%, transparent 72%),
-    radial-gradient(480px 360px at 70% 10%, #f7efe6 0%, transparent 70%),
-    var(--bg);
+  background: var(--color-gray-200);
 }
 .login-card {
   display: grid;
@@ -51,7 +54,7 @@ button { font-family: inherit; }
   font-size: var(--fs-xl);
   font-weight: var(--fw-200);
   letter-spacing: 0.04em;
-  margin-bottom: var(--sp-6);
+  margin-bottom: var(--sp-3);
 }
 .login__logo b { font-weight: var(--fw-500); }
 
@@ -61,8 +64,7 @@ button { font-family: inherit; }
   flex-direction: column;
   justify-content: center;
 }
-.login-form__title { font-size: var(--fs-2xl); font-weight: var(--fw-600); letter-spacing: -0.02em; }
-.login-form__sub { color: var(--text-muted); margin: var(--sp-2) 0 var(--sp-6); }
+.login-form__sub { color: var(--text-muted); margin: 0 0 var(--sp-6); }
 .login-form__labelrow { display: flex; justify-content: space-between; align-items: baseline; }
 .login-form__labelrow a { font-size: var(--fs-xs); color: var(--text-muted); text-decoration: none; }
 .login-form__labelrow a:hover { color: var(--text); text-decoration: underline; }
@@ -88,7 +90,7 @@ button { font-family: inherit; }
 .login-form__signup a:hover { text-decoration: underline; }
 
 .login-visual { position: relative; min-height: 100%; }
-.login-visual svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.login-visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .login-visual__mark {
   position: absolute; right: var(--sp-5); bottom: var(--sp-4);
   color: #fff; opacity: 0.75; letter-spacing: 0.05em;
@@ -255,7 +257,7 @@ button { font-family: inherit; }
 /* -------------------------------------------------------- responsivo ------ */
 @media (max-width: 1200px) {
   .shell { grid-template-columns: var(--sidebar-w-collapsed) 1fr; }
-  .sidebar__brand span, .sidebar__brand b.brand-mark, .nav__item .label, .sidebar__user-info { display: none; }
+  .sidebar__brand span, .sidebar__brand b.brand-mark, .sidebar .nav__item .label, .sidebar__user-info { display: none; }
   .sidebar__brand { justify-content: center; padding: 0 var(--sp-2); }
   .sidebar__brand .collapse-btn { margin-left: 0; }
   .nav__item { justify-content: center; }

@@ -257,9 +257,13 @@ export function clientAutocomplete(clients, selectedId = '', placeholder = 'Busc
   if (cur) pick(cur);
   const render = () => {
     const q = input.value.trim().toLowerCase();
+    const qDigits = onlyDigits(q);
+    // qDigits só entra na comparação se a busca tiver algum dígito — senão
+    // "".includes('') é sempre true e casaria com QUALQUER cliente (o filtro
+    // por nome vira no-op e "＋ Cadastrar" nunca aparece pra busca por texto).
     matches = (!q ? clients.slice(0, 8)
       : clients.filter((c) => (c.name || '').toLowerCase().includes(q)
-          || onlyDigits(c.phone).includes(onlyDigits(q))).slice(0, 8));
+          || (qDigits && onlyDigits(c.phone).includes(qDigits))).slice(0, 8));
     list.innerHTML = matches.map((c, i) =>
       `<div class="autocomplete__item${i === active ? ' active' : ''}" data-i="${i}">${esc(c.name)}${c.phone ? `<div class="sub">${esc(c.phone)}</div>` : ''}</div>`
     ).join('') || (onCreate && q
@@ -267,7 +271,17 @@ export function clientAutocomplete(clients, selectedId = '', placeholder = 'Busc
       : `<div class="autocomplete__item faint">Nenhum cliente</div>`);
     list.hidden = false;
   };
-  input.addEventListener('focus', render);
+  // o modal foca o 1º campo do form ao abrir (a11y) — quando o cliente é esse
+  // campo, esse autofoco programático disparava 'focus' e abria a lista sem
+  // nenhuma ação do usuário. queueMicrotask separa esse foco inicial (mesmo
+  // tick síncrono do mount) de qualquer foco real subsequente (sempre em um
+  // tick posterior, muito antes de qualquer interação humana chegar a tempo).
+  let mounted = false;
+  queueMicrotask(() => { mounted = true; });
+  input.addEventListener('focus', () => { if (mounted) render(); });
+  // clique num campo já focado (ex.: acabou de receber o autofoco do modal)
+  // não dispara um novo 'focus' — sem isso, o 1º clique do usuário não abriria nada.
+  input.addEventListener('click', render);
   input.addEventListener('input', () => { hidden.value = ''; active = -1; render(); });
   const scrollActive = () => list.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
   input.addEventListener('keydown', (e) => {

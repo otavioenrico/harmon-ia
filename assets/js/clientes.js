@@ -377,3 +377,48 @@ export function openForm(ctx, c, onSaved, preset = {}) {
     m.markClean(); m.close(true); onSaved(res.data);
   };
 }
+
+// cadastro rápido (popup compacto): chamado pelo "＋ Cadastrar" do autocomplete
+// de cliente (Agenda/Histórico) quando a busca não acha ninguém. Só nome/
+// telefone/e-mail — o resto (CPF, endereço etc.) fica em branco pra completar
+// depois em Clientes. Reaproveita a mesma máscara de telefone do form completo.
+export function quickCreate(ctx, name, onSaved) {
+  const form = document.createElement('form');
+  form.id = 'cli-quick-form';
+  form.innerHTML = `
+    <div class="field">
+      <label>Nome <span class="req">*</span></label>
+      <input class="input" name="name" required value="${esc(name || '')}" />
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Telefone</label>
+        <input class="input" name="phone" inputmode="tel" /></div>
+      <div class="field"><label>E-mail</label>
+        <input class="input" name="email" type="email" /></div>
+    </div>`;
+  bindMask(form.querySelector('[name="phone"]'), maskPhone);
+
+  const foot = document.createElement('div');
+  foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Cancelar</button>
+                    <button class="btn btn--primary" type="submit" form="cli-quick-form">Criar</button>`;
+
+  const m = openModal({ title: 'Nova cliente', body: form, footer: foot });
+  foot.querySelector('[data-x]').onclick = () => m.close();
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const val = (k) => (fd.get(k) || '').toString().trim() || null;
+    const nameVal = (fd.get('name') || '').toString().trim();
+    if (!nameVal) return toast('Informe o nome.', 'warning');
+    const submit = foot.querySelector('[type="submit"]');
+    busy(submit, true);
+    const res = await supabase.from('clients')
+      .insert({ user_id: ctx.session.user.id, name: nameVal, phone: val('phone'), email: val('email') })
+      .select().single();
+    busy(submit, false);
+    if (res.error) { console.error(res.error); return toast('Erro ao salvar.', 'error'); }
+    toast('Cliente criada.');
+    m.markClean(); m.close(true); onSaved(res.data);
+  };
+}

@@ -6,7 +6,7 @@
 // Segue o padrão de servicos.js / clientes.js. RLS isola por usuário.
 // ============================================================================
 import { supabase } from './supabase.js';
-import { openForm as openClientForm } from './clientes.js';
+import { quickCreate as quickCreateClient } from './clientes.js';
 import { money, fmtDate, todayISO, daysSince, openModal, confirmDialog, toast, busy, esc,
   debounce, waLink, icon, clientAutocomplete, emptyBox, guard, bulkBar, periodFilter } from './utils.js';
 
@@ -356,12 +356,12 @@ function openForm(ctx, state, clientId, onSaved) {
   // item 15: seleção de cliente por busca (componente compartilhado). Sem
   // match → "＋ Cadastrar" abre o form de Clientes e já seleciona a criada.
   const clientPicker = clientAutocomplete(state.clients, clientId, undefined, {
-    onCreate: (name) => openClientForm(ctx, null, (created) => {
+    onCreate: (name) => quickCreateClient(ctx, name, (created) => {
       if (!created) return;
       state.clients.push(created);
       state.clients.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt'));
       clientPicker.set(created);
-    }, { name }),
+    }),
   });
   form.querySelector('[data-client-slot]').appendChild(clientPicker.el);
 
