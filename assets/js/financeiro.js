@@ -7,7 +7,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, todayISO, openModal, confirmDialog, guard, toast, busy, esc, parseMoney,
-  toCSV, download, icon, emptyBox, debounce } from './utils.js';
+  toCSV, download, icon, emptyBox, debounce, bulkBar, periodFilter } from './utils.js';
 
 const finIcon = icon('wallet');
 
@@ -33,7 +33,7 @@ function lucroOf(e) {
 }
 
 export async function render(root, ctx) {
-  const state = { all: [], tab: 'resumo', fStatus: '', fDe: '', fAte: '', q: '' };
+  const state = { all: [], tab: 'resumo', fStatus: '', fDe: '', fAte: '', q: '', selected: new Set() };
 
   const btn = document.createElement('button');
   btn.className = 'btn btn--primary';
@@ -73,14 +73,12 @@ export async function render(root, ctx) {
   filters.innerHTML = `
     <input class="input search-input" id="f-q" placeholder="Buscar lançamento…" value="${esc(state.q)}">
     <select class="select" id="f-status">
-      <option value="">Todo status</option><option value="pending">Pendentes</option><option value="paid">Pagos</option></select>
-    <input class="input" id="f-de" type="date" value="${state.fDe}" title="De">
-    <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até">`;
+      <option value="">Todo status</option><option value="pending">Pendentes</option><option value="paid">Pagos</option></select>`;
+  // select único de período (presets + personalizado) no lugar dos dois dates
+  filters.appendChild(periodFilter((de, ate) => { state.fDe = de; state.fAte = ate; paint(); }).el);
   filters.querySelector('#f-q').addEventListener('input',
     debounce((e) => { state.q = e.target.value.trim().toLowerCase(); paint(); }));
   filters.querySelector('#f-status').onchange = (e) => { state.fStatus = e.target.value; paint(); };
-  filters.querySelector('#f-de').onchange = (e) => { state.fDe = e.target.value; paint(); };
-  filters.querySelector('#f-ate').onchange = (e) => { state.fAte = e.target.value; paint(); };
 
   // filtro base (status + período + busca); a aba decide o recorte por tipo.
   function filtered() {
@@ -128,13 +126,41 @@ export async function render(root, ctx) {
       pane.innerHTML = emptyBox(finIcon, 'Nenhum lançamento no filtro.');
       return;
     }
+    // Rodada 7: coluna de seleção p/ limpeza em massa (delete direto, RLS isola)
+    const allSel = rows.every((e) => state.selected.has(e.id));
     pane.innerHTML = `
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>Data</th><th>Descrição</th><th>Cliente</th><th>Forma</th>
+      <div class="table-wrap">${bulkBar(state.selected.size, 'f-del')}<table class="data">
+        <thead><tr>
+          <th class="chk"><input type="checkbox" id="f-selall" ${allSel ? 'checked' : ''} aria-label="Selecionar todos"></th>
+          <th>Data</th><th>Descrição</th><th>Cliente</th><th>Forma</th>
           <th class="num">Valor</th>${showLucro ? '<th class="num">Lucro</th>' : ''}<th>Status</th><th></th></tr></thead>
         <tbody>${rows.map((e) => rowHTML(e, showLucro)).join('')}</tbody>
       </table></div>`;
     pane.querySelectorAll('[data-pay]').forEach((b) => b.onclick = () => settle(b.dataset.pay, load));
+    pane.querySelectorAll('[data-sel]').forEach((cb) => cb.onchange = () => {
+      cb.checked ? state.selected.add(cb.dataset.sel) : state.selected.delete(cb.dataset.sel);
+      paint();
+    });
+    const all = pane.querySelector('#f-selall');
+    if (all) all.onchange = () => {
+      rows.forEach((e) => all.checked ? state.selected.add(e.id) : state.selected.delete(e.id));
+      paint();
+    };
+    const del = pane.querySelector('#f-del');
+    if (del) del.onclick = guard(async () => {
+      const ids = [...state.selected];
+      const ok = await confirmDialog({
+        title: 'Excluir lançamentos',
+        message: `Excluir ${ids.length} lançamento${ids.length > 1 ? 's' : ''}? Eles saem do caixa e dos totais. Essa ação não tem desfazer.`,
+        confirmLabel: 'Excluir', danger: true,
+      });
+      if (!ok) return;
+      const { error } = await supabase.from('financial_entries').delete().in('id', ids);
+      if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+      state.selected.clear();
+      toast(`${ids.length} lançamento${ids.length > 1 ? 's excluídos' : ' excluído'}.`);
+      load();
+    });
   }
 
   function paintResumo(rows) {
@@ -196,6 +222,7 @@ export async function render(root, ctx) {
     const desc = e.description || (inc ? 'Receita' : 'Despesa');
     const lucro = showLucro ? lucroOf(e) : null;
     return `<tr>
+      <td class="chk"><input type="checkbox" data-sel="${e.id}" ${state.selected.has(e.id) ? 'checked' : ''} aria-label="Selecionar"></td>
       <td class="nowrap">${fmtDate(refDate(e))}</td>
       <td>${esc(desc)}${parc}</td>
       <td>${esc(e.clients?.name || '—')}</td>

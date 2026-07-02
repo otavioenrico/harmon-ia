@@ -146,6 +146,16 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .data .num { text-align: right; font-variant-numeric: tabular-nums; }
 .row-detail td { background: var(--surface-2); }
 
+/* seleção em massa (Histórico/Caixa): coluna de checkbox + barra de ação */
+.data .chk { width: 36px; }
+.data .chk input { display: block; cursor: pointer; accent-color: var(--color-mauve-700); }
+.bulkbar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--surface-2); border-bottom: 1px solid var(--border);
+  font-size: var(--fs-sm); color: var(--text-muted);
+}
+
 /* -------------------------------------------------------------- avatar ---- */
 .avatar {
   width: 34px; height: 34px; border-radius: 50%;

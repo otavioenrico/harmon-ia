@@ -6,8 +6,9 @@
 // Segue o padrão de servicos.js / clientes.js. RLS isola por usuário.
 // ============================================================================
 import { supabase } from './supabase.js';
-import { money, fmtDate, todayISO, daysSince, openModal, toast, busy, esc,
-  debounce, waLink, icon, clientAutocomplete, emptyBox, guard } from './utils.js';
+import { openForm as openClientForm } from './clientes.js';
+import { money, fmtDate, todayISO, daysSince, openModal, confirmDialog, toast, busy, esc,
+  debounce, waLink, icon, clientAutocomplete, emptyBox, guard, bulkBar, periodFilter } from './utils.js';
 
 const STATUS_BADGE = {
   scheduled: '<span class="badge badge--warning">agendado</span>',
@@ -25,7 +26,7 @@ const METHODS = [
 export async function render(root, ctx) {
   const state = { all: [], clients: [], services: [], stock: [], dismissals: new Map(),
     view: 'proc', qCliente: '', fServico: '', fStatus: '', fDe: '', fAte: '',
-    reDays: 60, retMonths: 1 };
+    reDays: 60, retMonths: 1, selected: new Set() };
 
   const btn = document.createElement('button');
   btn.className = 'btn btn--primary';
@@ -47,6 +48,10 @@ export async function render(root, ctx) {
 
   const tableWrap = root.querySelector('#h-table');
   const filters = root.querySelector('#h-filters');
+
+  // select único de período (presets + personalizado). Criado uma vez e
+  // re-anexado a cada paintFilters — o preset escolhido sobrevive à troca de view.
+  const period = periodFilter((de, ate) => { state.fDe = de; state.fAte = ate; paint(); });
 
   root.querySelector('#h-view').onclick = (e) => {
     const b = e.target.closest('[data-v]'); if (!b) return;
@@ -83,16 +88,13 @@ export async function render(root, ctx) {
       <select class="select" id="f-svc"><option value="">Todo serviço</option>${opts(state.services, state.fServico)}</select>
       <select class="select" id="f-st">
         <option value="">Todo status</option><option value="scheduled">Agendados</option>
-        <option value="completed">Realizados</option><option value="cancelled">Cancelados</option></select>
-      <input class="input" id="f-de" type="date" value="${state.fDe}" title="De">
-      <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até">`;
+        <option value="completed">Realizados</option><option value="cancelled">Cancelados</option></select>`;
+    filters.appendChild(period.el);
     filters.querySelector('#f-cli-q').addEventListener('input',
       debounce((e) => { state.qCliente = e.target.value.trim().toLowerCase(); paint(); }));
     filters.querySelector('#f-svc').onchange = (e) => { state.fServico = e.target.value; paint(); };
     filters.querySelector('#f-st').value = state.fStatus;
     filters.querySelector('#f-st').onchange = (e) => { state.fStatus = e.target.value; paint(); };
-    filters.querySelector('#f-de').onchange = (e) => { state.fDe = e.target.value; paint(); };
-    filters.querySelector('#f-ate').onchange = (e) => { state.fAte = e.target.value; paint(); };
   }
 
   // ----------------------------------------------------------------- dados ---
@@ -145,20 +147,59 @@ export async function render(root, ctx) {
       tableWrap.innerHTML = emptyBox(icon('clipboard'), 'Nenhum procedimento registrado.'); return;
     }
     // item 9: agendados e realizados listados juntos, com coluna de status.
-    tableWrap.innerHTML = table(
-      ['Data', 'Cliente', 'Serviço', 'Status', 'Valor', 'Lucro'],
-      rows.map((p) => {
-        const has = p.price_charged != null;
-        const lucro = has ? Number(p.price_charged) - p._cost : null;
-        return `<tr>
-          <td class="nowrap">${fmtDate(p.date)}</td>
-          <td>${esc(p.clients?.name || '—')}</td>
-          <td>${esc(p.services?.name || '—')}</td>
-          <td>${STATUS_BADGE[p.status] || STATUS_BADGE.completed}</td>
-          <td class="num">${has ? money(p.price_charged) : '—'}</td>
-          <td class="num ${lucro < 0 ? 'neg' : ''}">${has ? money(lucro) : '—'}</td>
-        </tr>`;
-      }).join(''), 4);
+    // Rodada 7: coluna de seleção p/ limpeza em massa (RPC delete_procedures).
+    const allSel = rows.every((p) => state.selected.has(p.id));
+    tableWrap.innerHTML = `
+      ${bulkBar(state.selected.size, 'h-del')}
+      <table class="data">
+        <thead><tr>
+          <th class="chk"><input type="checkbox" id="h-selall" ${allSel ? 'checked' : ''} aria-label="Selecionar todos"></th>
+          <th>Data</th><th>Cliente</th><th>Serviço</th><th>Status</th>
+          <th class="num">Valor</th><th class="num">Lucro</th>
+        </tr></thead>
+        <tbody>${rows.map((p) => {
+          const has = p.price_charged != null;
+          const lucro = has ? Number(p.price_charged) - p._cost : null;
+          return `<tr>
+            <td class="chk"><input type="checkbox" data-sel="${p.id}" ${state.selected.has(p.id) ? 'checked' : ''} aria-label="Selecionar"></td>
+            <td class="nowrap">${fmtDate(p.date)}</td>
+            <td>${esc(p.clients?.name || '—')}</td>
+            <td>${esc(p.services?.name || '—')}</td>
+            <td>${STATUS_BADGE[p.status] || STATUS_BADGE.completed}</td>
+            <td class="num">${has ? money(p.price_charged) : '—'}</td>
+            <td class="num ${lucro < 0 ? 'neg' : ''}">${has ? money(lucro) : '—'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    wireSelection(rows);
+  }
+
+  // checkboxes + selecionar-todos + excluir em massa (só na view Procedimentos)
+  function wireSelection(rows) {
+    tableWrap.querySelectorAll('[data-sel]').forEach((cb) => cb.onchange = () => {
+      cb.checked ? state.selected.add(cb.dataset.sel) : state.selected.delete(cb.dataset.sel);
+      paint();
+    });
+    const all = tableWrap.querySelector('#h-selall');
+    if (all) all.onchange = () => {
+      rows.forEach((p) => all.checked ? state.selected.add(p.id) : state.selected.delete(p.id));
+      paint();
+    };
+    const del = tableWrap.querySelector('#h-del');
+    if (del) del.onclick = guard(async () => {
+      const ids = [...state.selected];
+      const ok = await confirmDialog({
+        title: 'Excluir procedimentos',
+        message: `Excluir ${ids.length} procedimento${ids.length > 1 ? 's' : ''}? Os lançamentos ligados no Fluxo de Caixa também serão removidos. Materiais debitados não voltam ao estoque e eventos do Google Calendar não são apagados. Essa ação não tem desfazer.`,
+        confirmLabel: 'Excluir', danger: true,
+      });
+      if (!ok) return;
+      const { error } = await supabase.rpc('delete_procedures', { p_ids: ids });
+      if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+      state.selected.clear();
+      toast(`${ids.length} procedimento${ids.length > 1 ? 's excluídos' : ' excluído'}.`);
+      load();
+    });
   }
 
   // último procedimento REALIZADO por cliente (agendamento futuro não conta)
@@ -312,8 +353,16 @@ function openForm(ctx, state, clientId, onSaved) {
       <textarea class="textarea" name="notes"></textarea>
     </div>`;
 
-  // item 15: seleção de cliente por busca (componente compartilhado)
-  const clientPicker = clientAutocomplete(state.clients, clientId);
+  // item 15: seleção de cliente por busca (componente compartilhado). Sem
+  // match → "＋ Cadastrar" abre o form de Clientes e já seleciona a criada.
+  const clientPicker = clientAutocomplete(state.clients, clientId, undefined, {
+    onCreate: (name) => openClientForm(ctx, null, (created) => {
+      if (!created) return;
+      state.clients.push(created);
+      state.clients.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt'));
+      clientPicker.set(created);
+    }, { name }),
+  });
   form.querySelector('[data-client-slot]').appendChild(clientPicker.el);
 
   // serviço → sugere o preço padrão

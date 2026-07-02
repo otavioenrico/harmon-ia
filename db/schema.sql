@@ -570,6 +570,25 @@ begin
     where procedure_id = p_procedure_id and user_id = v_user and paid = false;
 end $$;
 
+-- ========================= RPC: excluir procedimentos (Rodada 7, limpeza) =====
+-- Limpeza de histórico em massa: apaga os procedimentos selecionados E os
+-- lançamentos ligados no caixa (a FK de financial_entries é on delete SET NULL,
+-- então sem este delete explícito sobrariam lançamentos órfãos).
+-- procedure_materials some via FK on delete cascade. Estoque NÃO é devolvido
+-- (movimentações são história real — ajuste manual se preciso) e eventos do
+-- Google Calendar não são tocados.
+create or replace function public.delete_procedures(p_ids uuid[])
+returns void
+language plpgsql as $$
+declare v_user uuid := auth.uid();
+begin
+  if v_user is null then raise exception 'not authenticated'; end if;
+  delete from public.financial_entries
+    where procedure_id = any(p_ids) and user_id = v_user;
+  delete from public.procedures
+    where id = any(p_ids) and user_id = v_user;
+end $$;
+
 -- ============================================================ STORAGE =========
 -- Um bucket privado para fotos de itens e anexos de NF. Caminho sempre
 -- prefixado pelo user_id: "<uid>/arquivo.jpg" — a policy garante isolamento.

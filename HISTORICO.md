@@ -693,5 +693,65 @@ CSS (`card-grid`, `login__card`, `login__tagline` limpos).
 ### Pendente / próximo
 - **Rodar `db/schema.sql` no Supabase antes de testar** (FK do Fluxo de Caixa
   + coluna `months`) — sem isso o Fluxo de Caixa continua quebrado.
+  ✅ Feito pelo usuário em 2026-07-02 (início da Rodada 7).
 - Verificação visual do usuário em ambiente real (não testado em browser nesta
   sessão). Sem commit/push/deploy, como combinado.
+
+---
+
+## Rodada 7 — Diagnóstico geral + limpeza em massa, período e cadastro inline (2026-07-02)
+
+### Diagnóstico (só análise, sem código)
+- **`improvements/rodada7-diagnostico-geral.md`**: auditoria completa sob 3
+  personas (Eng. de Software, Full Stack Sênior, UI/UX) — 34 achados com
+  arquivo/linha, consolidados por severidade, convergências, 12 quick wins e
+  8 estruturais. Destaques: auto-conclusão de agendamentos sem confirmação/
+  estorno (ES-1), `google_refresh_token` chegando ao browser via `select('*')`
+  (ES-2), tabelas sem scroll horizontal no mobile (UX-1), edição de agendamento
+  duplicando parcela já baixada (ES-6).
+- **Decisões fechadas** (usuário delegou; registradas no doc): no-show =
+  confirmação em lote com exceções; login = remover form fake, Google único e
+  primário; sinal antecipado permitido (edição aborta se houver parcela paga);
+  horizonte default 12 meses; OAuth segue em modo Teste. A execução do
+  diagnóstico será uma rodada própria.
+
+### Feito (código desta rodada — pedidos do usuário)
+1. **Limpeza em massa** (Histórico > Procedimentos, Fluxo de Caixa e Clientes):
+   coluna de checkbox + "selecionar todos" + barra com contador e **Excluir**
+   (`bulkBar` novo no utils; `.chk`/`.bulkbar` no components.css; confirmação
+   de perigo em tudo).
+   - Procedimentos: nova RPC **`delete_procedures(uuid[])`** (schema.sql) —
+     apaga procedimentos + lançamentos ligados na mesma transação (a FK é
+     `set null`; sem o delete explícito sobrariam órfãos). Materiais caem via
+     cascade; estoque NÃO é devolvido; eventos Google não são tocados (diálogo
+     avisa).
+   - Lançamentos: delete direto em `financial_entries` (RLS isola).
+   - Clientes: delete direto — FKs resolvem (procedures/financial_entries
+     ficam com cliente "—"; return_dismissals cai em cascata). Também botão
+     **Excluir** no drawer de perfil. Inativar continua sendo a opção
+     "sumir sem apagar".
+2. **Filtro de período** (`periodFilter` novo no utils, usado em Fluxo de
+   Caixa e Histórico > Procedimentos): os dois dates De/Até viram um select —
+   Todo o período (default) / Mês atual / 30 dias / 3 / 6 / 12 meses /
+   **Personalizado…** (só aí os dates aparecem). "Mês atual" = mês-calendário
+   inteiro (parcelas a vencer no mês continuam visíveis). No Histórico o
+   componente sobrevive à troca de views (criado 1x, re-anexado).
+3. **Cadastro de cliente inline**: `clientAutocomplete` ganhou `onCreate` —
+   busca sem match mostra "＋ Cadastrar \"nome\"" (clique ou Enter). Abre o
+   `openForm` de Clientes (agora **exportado**, aceita `preset.name` e devolve
+   a linha criada ao `onSaved`) por cima do modal e já seleciona a cliente
+   criada (`picker.set()`). Ativo em Agenda (novo agendamento) e Histórico
+   (registro); Estoque reusa o autocomplete sem o botão (opt-in).
+
+### Verificação
+`node --check` limpo nos 6 JS tocados (utils, clientes, agenda, historico,
+financeiro + estoque intocado). Asserts da lógica não trivial do `periodFilter`
+(limites de mês, fevereiro bissexto, presets) passaram. SQL: 11 blocos
+plpgsql/do = 11 `end $$;` (balanceado). Edge conhecido e aceito: preset "3
+meses" partindo de dia 31 desloca 2-3 dias (rolagem de calendário do JS).
+
+### Deploy
+- **Lembrar: rodar `db/schema.sql` no Supabase de novo** — a RPC
+  `delete_procedures` foi adicionada DEPOIS do run desta manhã. Sem ela, o
+  Excluir do Histórico falha (Clientes e Caixa funcionam sem migração).
+- Verificação visual em produção ainda pendente (browser não conectado).

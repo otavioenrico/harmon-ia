@@ -239,9 +239,11 @@ export const guard = (fn) => {
 
 // -------------------------------------------------------- autocomplete -----
 // item 15: seleção de cliente por busca (nome ou telefone). Componente único —
-// Agendamento e Histórico usam o mesmo. Devolve { el, value() } onde value() é
-// o id selecionado (ou ''). Mesma lógica p/ qualquer lista {id,name,phone}.
-export function clientAutocomplete(clients, selectedId = '', placeholder = 'Buscar cliente…') {
+// Agendamento e Histórico usam o mesmo. Devolve { el, value(), set(item) }.
+// opts.onCreate(texto): quando definido e a busca não achar nada, o dropdown
+// mostra "＋ Cadastrar…" (clique ou Enter) — o chamador abre o cadastro e depois
+// chama set() com o registro criado. Mesma lógica p/ qualquer lista {id,name,phone}.
+export function clientAutocomplete(clients, selectedId = '', placeholder = 'Buscar cliente…', { onCreate } = {}) {
   const wrap = h(`<div class="autocomplete">
     <input class="input" type="text" placeholder="${esc(placeholder)}" autocomplete="off">
     <input type="hidden">
@@ -259,7 +261,9 @@ export function clientAutocomplete(clients, selectedId = '', placeholder = 'Busc
           || onlyDigits(c.phone).includes(onlyDigits(q))).slice(0, 8));
     list.innerHTML = matches.map((c, i) =>
       `<div class="autocomplete__item${i === active ? ' active' : ''}" data-i="${i}">${esc(c.name)}${c.phone ? `<div class="sub">${esc(c.phone)}</div>` : ''}</div>`
-    ).join('') || `<div class="autocomplete__item faint">Nenhum cliente</div>`;
+    ).join('') || (onCreate && q
+      ? `<div class="autocomplete__item" data-create>＋ Cadastrar "${esc(input.value.trim())}"</div>`
+      : `<div class="autocomplete__item faint">Nenhum cliente</div>`);
     list.hidden = false;
   };
   input.addEventListener('focus', render);
@@ -270,14 +274,59 @@ export function clientAutocomplete(clients, selectedId = '', placeholder = 'Busc
     if (e.key === 'ArrowDown') { active = Math.min(active + 1, matches.length - 1); render(); scrollActive(); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); render(); scrollActive(); e.preventDefault(); }
     else if (e.key === 'Enter' && matches[active]) { pick(matches[active]); list.hidden = true; e.preventDefault(); }
+    else if (e.key === 'Enter' && onCreate && !matches.length && input.value.trim()) {
+      list.hidden = true; onCreate(input.value.trim()); e.preventDefault();
+    }
     else if (e.key === 'Escape') { list.hidden = true; }
   });
   list.addEventListener('mousedown', (e) => {
+    if (e.target.closest('[data-create]')) { list.hidden = true; onCreate(input.value.trim()); return; }
     const it = e.target.closest('[data-i]'); if (!it) return;
     pick(matches[+it.dataset.i]); list.hidden = true;
   });
   document.addEventListener('mousedown', (e) => { if (!wrap.contains(e.target)) list.hidden = true; });
-  return { el: wrap, value: () => hidden.value };
+  return { el: wrap, value: () => hidden.value, set: (c) => pick(c) };
+}
+
+// ------------------------------------------------------ filtro de período ---
+// select único de período (Caixa/Histórico): presets + "Personalizado…" que
+// revela os dois campos de data. onChange(deISO, ateISO) — '' = sem limite.
+// Feito p/ viver dentro do grid .filters (display:contents = filhos viram
+// células do grid; os inputs escondidos não ocupam célula).
+export function periodFilter(onChange) {
+  const wrap = h(`<div style="display:contents">
+    <select class="select" aria-label="Período">
+      <option value="all">Todo o período</option>
+      <option value="month">Mês atual</option>
+      <option value="30d">Últimos 30 dias</option>
+      <option value="3m">Últimos 3 meses</option>
+      <option value="6m">Últimos 6 meses</option>
+      <option value="12m">Últimos 12 meses</option>
+      <option value="custom">Personalizado…</option>
+    </select>
+    <input class="input" type="date" title="De" aria-label="De" hidden>
+    <input class="input" type="date" title="Até" aria-label="Até" hidden>
+  </div>`);
+  const [sel, de, ate] = wrap.children;
+  const iso = (d) => d.toLocaleDateString('en-CA');
+  const range = (v) => {
+    const now = new Date();
+    if (v === 'month') return [iso(new Date(now.getFullYear(), now.getMonth(), 1)),
+                               iso(new Date(now.getFullYear(), now.getMonth() + 1, 0))];
+    const months = { '3m': 3, '6m': 6, '12m': 12 }[v];
+    if (v !== '30d' && !months) return ['', ''];               // 'all'
+    const from = new Date(now);
+    if (v === '30d') from.setDate(from.getDate() - 30);
+    else from.setMonth(from.getMonth() - months);
+    return [iso(from), iso(now)];
+  };
+  sel.onchange = () => {
+    const custom = sel.value === 'custom';
+    de.hidden = ate.hidden = !custom;
+    onChange(...(custom ? [de.value, ate.value] : range(sel.value)));
+  };
+  de.onchange = ate.onchange = () => onChange(de.value, ate.value);
+  return { el: wrap };
 }
 
 // --------------------------------------------------------------- skeleton ---
@@ -291,6 +340,13 @@ export const skeletonRows = (cols, rows = 5) =>
 // improvisado inline nos demais módulos). extraHTML: CTA opcional (botão etc.).
 export const emptyBox = (iconHTML, msg, extraHTML = '') =>
   `<div class="empty">${iconHTML ? `<div class="icon">${iconHTML}</div>` : ''}<p>${esc(msg)}</p>${extraHTML}</div>`;
+
+// --------------------------------------------------------- seleção em massa --
+// barra de ação das tabelas com checkbox (Histórico/Caixa): contador + Excluir.
+// Renderiza vazio sem seleção — o chamador só liga o handler se o botão existir.
+export const bulkBar = (count, delId) => !count ? '' :
+  `<div class="bulkbar"><span>${count} selecionado${count > 1 ? 's' : ''}</span>
+     <button class="btn btn--danger btn--sm" id="${delId}">${icon('trash')} Excluir</button></div>`;
 
 // ------------------------------------------------------------- download/CSV -
 export function download(filename, content, mime = 'text/plain') {
