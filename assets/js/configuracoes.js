@@ -11,11 +11,12 @@ const TABLES = ['user_settings', 'services', 'clients', 'stock_items',
 
 // cor de destaque: id + amostra (tom 500 de cada paleta em accent.css) + rótulo
 const ACCENTS = [
-  ['rose',  '#b79ca0', 'Rosé'],
-  ['sand',  '#cbb088', 'Areia'],
-  ['sky',   '#9bb9cf', 'Céu'],
-  ['lilac', '#b29ec6', 'Lilás'],
-  ['mint',  '#97c0a6', 'Menta'],
+  ['rose',    '#b79ca0', 'Rosé'],
+  ['sand',    '#cbb088', 'Areia'],
+  ['sky',     '#9bb9cf', 'Céu'],
+  ['lilac',   '#b29ec6', 'Lilás'],
+  ['mint',    '#97c0a6', 'Menta'],
+  ['neutral', '#a3a3a3', 'Neutro'],
 ];
 
 export async function render(root, ctx) {

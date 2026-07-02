@@ -24,6 +24,7 @@
   --color-black:    #1a1816;   /* quase-preto */
   --color-white:    #ffffff;
   --color-gray-100: #f5f4f2;   /* fundo geral */
+  --color-gray-150: #e6e6e6;   /* fundo da tela de login */
   --color-gray-200: #ebe8e5;
   --color-gray-400: #7d766e;   /* ~4.6:1 sobre branco (era #9e9892, abaixo de AA) */
   --color-gray-600: #6b6760;   /* 5.62:1 sobre branco */

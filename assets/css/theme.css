@@ -4,21 +4,24 @@
    ============================================================================ */
 
 [data-theme="dark"] {
-  --bg:            #131311;
-  --surface:       #1f1f1d;
-  --surface-2:     #272723;
-  --text:          #f1eee9;
-  --text-muted:    #b3ada4;
-  --text-faint:    #837d74;
-  --border:        #322f2b;
-  --border-strong: #4a4640;
-  --accent:        #2f2e2e;
+  /* Rodada 9: paleta neutra (sem matiz quente) — só preto/cinza puro daqui
+     pra baixo; a única cor com tonalidade que sobra é a complementar
+     (--color-mauve-300), em accent-text/btn-primary/btn-secondary/focus-ring. */
+  --bg:            #0d0d0d;
+  --surface:       #1f1f1f;
+  --surface-2:     #272727;
+  --text:          #ffffff;
+  --text-muted:    #aeaeae;
+  --text-faint:    #7e7e7e;
+  --border:        #2f2f2f;
+  --border-strong: #464646;
+  --accent:        #2e2e2e;
   --accent-text:   var(--color-mauve-300);
 
   /* primário inverte para o bege (texto escuro) — destaque sem #fff puro */
   --btn-primary-bg:   var(--color-mauve-300);
   --btn-primary-text: var(--color-black);
-  --btn-secondary-bg:   #2f2e2e;
+  --btn-secondary-bg:   #2e2e2e;
   --btn-secondary-text: var(--color-mauve-300);
 
   --success-soft: #1d2a22;
@@ -30,9 +33,16 @@
 
   --focus-ring: 2px solid var(--color-mauve-300);
   --overlay-bg: rgba(0, 0, 0, 0.55);
-  --switch-thumb: #131311;
+  --switch-thumb: #0d0d0d;
 }
 
 /* o switch fica bege no escuro */
 [data-theme="dark"] .switch input:checked + .track { background: var(--color-mauve-300); }
+
+/* destaque "neutral": no escuro o CTA primário vira branco puro (não um
+   cinza) — os outros 5 destaques usam a cor de --color-mauve-300 aqui; o
+   neutro é o único caso em que preto/branco têm prioridade sobre a rampa. */
+[data-theme="dark"][data-accent="neutral"] {
+  --btn-primary-bg: #ffffff;
+}
 

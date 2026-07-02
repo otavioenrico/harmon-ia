@@ -59,7 +59,10 @@
 }
 .textarea { resize: vertical; min-height: 80px; }
 .field-row { display: flex; gap: var(--sp-3); }
-.field-row > .field { flex: 1; }
+/* min-width:0 evita que o min-content do <input> (que os browsers calculam
+   com uma largura mínima própria) force o item flex a estourar o field-row —
+   mesma causa-raiz do overflow visto no formulário de Clientes no mobile. */
+.field-row > .field { flex: 1; min-width: 0; }
 .hint { font-size: var(--fs-xs); color: var(--text-faint); }
 
 /* toggle / switch ----------------------------------------------------------- */
@@ -344,7 +347,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .hero {
   background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);
   border-radius: var(--radius-xl); padding: var(--sp-6);
-  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5); flex-wrap: wrap;
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-5);
 }
 .hero__label { text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-faint); }
 .hero__title { font-size: var(--fs-2xl); font-weight: var(--fw-700); margin-top: var(--sp-2); color: var(--text); }
@@ -474,9 +477,13 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   }
   .closing .drawer { animation: slideDownOut var(--dur-exit) var(--ease-out) forwards; }
 
-  /* formulários: pares curtos (Data/Hora) lado a lado, campos largos empilham */
+  /* formulários: campos empilham em coluna única. !important necessário
+     porque vários forms (Clientes/Agenda/Histórico/Estoque) setam flex:N
+     inline pra proporção desktop (ex.: Rua flex:3 / Número flex:1) — sem
+     isso, o basis:0% do inline sobrevivia ao wrap e espremia os campos
+     lado a lado em vez de empilhar, causando o overflow visto no mobile. */
   .field-row { flex-wrap: wrap; }
-  .field-row > .field { flex: 1 1 140px; }
+  .field-row > .field { flex: 1 1 140px !important; }
 
   /* toolbars: busca em linha própria; navegação da agenda idem */
   .module__toolbar .search-input { max-width: none; flex: 1 1 100%; }

@@ -27,7 +27,7 @@ create table if not exists public.user_settings (
   user_id              uuid references auth.users(id) on delete cascade not null unique,
   google_refresh_token text,
   theme                text default 'light',         -- 'light' | 'dark'
-  accent               text default 'rose',          -- rose | sand | sky | lilac | mint
+  accent               text default 'rose',          -- rose | sand | sky | lilac | mint | neutral
   created_at           timestamptz default now(),
   updated_at           timestamptz default now()
 );
@@ -188,7 +188,7 @@ create table if not exists public.return_dismissals (
 
 -- migrações p/ bancos já implantados (idempotente) ----------------------------
 alter table public.clients add column if not exists address_complement text;
-alter table public.user_settings add column if not exists accent text default 'rose';
+alter table public.user_settings add column if not exists accent text default 'rose'; -- valores: rose | sand | sky | lilac | mint | neutral
 alter table public.user_settings add column if not exists whatsapp_number text;
 
 -- FIX (Rodada 6, bug 1.2): financial_entries.procedure_id não tinha FK — sem o

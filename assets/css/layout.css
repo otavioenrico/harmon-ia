@@ -37,7 +37,7 @@ button { font-family: inherit; }
   display: grid;
   place-items: center;
   padding: var(--sp-5);
-  background: var(--color-gray-200);
+  background: var(--color-gray-150);
 }
 .login-card {
   display: grid;

@@ -38,3 +38,14 @@
   --color-mauve-500: #97c0a6;
   --color-mauve-700: #6a9179;
 }
+/* 'neutral' — sem matiz, só cinza puro (mesma rampa das outras, sem cor).
+   O CTA primário some do "acompanha o destaque": no claro já é preto por
+   padrão (--btn-primary-bg fixo em tokens.css); no escuro teria virado a
+   cor de destaque (mauve-300) como nos outros temas — aqui forçamos branco
+   puro em vez de um cinza, ver override em theme.css. */
+[data-accent="neutral"] {
+  --color-mauve-100: #ececec;
+  --color-mauve-300: #cfcfcf;
+  --color-mauve-500: #a3a3a3;
+  --color-mauve-700: #6b6b6b;
+}
