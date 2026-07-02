@@ -165,9 +165,9 @@ export async function render(root, ctx) {
           <tbody>${upcoming.map((p) => `
             <tr>
               <td>${esc(p.clients?.name || 'Cliente')}</td>
-              <td>${esc(p.services?.name || 'Procedimento')}</td>
-              <td class="nowrap">${durLabel(p)}</td>
-              <td class="nowrap muted">${whenLabel(p)}</td>
+              <td data-th="Procedimento">${esc(p.services?.name || 'Procedimento')}</td>
+              <td class="nowrap" data-th="Duração">${durLabel(p)}</td>
+              <td class="nowrap muted" data-th="Data">${whenLabel(p)}</td>
             </tr>`).join('')}</tbody>
         </table>`
         : '<p class="faint">Nada agendado. Use “Agendar” para criar.</p>'}

@@ -162,12 +162,12 @@ export async function render(root, ctx) {
           const lucro = has ? Number(p.price_charged) - p._cost : null;
           return `<tr>
             <td class="chk"><input type="checkbox" data-sel="${p.id}" ${state.selected.has(p.id) ? 'checked' : ''} aria-label="Selecionar"></td>
-            <td class="nowrap">${fmtDate(p.date)}</td>
+            <td class="nowrap" data-th="Data">${fmtDate(p.date)}</td>
             <td>${esc(p.clients?.name || '—')}</td>
-            <td>${esc(p.services?.name || '—')}</td>
-            <td>${STATUS_BADGE[p.status] || STATUS_BADGE.completed}</td>
-            <td class="num">${has ? money(p.price_charged) : '—'}</td>
-            <td class="num ${lucro < 0 ? 'neg' : ''}">${has ? money(lucro) : '—'}</td>
+            <td data-th="Serviço">${esc(p.services?.name || '—')}</td>
+            <td data-th="Status">${STATUS_BADGE[p.status] || STATUS_BADGE.completed}</td>
+            <td class="num" data-th="Valor">${has ? money(p.price_charged) : '—'}</td>
+            <td class="num ${lucro < 0 ? 'neg' : ''}" data-th="Lucro">${has ? money(lucro) : '—'}</td>
           </tr>`;
         }).join('')}</tbody>
       </table>`;
@@ -226,9 +226,9 @@ export async function render(root, ctx) {
       ['Cliente', 'Último proc.', 'Dias', ''],
       rows.map((c) => `<tr>
         <td>${esc(c.name)}</td>
-        <td class="nowrap">${fmtDate(c._last)}</td>
-        <td class="num">${c._days}</td>
-        <td class="num">${c.phone
+        <td class="nowrap" data-th="Último proc.">${fmtDate(c._last)}</td>
+        <td class="num" data-th="Dias">${c._days}</td>
+        <td class="num actions">${c.phone
           ? `<a class="btn btn--secondary btn--sm" target="_blank" rel="noopener"
                href="${waLink(c.phone, msg(c.name))}">WhatsApp</a>`
           : '<span class="faint">sem telefone</span>'}</td>
@@ -271,10 +271,10 @@ export async function render(root, ctx) {
       ['Cliente', 'Procedimento', 'Último proc.', 'Dias', ''],
       rows.map((r) => `<tr data-cli="${r.client_id}" data-svc="${r.service_id}">
         <td>${esc(r.name)}</td>
-        <td>${esc(r.service || '—')}</td>
-        <td class="nowrap">${fmtDate(r.date)}</td>
-        <td class="num">${r._days}</td>
-        <td class="num nowrap">
+        <td data-th="Procedimento">${esc(r.service || '—')}</td>
+        <td class="nowrap" data-th="Último proc.">${fmtDate(r.date)}</td>
+        <td class="num" data-th="Dias">${r._days}</td>
+        <td class="num nowrap actions">
           ${r.phone
             ? `<a class="btn btn--secondary btn--sm" target="_blank" rel="noopener"
                  href="${waLink(r.phone, msg(r.name))}">WhatsApp</a>`

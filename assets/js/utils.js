@@ -187,9 +187,10 @@ export function openModal({ title = '', body = '', footer = '', wide = false, on
 // ---------------------------------------------------------------- drawer ----
 // painel lateral reaproveitando .modal-overlay (backdrop) + .drawer. ESC e
 // clique-fora fecham; mesmo trap/restauração de foco do modal.
-export function openDrawer(bodyEl, { center = false } = {}) {
+// center: centralizado (perfil/estoque); sheet: gruda no rodapé (menu "Mais").
+export function openDrawer(bodyEl, { center = false, sheet = false } = {}) {
   const overlay = h(`<div class="modal-overlay"></div>`);
-  const aside = h(`<aside class="drawer${center ? ' drawer--center' : ''}" role="dialog" aria-modal="true" tabindex="-1"></aside>`);
+  const aside = h(`<aside class="drawer${center ? ' drawer--center' : ''}${sheet ? ' drawer--sheet' : ''}" role="dialog" aria-modal="true" tabindex="-1"></aside>`);
   aside.appendChild(bodyEl);
   overlay.appendChild(aside);
   document.body.appendChild(overlay);

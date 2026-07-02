@@ -122,11 +122,11 @@ export async function render(root, ctx) {
       <tr class="clickable" data-id="${c.id}">
         <td class="chk"><input type="checkbox" data-sel="${c.id}" ${state.selected.has(c.id) ? 'checked' : ''} aria-label="Selecionar"></td>
         <td>${esc(c.name)}${c.active === false ? ' <span class="badge badge--muted">inativa</span>' : ''}</td>
-        <td class="nowrap">${c.phone ? `<a class="wa-link" href="${waLink(c.phone)}" target="_blank" rel="noopener" title="WhatsApp">${icon('whatsapp')}${esc(c.phone)}</a>` : '—'}</td>
-        <td>${esc(c.email || '—')}</td>
-        <td>${esc(c.address_city || '—')}</td>
-        <td class="nowrap">${c._last ? fmtDate(c._last) : '—'}</td>
-        <td class="num">${c._total}</td>
+        <td class="nowrap" data-th="Telefone">${c.phone ? `<a class="wa-link" href="${waLink(c.phone)}" target="_blank" rel="noopener" title="WhatsApp">${icon('whatsapp')}${esc(c.phone)}</a>` : '—'}</td>
+        <td data-th="E-mail">${esc(c.email || '—')}</td>
+        <td data-th="Cidade">${esc(c.address_city || '—')}</td>
+        <td class="nowrap" data-th="Último proc.">${c._last ? fmtDate(c._last) : '—'}</td>
+        <td class="num" data-th="Total">${c._total}</td>
       </tr>`;
   }
 
@@ -253,10 +253,10 @@ async function loadProcedures(clientId, pane) {
           (s, m) => s + Number(m.quantity_used || 0) * Number(m.unit_cost_at_time || 0), 0);
         const hasPrice = p.price_charged != null;
         return `<tr>
-          <td class="nowrap">${fmtDate(p.date)}</td>
-          <td>${esc(p.services?.name || '—')}</td>
-          <td class="num">${hasPrice ? money(p.price_charged) : '—'}</td>
-          <td class="num">${hasPrice ? money(Number(p.price_charged) - cost) : '—'}</td>
+          <td class="nowrap" data-th="Data">${fmtDate(p.date)}</td>
+          <td data-th="Serviço">${esc(p.services?.name || '—')}</td>
+          <td class="num" data-th="Valor">${hasPrice ? money(p.price_charged) : '—'}</td>
+          <td class="num" data-th="Lucro">${hasPrice ? money(Number(p.price_charged) - cost) : '—'}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
@@ -272,10 +272,10 @@ async function loadFinancial(clientId, pane) {
     <table class="data">
       <thead><tr><th>Venc.</th><th>Descrição</th><th class="num">Valor</th><th>Status</th></tr></thead>
       <tbody>${data.map((f) => `<tr>
-        <td class="nowrap">${fmtDate(f.due_date)}</td>
-        <td>${esc(f.description || '—')}</td>
-        <td class="num ${f.type === 'expense' ? 'neg' : 'pos'}">${f.type === 'expense' ? '−' : ''}${money(f.amount)}</td>
-        <td>${f.paid ? '<span class="badge badge--success">pago</span>' : '<span class="badge badge--warning">pendente</span>'}</td>
+        <td class="nowrap" data-th="Venc.">${fmtDate(f.due_date)}</td>
+        <td data-th="Descrição">${esc(f.description || '—')}</td>
+        <td class="num ${f.type === 'expense' ? 'neg' : 'pos'}" data-th="Valor">${f.type === 'expense' ? '−' : ''}${money(f.amount)}</td>
+        <td data-th="Status">${f.paid ? '<span class="badge badge--success">pago</span>' : '<span class="badge badge--warning">pendente</span>'}</td>
       </tr>`).join('')}</tbody>
     </table>`;
 }

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="light dark" />
   <title>Harmon IA</title>
   <link rel="stylesheet" href="assets/css/tokens.css" />
@@ -33,6 +33,9 @@
       <main class="module" id="module-root"></main>
     </div>
   </div>
+
+  <!-- navegação mobile (≤900px): populada pelo app.js; CSS esconde no desktop -->
+  <nav class="tabbar" id="tabbar" aria-label="Navegação principal" hidden></nav>
 
   <script type="module" src="assets/js/app.js"></script>
 </body>

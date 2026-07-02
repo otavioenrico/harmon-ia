@@ -71,9 +71,9 @@ export async function render(root, ctx) {
           <span class="dot" style="background:${esc(s.color || '#9e9892')}"></span>
           <span>${esc(s.name)}${s.description ? `<div class="sub faint" style="font-size:var(--fs-xs)">${esc(s.description)}</div>` : ''}</span>
         </div></td>
-        <td class="num">${s.default_price != null ? money(s.default_price) : '—'}</td>
-        <td class="num">${s.duration_min ? s.duration_min + ' min' : '—'}</td>
-        <td>${s.active ? '<span class="badge badge--success">ativo</span>' : '<span class="badge badge--muted">inativo</span>'}</td>
+        <td class="num" data-th="Preço">${s.default_price != null ? money(s.default_price) : '—'}</td>
+        <td class="num" data-th="Duração">${s.duration_min ? s.duration_min + ' min' : '—'}</td>
+        <td data-th="Status">${s.active ? '<span class="badge badge--success">ativo</span>' : '<span class="badge badge--muted">inativo</span>'}</td>
       </tr>`;
   }
 

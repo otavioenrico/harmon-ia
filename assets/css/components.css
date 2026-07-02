@@ -28,8 +28,7 @@
 /* CTA em destaque (banner/hero): pill. Botões do dia-a-dia continuam retângulo. */
 .btn--pill { border-radius: var(--radius-pill); padding: var(--sp-3) var(--sp-5); }
 .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-/* rótulo de botão que colapsa para só-ícone em telas estreitas (ex.: Exportar CSV) */
-@media (max-width: 480px) { .btn-label { display: none; } }
+/* rótulo de botão que colapsa para só-ícone no mobile (ver bloco mobile ≤900px) */
 .btn--icon svg { width: 20px; height: 20px; }
 
 .btn-google {
@@ -131,7 +130,8 @@
 .badge--muted   { background: var(--surface-2);    color: var(--text-faint); }
 
 /* -------------------------------------------------------------- tabelas --- */
-.table-wrap { background: var(--surface); box-shadow: var(--shadow-sm); border-radius: var(--radius); overflow: hidden; }
+/* overflow-x: tabela larga rola pro lado em vez de esmagar as colunas */
+.table-wrap { background: var(--surface); box-shadow: var(--shadow-sm); border-radius: var(--radius); overflow-x: auto; }
 table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .data th {
   text-align: left; font-weight: var(--fw-400); color: var(--text-muted);
@@ -216,7 +216,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 }
 /* drawer lateral (perfil da cliente) — mesma receita do modal: o container não
    rola; quem rola é a região .drawer__body montada pelo módulo. */
-.drawer { position: fixed; top: 0; right: 0; height: 100vh; width: 460px; max-width: 92vw;
+.drawer { position: fixed; top: 0; right: 0; height: 100dvh; width: 460px; max-width: 92vw;
   background: var(--surface); border-left: 1px solid var(--border); z-index: 100;
   display: flex; flex-direction: column; overflow: hidden;
   animation: slideLeft var(--dur-base) var(--ease-out); }
@@ -233,6 +233,18 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .drawer__head { flex-shrink: 0; padding: var(--sp-5) var(--sp-5) 0; }
 .drawer__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--sp-4) var(--sp-5) var(--sp-5); }
 .closing .drawer.drawer--center { animation: slideDownOut var(--dur-exit) var(--ease-out) forwards; }
+/* variante sheet (menu "Mais" da tabbar): gruda no rodapé, largura total,
+   cantos superiores arredondados; safe-area p/ iPhone. */
+.drawer--sheet {
+  top: auto; bottom: 0; left: 0; right: 0;
+  width: 100%; max-width: 100%; height: auto; max-height: 80dvh;
+  border-left: none; border-top: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  animation: slideUp var(--dur-base) var(--ease-out);
+}
+.closing .drawer.drawer--sheet { animation: slideDownOut var(--dur-exit) var(--ease-out) forwards; }
 
 @keyframes fade { from { opacity: 0; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } }
@@ -381,6 +393,72 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .ag-cell__n { font-size: 12px; align-self: flex-start; }
 .ag-chip { font-size: 11px; background: var(--accent); color: var(--accent-text); border-radius: var(--radius-sm); padding: 1px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .ag-more { font-size: 11px; color: var(--text-muted); }
+
+/* ============================================== mobile (Rodada 7) ========== */
+/* ≤900px — modo app: FAB, rótulos de botão colapsam, toasts sobem da tabbar */
+@media (max-width: 900px) {
+  .btn-label { display: none; }
+  /* a ação primária do módulo (sempre "+ Alguma coisa") vira botão flutuante
+     acima da tabbar; o texto some (font-size:0) e o ::before desenha o "+" */
+  .header__actions .btn--primary {
+    position: fixed; right: var(--sp-4);
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--sp-4));
+    width: 56px; height: 56px; border-radius: 50%; padding: 0;
+    box-shadow: var(--shadow); z-index: 80;
+    font-size: 0;
+  }
+  .header__actions .btn--primary::before { content: '+'; font-size: 28px; line-height: 1; }
+  .toasts { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--sp-4)); }
+}
+
+/* ≤640px — telefone: tabelas em cards, overlays em bottom sheet, forms 1 col */
+@media (max-width: 640px) {
+  /* tabelas → cards empilhados: thead some; td[data-th] vira "rótulo  valor";
+     td sem data-th é o título do card; .chk vai pro canto; .actions alinha
+     os botões à direita. Módulos marcam as células com data-th/actions. */
+  .data thead { display: none; }
+  .data, .data tbody, .data td { display: block; width: 100%; }
+  /* tr em flex-coluna: a célula-título (sem data-th) sobe pro topo do card
+     via order:-1, mesmo quando não é a 1ª coluna da tabela desktop */
+  .data tr { display: flex; flex-direction: column; position: relative; padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border); }
+  .data tr:last-child { border-bottom: none; }
+  .data td { border: none; padding: 2px 0; }
+  .data td.num { text-align: left; }
+  .data td[data-th] { display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-3); }
+  .data td[data-th]::before { content: attr(data-th); color: var(--text-muted); font-size: var(--fs-xs); flex-shrink: 0; }
+  .data td:not([data-th]):not(.chk):not(.actions) { order: -1; font-weight: var(--fw-500); padding-right: 40px; }
+  .data td.chk { position: absolute; top: var(--sp-3); right: var(--sp-4); width: auto; }
+  .data td.actions { display: flex; justify-content: flex-end; gap: var(--sp-2); padding-top: var(--sp-2); }
+
+  /* modais e drawers viram bottom sheets */
+  .modal-overlay { padding: 0; align-items: end; }
+  .modal, .drawer--center {
+    width: 100%; max-width: 100%; max-height: 94dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .drawer {
+    top: auto; bottom: 0; left: 0; right: 0;
+    width: 100%; max-width: 100%; height: auto; max-height: 94dvh;
+    border-left: none; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    animation: slideUp var(--dur-base) var(--ease-out);
+  }
+  .closing .drawer { animation: slideDownOut var(--dur-exit) var(--ease-out) forwards; }
+
+  /* formulários: pares curtos (Data/Hora) lado a lado, campos largos empilham */
+  .field-row { flex-wrap: wrap; }
+  .field-row > .field { flex: 1 1 140px; }
+
+  /* toolbars: busca em linha própria; navegação da agenda idem */
+  .module__toolbar .search-input { max-width: none; flex: 1 1 100%; }
+  .ag-nav { margin-left: 0; width: 100%; justify-content: space-between; }
+
+  /* home: 5 atalhos do hero em grade 2 colunas (em vez de torre) */
+  .hero__actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+
+  /* toasts na largura da tela */
+  .toasts { left: var(--sp-4); right: var(--sp-4); }
+  .toast { max-width: none; min-width: 0; }
+}
 
 /* ------------------------------------------------- reduced motion ---------- */
 /* respeita a preferência do SO: mata transições/animações (o shimmer do

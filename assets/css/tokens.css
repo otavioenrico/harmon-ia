@@ -114,6 +114,7 @@
   --sidebar-w: 272px;
   --sidebar-w-collapsed: 64px;
   --header-h: 68px;
+  --tabbar-h: 64px;   /* barra de abas mobile (≤900px) */
 
   /* -------- motion -------- */
   /* hovers/estados: ease genérico e rápido; entradas de overlay: ease-out com

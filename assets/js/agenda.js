@@ -5,7 +5,9 @@
 // lançamento pendente — SEM debitar estoque). Ao abrir a tela, agendamentos com
 // data passada são concluídos (complete_procedure: debita estoque + confirma
 // pagamento à vista). Cancelar exclui o evento e chama cancel_procedure.
-// Views Lista/Mês/Dia + busca. Rascunhos em agenda_drafts (não viram evento).
+// Visualização Lista/Calendário + período Dia/Semana/Mês (Rodada 7: abre na
+// Lista do mês inteiro; o período só vale na Lista — o Calendário já é o mês).
+// Busca por título. Rascunhos em agenda_drafts (não viram evento).
 // Lê intent:agendar deixado por Clientes. RLS isola por usuário.
 // ============================================================================
 import { supabase } from './supabase.js';
@@ -28,11 +30,13 @@ const METHODS = [
 ];
 
 export async function render(root, ctx) {
-  const state = { view: 'list', cursor: new Date(), events: [], clients: [], services: [], stock: [], procByEvent: new Map(), q: '' };
+  // view: 'list' | 'cal' (Calendário = grade do mês). period só vale na Lista.
+  const state = { view: 'list', period: 'month', cursor: new Date(), events: [], clients: [], services: [], stock: [], procByEvent: new Map(), q: '' };
 
   const draftsBtn = document.createElement('button');
   draftsBtn.className = 'btn btn--secondary';
-  draftsBtn.textContent = 'Rascunhos';
+  draftsBtn.innerHTML = `${icon('clipboard')}<span class="btn-label">Rascunhos</span>`;
+  draftsBtn.title = 'Rascunhos';
   draftsBtn.onclick = () => openDrafts();
 
   const newBtn = document.createElement('button');
@@ -45,8 +49,12 @@ export async function render(root, ctx) {
     <div class="module__toolbar">
       <div class="segmented" id="ag-view">
         <button data-v="list" class="active">Lista</button>
-        <button data-v="day">Dia</button>
-        <button data-v="month">Mês</button>
+        <button data-v="cal">Calendário</button>
+      </div>
+      <div class="segmented" id="ag-period">
+        <button data-p="day">Dia</button>
+        <button data-p="week">Semana</button>
+        <button data-p="month" class="active">Mês</button>
       </div>
       <input class="input search-input" id="ag-q" placeholder="Buscar por título…" />
       <div class="ag-nav">
@@ -59,21 +67,30 @@ export async function render(root, ctx) {
     <div id="ag-body"></div>`;
 
   const body = root.querySelector('#ag-body');
+  const periodEl = root.querySelector('#ag-period');
   root.querySelector('#ag-view').onclick = (e) => {
     const b = e.target.closest('[data-v]'); if (!b) return;
     state.view = b.dataset.v;
     root.querySelectorAll('#ag-view button').forEach((x) => x.classList.toggle('active', x === b));
+    periodEl.hidden = state.view === 'cal';   // calendário já é o mês
+    load();
+  };
+  periodEl.onclick = (e) => {
+    const b = e.target.closest('[data-p]'); if (!b) return;
+    state.period = b.dataset.p;
+    periodEl.querySelectorAll('button').forEach((x) => x.classList.toggle('active', x === b));
     load();
   };
   root.querySelector('#ag-q').addEventListener('input', (e) => { state.q = e.target.value.trim().toLowerCase(); paintView(); });
   root.querySelector('.ag-nav').onclick = (e) => {
     const b = e.target.closest('[data-nav]'); if (!b) return;
     const n = Number(b.dataset.nav);
+    const byMonth = state.view === 'cal' || state.period === 'month';
     if (n === 0) state.cursor = new Date();
-    else if (state.view === 'month') state.cursor.setMonth(state.cursor.getMonth() + n);
-    else if (state.view === 'day') state.cursor.setDate(state.cursor.getDate() + n);
+    else if (byMonth) state.cursor.setMonth(state.cursor.getMonth() + n);
+    else if (state.period === 'day') state.cursor.setDate(state.cursor.getDate() + n);
     else state.cursor.setDate(state.cursor.getDate() + n * 7);
-    load(n === 0);
+    load();
   };
 
   // catálogos para o formulário — carregam uma vez
@@ -88,52 +105,49 @@ export async function render(root, ctx) {
   await autoCompletePast();
 
   // ------------------------------------------------------------------- load ---
+  // Rodada 7: o auto-avanço de semanas (Rodada 5, item 6) saiu — a Lista abre
+  // no mês inteiro, então "semana vazia ao abrir" deixou de existir.
   function rangeOf() {
-    if (state.view === 'month') return monthRange(state.cursor);
-    if (state.view === 'day') return dayRange(state.cursor);
-    return weekRange(state.cursor);
+    if (state.view === 'cal') return monthRange(state.cursor);        // grade 6×7
+    if (state.period === 'day') return dayRange(state.cursor);
+    if (state.period === 'week') return weekRange(state.cursor);
+    return monthListRange(state.cursor);                              // mês-calendário
   }
 
-  // item 6: a Lista nunca fica vazia sem motivo — se a semana atual (carga
-  // inicial ou botão "Hoje") não tem nada, avança semana a semana até achar
-  // algo, até um teto (não se aplica a "próxima/anterior" manual: navegar de
-  // propósito pra uma semana vazia deve mostrar a semana vazia, não pular).
-  const AGENDA_AUTO_LOOKAHEAD_WEEKS = 8;
+  function labelOf(min, max) {
+    if (state.view === 'cal' || state.period === 'month')
+      return `${MO[state.cursor.getMonth()]} ${state.cursor.getFullYear()}`;
+    if (state.period === 'day')
+      return state.cursor.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+    return `${min.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${new Date(max - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`;
+  }
 
-  async function load(autoAdvance = false) {
+  async function load() {
     // skeleton na forma de linhas de evento (hora + resumo), não um bloco cego
     body.innerHTML = `<div class="card">${`<div class="ag-row">
       <div class="skeleton" style="width:48px"></div>
       <div class="skeleton" style="flex:1;max-width:60%"></div>
     </div>`.repeat(5)}</div>`;
 
-    for (let hop = 0; ; hop++) {
-      const [min, max] = rangeOf();
-      root.querySelector('#ag-label').textContent =
-        state.view === 'month' ? `${MO[state.cursor.getMonth()]} ${state.cursor.getFullYear()}`
-        : state.view === 'day' ? state.cursor.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
-        : `${min.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${new Date(max - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`;
-      try {
-        const [evs, procs] = await Promise.all([
-          listEvents(min, max),
-          supabase.from('procedures')
-            .select('id, google_event_id, status, price_charged, client_id, service_id, procedure_materials(stock_item_id, quantity_used, unit_cost_at_time)')
-            .not('google_event_id', 'is', null)
-            .gte('date', isoDay(min)).lt('date', isoDay(max)),
-        ]);
-        state.events = evs;
-        state.procByEvent = new Map((procs.data || []).map((p) => [p.google_event_id, p]));
-      } catch (err) {
-        if (err instanceof NeedsReconnect) return reconnect();
-        console.error(err); body.innerHTML = `<div class="empty"><div class="icon">${icon('warning')}</div><p>${esc(err.message)}</p></div>`;
-        return;
-      }
-      // state.events (atribuído no try acima) — `evs` é const do bloco try e não existe aqui
-      if (autoAdvance && state.view === 'list' && !state.events.length && hop < AGENDA_AUTO_LOOKAHEAD_WEEKS) {
-        state.cursor.setDate(state.cursor.getDate() + 7);
-        continue;
-      }
-      break;
+    const [min, max] = rangeOf();
+    root.querySelector('#ag-label').textContent = labelOf(min, max);
+    try {
+      const [evs, procs] = await Promise.all([
+        listEvents(min, max),
+        supabase.from('procedures')
+          .select('id, google_event_id, status, price_charged, client_id, service_id, procedure_materials(stock_item_id, quantity_used, unit_cost_at_time)')
+          .not('google_event_id', 'is', null)
+          .gte('date', isoDay(min)).lt('date', isoDay(max)),
+      ]);
+      state.events = evs;
+      // FS-3 (diagnóstico): erro do Supabase não pode ser engolido — sem os
+      // procedures a lista pinta sem valor/status/Concluir e ninguém percebe.
+      if (procs.error) { console.error(procs.error); toast('Não foi possível carregar os dados dos agendamentos.', 'error'); }
+      state.procByEvent = new Map((procs.data || []).map((p) => [p.google_event_id, p]));
+    } catch (err) {
+      if (err instanceof NeedsReconnect) return reconnect();
+      console.error(err); body.innerHTML = `<div class="empty"><div class="icon">${icon('warning')}</div><p>${esc(err.message)}</p></div>`;
+      return;
     }
     paintView();
   }
@@ -158,16 +172,21 @@ export async function render(root, ctx) {
     : state.events.filter((e) => (e.summary || '').toLowerCase().includes(state.q));
 
   function paintView() {
-    if (state.view === 'month') return renderMonth();
-    if (state.view === 'day') return renderDay();
+    if (state.view === 'cal') return renderMonth();
     renderList();
   }
 
   // ------------------------------------------------------------- view: lista -
+  // única view de lista, para qualquer período (dia/semana/mês): agrupada por
+  // dia. Período "dia" vazio ganha o CTA de agendar direto naquele dia.
   function renderList() {
     const evs = visibleEvents();
     if (!evs.length) {
-      body.innerHTML = emptyBox(icon('calendar'), `Nenhum agendamento ${state.q ? 'encontrado' : 'neste período'}.`);
+      const quickDay = !state.q && state.period === 'day';
+      body.innerHTML = emptyBox(icon('calendar'),
+        `Nenhum agendamento ${state.q ? 'encontrado' : state.period === 'day' ? 'neste dia' : 'neste período'}.`,
+        quickDay ? `<button class="btn btn--secondary mt-4" id="ag-day-new">Agendar neste dia</button>` : '');
+      body.querySelector('#ag-day-new')?.addEventListener('click', () => openForm(isoDay(state.cursor)));
       return;
     }
     const byDay = new Map();
@@ -179,21 +198,6 @@ export async function render(root, ctx) {
         ${list.map(rowHTML).join('')}
       </div>`;
     }).join('');
-    wireEventClicks();
-  }
-
-  // --------------------------------------------------------------- view: dia -
-  function renderDay() {
-    const evs = visibleEvents()
-      .filter((e) => sameDay(evStart(e), state.cursor))
-      .sort((a, b) => evStart(a) - evStart(b));
-    if (!evs.length) {
-      body.innerHTML = emptyBox(icon('calendar'), 'Nenhum agendamento neste dia.',
-        `<button class="btn btn--secondary mt-4" id="ag-day-new">Agendar neste dia</button>`);
-      body.querySelector('#ag-day-new').onclick = () => openForm(isoDay(state.cursor));
-      return;
-    }
-    body.innerHTML = `<div class="card">${evs.map(rowHTML).join('')}</div>`;
     wireEventClicks();
   }
 
@@ -591,23 +595,30 @@ export async function render(root, ctx) {
     }));
   }
 
-  // item 3.4: atalho "Ver agenda de hoje" do dashboard — abre direto na view Dia
+  // item 3.4: atalho "Ver agenda de hoje" do dashboard — Lista com período Dia
   if (sessionStorage.getItem('intent:agendaHoje')) {
     sessionStorage.removeItem('intent:agendaHoje');
-    state.view = 'day'; state.cursor = new Date();
-    root.querySelectorAll('#ag-view button').forEach((x) => x.classList.toggle('active', x.dataset.v === 'day'));
+    state.period = 'day'; state.cursor = new Date();
+    periodEl.querySelectorAll('button').forEach((x) => x.classList.toggle('active', x.dataset.p === 'day'));
   }
 
-  await load(true);
+  await load();
   if (sessionStorage.getItem('intent:agendar')) openForm();
   else if (sessionStorage.getItem('intent:novoAgendamento')) { sessionStorage.removeItem('intent:novoAgendamento'); openForm(); }
 }
 
 // ---------------------------------------------------------------- ranges -----
+// monthRange = janela da GRADE do calendário (6×7, pega dias vizinhos);
+// monthListRange = mês-calendário exato (1º → 1º do mês seguinte), p/ a Lista.
 function monthRange(cursor) {
   const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
   const min = new Date(first); min.setDate(1 - first.getDay());
   const max = new Date(min); max.setDate(min.getDate() + 42);
+  return [min, max];
+}
+function monthListRange(cursor) {
+  const min = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  const max = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
   return [min, max];
 }
 function weekRange(cursor) {

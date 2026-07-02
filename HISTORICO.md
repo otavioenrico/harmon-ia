@@ -755,3 +755,57 @@ meses" partindo de dia 31 desloca 2-3 dias (rolagem de calendário do JS).
   `delete_procedures` foi adicionada DEPOIS do run desta manhã. Sem ela, o
   Excluir do Histórico falha (Clientes e Caixa funcionam sem migração).
 - Verificação visual em produção ainda pendente (browser não conectado).
+- ✅ Commit `a959e16` + push + deploy confirmado em produção (curl nos assets).
+
+---
+
+## Rodada 7 (continuação) — Estoque em massa, Agenda Lista/Calendário e versão mobile (2026-07-02)
+
+### Feito
+1. **Estoque — seleção em massa**: mesmo padrão dos outros módulos (checkbox +
+   selecionar-todos + `bulkBar` + confirmação). Delete direto (FKs preservam
+   histórico: `stock_transactions`/`procedure_materials` ficam sem o item;
+   `shopping_list_items` cai em cascata); fotos/NFs removidas do bucket
+   (best-effort). Sem mudança de schema.
+2. **Agenda reformulada** (reverte o auto-avanço da Rodada 5, decisão do
+   usuário): toggle de visualização virou **Lista / Calendário** e a Lista
+   ganhou período próprio **Dia / Semana / Mês** (default Mês — abre com o mês
+   inteiro em lista, agrupado por dia). Calendário = grade mensal (período
+   some nesse modo); setas navegam pela unidade ativa. `monthListRange` novo
+   (mês exato) vs `monthRange` (janela da grade). "Ver agenda de hoje" →
+   Lista+Dia. De brinde: fechado o achado FS-3 do diagnóstico neste trecho
+   (`procs.error` agora gera toast em vez de pintar a lista sem valores).
+3. **Versão mobile completa** (plano aprovado em plan mode; decisões do
+   usuário: tabbar + cards + FAB). Breakpoints: ≤900px modo app, ≤640px
+   telefone. Desktop intocado.
+   - **Bug bloqueante corrigido**: desde a Rodada 4 o hambúrguer morava dentro
+     da sidebar escondida (≤900px) — não havia COMO navegar no celular.
+   - **Tabbar** (`app.html` #tabbar + `buildTabbar` no app.js): Início/Agenda/
+     Clientes/Caixa + **Mais** (sheet `.drawer--sheet` com Estoque, Histórico,
+     Serviços, Configurações, usuário e Sair). Sidebar `display:none` ≤900px;
+     todo o código de drawer/scrim mobile do app.js/layout.css foi removido.
+   - **FAB**: CSS puro — `.header__actions .btn--primary` vira botão flutuante
+     redondo acima da tabbar (funciona porque todo primário começa com "+");
+     secundárias colapsam pra ícone (`.btn-label` agora esconde ≤900px;
+     Rascunhos/Lista de compras/Adicionar produto ganharam ícone+label).
+   - **Tabelas → cards** ≤640px: thead some, tr vira card flex-coluna,
+     `td[data-th]` vira linha "rótulo — valor", célula sem data-th é o título
+     (order:-1), `.chk` no canto, `.actions` alinha botões. Sweep de `data-th`
+     em clientes/estoque/historico/financeiro/servicos/home. `.table-wrap`
+     ganhou `overflow-x:auto` (fallback universal — UX-1 do diagnóstico).
+   - **Overlays**: modal/drawer viram bottom sheet ≤640px (94dvh, cantos
+     superiores); `.drawer` 100vh→100dvh; `viewport-fit=cover` +
+     `env(safe-area-inset-bottom)` (tabbar, FAB, sheets, toasts).
+   - **Forms/toolbars**: `.field-row` quebra ≤640px (flex-basis 140px — pares
+     curtos lado a lado); busca em linha própria; `.ag-nav` linha própria;
+     hero da Home em grade 2 colunas; toasts acima da tabbar e full-width.
+
+### Verificação
+`node --check` limpo nos 9 JS; chaves balanceadas nos 5 CSS; servidor local
+serviu todos os assets 200. **Extensão Chrome não conectada** — verificação
+visual mobile (390×844) e regressão desktop ficam com o usuário.
+
+### Pendente / próximo
+- ✅ Schema rodado no Supabase (RPC `delete_procedures` ativa) e commit/push
+  autorizados pelo usuário em 2026-07-02.
+- Verificação visual (mobile 390×844 + regressão desktop) em produção.

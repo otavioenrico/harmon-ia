@@ -223,16 +223,16 @@ export async function render(root, ctx) {
     const lucro = showLucro ? lucroOf(e) : null;
     return `<tr>
       <td class="chk"><input type="checkbox" data-sel="${e.id}" ${state.selected.has(e.id) ? 'checked' : ''} aria-label="Selecionar"></td>
-      <td class="nowrap">${fmtDate(refDate(e))}</td>
+      <td class="nowrap" data-th="Data">${fmtDate(refDate(e))}</td>
       <td>${esc(desc)}${parc}</td>
-      <td>${esc(e.clients?.name || '—')}</td>
-      <td>${e.payment_method ? esc(methodLabel(e.payment_method)) : '—'}</td>
-      <td class="num ${inc ? 'pos' : 'neg'}">${inc ? '' : '−'}${money(e.amount)}</td>
-      ${showLucro ? `<td class="num ${lucro != null && lucro < 0 ? 'neg' : 'pos'}">${lucro != null ? money(lucro) : '—'}</td>` : ''}
-      <td>${e.paid
+      <td data-th="Cliente">${esc(e.clients?.name || '—')}</td>
+      <td data-th="Forma">${e.payment_method ? esc(methodLabel(e.payment_method)) : '—'}</td>
+      <td class="num ${inc ? 'pos' : 'neg'}" data-th="Valor">${inc ? '' : '−'}${money(e.amount)}</td>
+      ${showLucro ? `<td class="num ${lucro != null && lucro < 0 ? 'neg' : 'pos'}" data-th="Lucro">${lucro != null ? money(lucro) : '—'}</td>` : ''}
+      <td data-th="Status">${e.paid
         ? `<span class="badge badge--success">pago</span>`
         : `<span class="badge badge--warning">pendente</span>`}</td>
-      <td class="num">${e.paid ? '' :
+      <td class="num actions">${e.paid ? '' :
         `<button class="btn btn--secondary btn--sm" data-pay="${e.id}">Dar baixa</button>`}</td>
     </tr>`;
   }

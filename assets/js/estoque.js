@@ -6,8 +6,8 @@
 // clientes.js; a RLS isola por usuário (user_id nos inserts).
 // ============================================================================
 import { supabase } from './supabase.js';
-import { money, fmtDateTime, openModal, openDrawer, toast, busy, debounce, guard,
-  esc, skeletonRows, h, toCSV, download, icon, emptyBox, clientAutocomplete, waLink } from './utils.js';
+import { money, fmtDateTime, openModal, openDrawer, confirmDialog, toast, busy, debounce, guard,
+  esc, skeletonRows, h, toCSV, download, icon, emptyBox, clientAutocomplete, waLink, bulkBar } from './utils.js';
 
 const BUCKET = 'uploads';
 const isLow = (it) => it.active !== false && Number(it.quantity || 0) <= Number(it.min_quantity || 0);
@@ -16,17 +16,19 @@ const REASONS = { compra: 'Entrada (compra)', descarte: 'Saída / descarte',
   ajuste: 'Ajuste', uso_procedimento: 'Uso em procedimento' };
 
 export async function render(root, ctx) {
-  const state = { all: [], q: '', filter: 'all', thumbs: {} };
+  const state = { all: [], q: '', filter: 'all', thumbs: {}, selected: new Set() };
   let drawer = null;
 
   const buy = document.createElement('button');
   buy.className = 'btn btn--secondary';
-  buy.textContent = 'Lista de compras';
+  buy.innerHTML = `${icon('box')}<span class="btn-label">Lista de compras</span>`;
+  buy.title = 'Lista de compras';
   buy.onclick = () => openShoppingList(ctx, state.all);
 
   const addToList = document.createElement('button');
   addToList.className = 'btn btn--secondary';
-  addToList.textContent = '+ Adicionar produto';
+  addToList.innerHTML = `${icon('plus')}<span class="btn-label">Adicionar produto</span>`;
+  addToList.title = 'Adicionar produto à lista de compras';
   addToList.onclick = () => openAddToShoppingList(ctx, state.all);
 
   const add = document.createElement('button');
@@ -46,8 +48,10 @@ export async function render(root, ctx) {
       <input class="input search-input" id="stk-q" placeholder="Buscar item…" />
     </div>
     <div class="table-wrap">
+      <div id="stk-bulk"></div>
       <table class="data">
         <thead><tr>
+          <th class="chk"><input type="checkbox" id="stk-selall" aria-label="Selecionar todos"></th>
           <th>Item</th><th class="num">Quantidade</th><th class="num">Mínimo</th>
           <th class="num">Custo</th><th>Status</th>
         </tr></thead>
@@ -56,6 +60,8 @@ export async function render(root, ctx) {
     </div>`;
 
   const tbody = root.querySelector('#stk-rows');
+  const bulkEl = root.querySelector('#stk-bulk');
+  const selAll = root.querySelector('#stk-selall');
 
   root.querySelector('#stk-filter').onclick = (e) => {
     const b = e.target.closest('[data-f]'); if (!b) return;
@@ -67,13 +73,25 @@ export async function render(root, ctx) {
     debounce((e) => { state.q = e.target.value.trim().toLowerCase(); paint(); }));
 
   tbody.onclick = (e) => {
+    if (e.target.closest('.chk')) return;   // checkbox de seleção não abre o item
     const tr = e.target.closest('[data-id]'); if (!tr) return;
     openItem(tr.dataset.id);
   };
 
+  // Rodada 7: seleção em massa (delegada — sobrevive aos repaints do tbody)
+  tbody.addEventListener('change', (e) => {
+    const cb = e.target.closest('[data-sel]'); if (!cb) return;
+    cb.checked ? state.selected.add(cb.dataset.sel) : state.selected.delete(cb.dataset.sel);
+    paint();
+  });
+  selAll.onchange = () => {
+    filteredRows().forEach((i) => selAll.checked ? state.selected.add(i.id) : state.selected.delete(i.id));
+    paint();
+  };
+
   // ----------------------------------------------------------------- dados ---
   async function load() {
-    tbody.innerHTML = skeletonRows(5);
+    tbody.innerHTML = skeletonRows(6);
     const { data, error } = await supabase.from('stock_items').select('*').order('name');
     if (error) { console.error(error); tbody.innerHTML = ''; toast('Erro ao carregar o estoque.', 'error'); return; }
     state.all = data || [];
@@ -88,13 +106,40 @@ export async function render(root, ctx) {
     paint();
   }
 
-  function paint() {
+  function filteredRows() {
     let rows = state.all;
     if (state.filter === 'low') rows = rows.filter(isLow);
     else if (state.filter === 'inactive') rows = rows.filter((i) => i.active === false);
     if (state.q) rows = rows.filter((i) => (i.name || '').toLowerCase().includes(state.q));
+    return rows;
+  }
+
+  function paint() {
+    const rows = filteredRows();
+    selAll.checked = rows.length > 0 && rows.every((i) => state.selected.has(i.id));
+    bulkEl.innerHTML = bulkBar(state.selected.size, 'stk-del');
+    const del = bulkEl.querySelector('#stk-del');
+    if (del) del.onclick = guard(async () => {
+      const ids = [...state.selected];
+      const ok = await confirmDialog({
+        title: 'Excluir itens do estoque',
+        message: `Excluir ${ids.length} ite${ids.length > 1 ? 'ns' : 'm'}? Movimentações e usos em procedimentos permanecem no histórico, sem o item vinculado; fotos e notas fiscais anexadas são removidas. Essa ação não tem desfazer.`,
+        confirmLabel: 'Excluir', danger: true,
+      });
+      if (!ok) return;
+      // paths dos anexos antes do delete (depois as linhas somem) — remoção do
+      // bucket é best-effort: item já foi, arquivo órfão não pode travar o fluxo
+      const paths = state.all.filter((i) => state.selected.has(i.id))
+        .flatMap((i) => [i.photo_url, i.nf_attachment_url]).filter(Boolean);
+      const { error } = await supabase.from('stock_items').delete().in('id', ids);
+      if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+      if (paths.length) supabase.storage.from(BUCKET).remove(paths).catch(() => {});
+      state.selected.clear();
+      toast(`${ids.length} ite${ids.length > 1 ? 'ns excluídos' : 'm excluído'}.`);
+      load();
+    });
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="5">${emptyBox(icon('box'),
+      tbody.innerHTML = `<tr><td colspan="6">${emptyBox(icon('box'),
         `Nenhum item ${state.q || state.filter !== 'all' ? 'encontrado' : 'cadastrado ainda'}.`)}</td></tr>`;
       return;
     }
@@ -105,14 +150,15 @@ export async function render(root, ctx) {
     const low = isLow(it);
     return `
       <tr class="clickable" data-id="${it.id}">
+        <td class="chk"><input type="checkbox" data-sel="${it.id}" ${state.selected.has(it.id) ? 'checked' : ''} aria-label="Selecionar"></td>
         <td><div class="flex" style="gap:8px">
           ${it.photo_url && state.thumbs[it.photo_url] ? `<img class="thumb" src="${esc(state.thumbs[it.photo_url])}" alt="">` : ''}
           <span>${esc(it.name)}${it.active === false ? ' <span class="badge badge--muted">inativo</span>' : ''}</span>
         </div></td>
-        <td class="num ${low ? 'neg' : ''}">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
-        <td class="num">${fmtQty(it.min_quantity)}</td>
-        <td class="num">${it.cost_price != null ? money(it.cost_price) : '—'}</td>
-        <td>${low ? '<span class="badge badge--warning">em falta</span>' : '<span class="badge badge--success">ok</span>'}</td>
+        <td class="num ${low ? 'neg' : ''}" data-th="Quantidade">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
+        <td class="num" data-th="Mínimo">${fmtQty(it.min_quantity)}</td>
+        <td class="num" data-th="Custo">${it.cost_price != null ? money(it.cost_price) : '—'}</td>
+        <td data-th="Status">${low ? '<span class="badge badge--warning">em falta</span>' : '<span class="badge badge--success">ok</span>'}</td>
       </tr>`;
   }
 
@@ -266,10 +312,10 @@ async function loadHistory(itemId, pane) {
     <table class="data">
       <thead><tr><th>Data</th><th>Tipo</th><th class="num">Qtd.</th><th>Obs.</th></tr></thead>
       <tbody>${data.map((t) => `<tr>
-        <td class="nowrap">${fmtDateTime(t.created_at)}</td>
-        <td>${esc(REASONS[t.reason] || t.reason || (t.type === 'in' ? 'entrada' : 'saída'))}</td>
-        <td class="num ${t.type === 'in' ? 'pos' : 'neg'}">${t.type === 'in' ? '+' : '−'}${fmtQty(t.quantity)}</td>
-        <td>${esc(t.notes || '—')}</td>
+        <td class="nowrap" data-th="Data">${fmtDateTime(t.created_at)}</td>
+        <td data-th="Tipo">${esc(REASONS[t.reason] || t.reason || (t.type === 'in' ? 'entrada' : 'saída'))}</td>
+        <td class="num ${t.type === 'in' ? 'pos' : 'neg'}" data-th="Qtd.">${t.type === 'in' ? '+' : '−'}${fmtQty(t.quantity)}</td>
+        <td data-th="Obs.">${esc(t.notes || '—')}</td>
       </tr>`).join('')}</tbody>
     </table>`;
 }
@@ -460,11 +506,11 @@ async function openShoppingList(ctx, allItems) {
       .map((l) => `<a class="btn btn--secondary btn--sm" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name || 'Comprar')}</a>`).join(' ');
     return `<tr>
       <td>${esc(it.name)}</td>
-      <td class="num">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
-      <td class="num">${fmtQty(it.min_quantity)}</td>
-      <td class="num">${need != null ? `${fmtQty(need)} ${esc(it.unit || '')}` : '—'}</td>
-      <td>${links || '<span class="faint">—</span>'}</td>
-      <td class="num">${it._listRowId ? `<button class="btn btn--icon btn--ghost" data-rm="${it._listRowId}" title="Remover">${icon('x')}</button>` : ''}</td>
+      <td class="num" data-th="Atual">${fmtQty(it.quantity)} ${esc(it.unit || '')}</td>
+      <td class="num" data-th="Mínimo">${fmtQty(it.min_quantity)}</td>
+      <td class="num" data-th="Comprar">${need != null ? `${fmtQty(need)} ${esc(it.unit || '')}` : '—'}</td>
+      <td data-th="Onde">${links || '<span class="faint">—</span>'}</td>
+      <td class="num actions">${it._listRowId ? `<button class="btn btn--icon btn--ghost" data-rm="${it._listRowId}" title="Remover">${icon('x')}</button>` : ''}</td>
     </tr>`;
   };
   body.innerHTML = `

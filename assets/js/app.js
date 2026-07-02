@@ -5,7 +5,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { requireSession, profile, signOut } from './auth.js';
-import { toast, initials, esc, icon } from './utils.js';
+import { toast, initials, esc, icon, h, openDrawer } from './utils.js';
 
 const ROUTES = {
   home:          { title: 'Início',         icon: 'home' },
@@ -22,11 +22,14 @@ const ROUTES = {
 // ROUTES pro router (#configuracoes) resolver normalmente.
 const ORDER = Object.keys(ROUTES).filter((k) => k !== 'configuracoes');
 
+// mobile (≤900px): 4 rotas fixas na tabbar; o resto vai pro sheet "Mais"
+const MOBILE_TABS = ['home', 'agenda', 'clientes', 'financeiro'];
+const TAB_LABELS = { home: 'Início', agenda: 'Agenda', clientes: 'Clientes', financeiro: 'Caixa' };
+
 const $ = (id) => document.getElementById(id);
 const navEl = $('nav'), rootEl = $('module-root'), actionsEl = $('header-actions'), titleEl = $('header-title');
 
 let session, settings;
-let closeDrawer = () => {};   // wireChrome() preenche; usado no menu do rodapé (mobile)
 const moduleCache = {};
 
 // ------------------------------------------------------------------- boot ---
@@ -46,6 +49,7 @@ const moduleCache = {};
   applyAccent(settings?.accent || 'rose');
   renderUserFooter();
   buildNav();
+  buildTabbar();
   wireChrome();
 
   window.addEventListener('hashchange', route);
@@ -105,9 +109,53 @@ function renderUserFooter() {
     pop.hidden = !wasHidden;
     trigger.setAttribute('aria-expanded', String(wasHidden));
   });
-  pop.querySelector('[data-go]').addEventListener('click', () => { closePop(); closeDrawer(); navigate('configuracoes'); });
+  pop.querySelector('[data-go]').addEventListener('click', () => { closePop(); navigate('configuracoes'); });
   pop.querySelector('[data-logout]').addEventListener('click', () => signOut());
   document.addEventListener('click', (e) => { if (!footer.contains(e.target)) closePop(); });
+}
+
+// ----------------------------------------------------------- tabbar (mobile) -
+// ≤900px a sidebar não existe (display:none) — a navegação é esta barra fixa
+// no rodapé: Início/Agenda/Clientes/Caixa + "Mais" (sheet com o restante).
+function buildTabbar() {
+  const bar = $('tabbar');
+  bar.hidden = false;
+  bar.innerHTML = MOBILE_TABS.map((key) => `
+    <button class="tabbar__item" data-route="${key}">
+      ${icon(ROUTES[key].icon)}<span>${TAB_LABELS[key]}</span>
+    </button>`).join('') + `
+    <button class="tabbar__item" data-more aria-haspopup="true">
+      ${icon('menu')}<span>Mais</span>
+    </button>`;
+  bar.querySelectorAll('[data-route]').forEach((b) =>
+    b.addEventListener('click', () => navigate(b.dataset.route)));
+  bar.querySelector('[data-more]').addEventListener('click', openMoreSheet);
+}
+
+function openMoreSheet() {
+  const p = profile(session);
+  const current = location.hash.slice(1) || 'home';
+  const extras = [...ORDER.filter((k) => !MOBILE_TABS.includes(k)), 'configuracoes'];
+  const body = h(`<div>
+    <div class="flex" style="padding: var(--sp-2) 0 var(--sp-4)">
+      <div class="avatar">${p.avatar ? `<img src="${esc(p.avatar)}" alt="">` : esc(initials(p.name))}</div>
+      <div class="sidebar__user-info">
+        <div class="name">${esc(p.name)}</div>
+        <div class="email">${esc(p.email)}</div>
+      </div>
+    </div>
+    ${extras.map((key) => `
+      <button class="nav__item${key === current ? ' active' : ''}" data-go="${key}">
+        <span class="nav__icon">${icon(ROUTES[key].icon)}</span><span class="label">${ROUTES[key].title}</span>
+      </button>`).join('')}
+    <button class="nav__item" data-logout>
+      <span class="nav__icon">${icon('logout')}</span><span class="label">Sair</span>
+    </button>
+  </div>`);
+  const sheet = openDrawer(body, { sheet: true });
+  body.querySelectorAll('[data-go]').forEach((b) =>
+    b.addEventListener('click', () => { sheet.close(); navigate(b.dataset.go); }));
+  body.querySelector('[data-logout]').addEventListener('click', () => signOut());
 }
 
 function wireChrome() {
@@ -115,27 +163,13 @@ function wireChrome() {
   if (brand) brand.innerHTML = icon('sparkle');
   const collapse = $('collapse');
   collapse.innerHTML = icon('panel');
-
-  // Desktop: colapsa a sidebar (rail de ícones). Mobile (≤900px): a sidebar é um
-  // drawer sobreposto — o botão abre/fecha com scrim; navegar fecha.
+  // Desktop: colapsa a sidebar (rail de ícones). ≤900px a sidebar (e este
+  // botão) somem via CSS — a navegação mobile é a tabbar.
   const shell = $('shell');
-  const mobile = window.matchMedia('(max-width: 900px)');
-  let scrim = null;
-  const syncAria = () => collapse.setAttribute('aria-expanded',
-    String(mobile.matches ? shell.classList.contains('sidebar-open')
-                          : !shell.classList.contains('collapsed')));
-  closeDrawer = () => { shell.classList.remove('sidebar-open'); scrim?.remove(); scrim = null; syncAria(); };
   collapse.addEventListener('click', () => {
-    if (!mobile.matches) { shell.classList.toggle('collapsed'); return syncAria(); }
-    if (shell.classList.toggle('sidebar-open')) {
-      scrim = document.createElement('div');
-      scrim.className = 'scrim';
-      scrim.addEventListener('click', closeDrawer);
-      document.body.appendChild(scrim);
-      syncAria();
-    } else closeDrawer();
+    shell.classList.toggle('collapsed');
+    collapse.setAttribute('aria-expanded', String(!shell.classList.contains('collapsed')));
   });
-  navEl.addEventListener('click', () => { if (mobile.matches) closeDrawer(); });
 }
 
 // ----------------------------------------------------------------- router ---
@@ -150,6 +184,10 @@ async function route() {
 
   navEl.querySelectorAll('.nav__item').forEach((b) =>
     b.classList.toggle('active', b.dataset.route === key));
+  // tabbar: rota fixa acende a própria aba; rota do sheet acende o "Mais"
+  $('tabbar').querySelectorAll('.tabbar__item').forEach((b) =>
+    b.classList.toggle('active',
+      b.dataset.route ? b.dataset.route === key : !MOBILE_TABS.includes(key)));
   titleEl.textContent = def.title;
   actionsEl.innerHTML = '';
   rootEl.innerHTML = '';
