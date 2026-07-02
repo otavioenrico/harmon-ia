@@ -72,7 +72,7 @@ export async function render(root, ctx) {
     else if (state.view === 'month') state.cursor.setMonth(state.cursor.getMonth() + n);
     else if (state.view === 'day') state.cursor.setDate(state.cursor.getDate() + n);
     else state.cursor.setDate(state.cursor.getDate() + n * 7);
-    load();
+    load(n === 0);
   };
 
   // catálogos para o formulário — carregam uma vez
@@ -93,31 +93,45 @@ export async function render(root, ctx) {
     return weekRange(state.cursor);
   }
 
-  async function load() {
-    const [min, max] = rangeOf();
-    root.querySelector('#ag-label').textContent =
-      state.view === 'month' ? `${MO[state.cursor.getMonth()]} ${state.cursor.getFullYear()}`
-      : state.view === 'day' ? state.cursor.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
-      : `${min.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${new Date(max - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`;
+  // item 6: a Lista nunca fica vazia sem motivo — se a semana atual (carga
+  // inicial ou botão "Hoje") não tem nada, avança semana a semana até achar
+  // algo, até um teto (não se aplica a "próxima/anterior" manual: navegar de
+  // propósito pra uma semana vazia deve mostrar a semana vazia, não pular).
+  const AGENDA_AUTO_LOOKAHEAD_WEEKS = 8;
+
+  async function load(autoAdvance = false) {
     // skeleton na forma de linhas de evento (hora + resumo), não um bloco cego
     body.innerHTML = `<div class="card">${`<div class="ag-row">
       <div class="skeleton" style="width:48px"></div>
       <div class="skeleton" style="flex:1;max-width:60%"></div>
     </div>`.repeat(5)}</div>`;
-    try {
-      const [evs, procs] = await Promise.all([
-        listEvents(min, max),
-        supabase.from('procedures')
-          .select('id, google_event_id, status, price_charged, client_id, service_id, procedure_materials(stock_item_id, quantity_used, unit_cost_at_time)')
-          .not('google_event_id', 'is', null)
-          .gte('date', isoDay(min)).lt('date', isoDay(max)),
-      ]);
-      state.events = evs;
-      state.procByEvent = new Map((procs.data || []).map((p) => [p.google_event_id, p]));
-    } catch (err) {
-      if (err instanceof NeedsReconnect) return reconnect();
-      console.error(err); body.innerHTML = `<div class="empty"><div class="icon">${icon('warning')}</div><p>${esc(err.message)}</p></div>`;
-      return;
+
+    for (let hop = 0; ; hop++) {
+      const [min, max] = rangeOf();
+      root.querySelector('#ag-label').textContent =
+        state.view === 'month' ? `${MO[state.cursor.getMonth()]} ${state.cursor.getFullYear()}`
+        : state.view === 'day' ? state.cursor.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
+        : `${min.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${new Date(max - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`;
+      try {
+        const [evs, procs] = await Promise.all([
+          listEvents(min, max),
+          supabase.from('procedures')
+            .select('id, google_event_id, status, price_charged, client_id, service_id, procedure_materials(stock_item_id, quantity_used, unit_cost_at_time)')
+            .not('google_event_id', 'is', null)
+            .gte('date', isoDay(min)).lt('date', isoDay(max)),
+        ]);
+        state.events = evs;
+        state.procByEvent = new Map((procs.data || []).map((p) => [p.google_event_id, p]));
+      } catch (err) {
+        if (err instanceof NeedsReconnect) return reconnect();
+        console.error(err); body.innerHTML = `<div class="empty"><div class="icon">${icon('warning')}</div><p>${esc(err.message)}</p></div>`;
+        return;
+      }
+      if (autoAdvance && state.view === 'list' && !evs.length && hop < AGENDA_AUTO_LOOKAHEAD_WEEKS) {
+        state.cursor.setDate(state.cursor.getDate() + 7);
+        continue;
+      }
+      break;
     }
     paintView();
   }
@@ -151,7 +165,7 @@ export async function render(root, ctx) {
   function renderList() {
     const evs = visibleEvents();
     if (!evs.length) {
-      body.innerHTML = emptyBox(icon('calendar'), `Nenhum agendamento ${state.q ? 'encontrado' : 'nesta semana'}.`);
+      body.innerHTML = emptyBox(icon('calendar'), `Nenhum agendamento ${state.q ? 'encontrado' : 'neste período'}.`);
       return;
     }
     const byDay = new Map();
@@ -566,7 +580,7 @@ export async function render(root, ctx) {
     }));
   }
 
-  await load();
+  await load(true);
   if (sessionStorage.getItem('intent:agendar')) openForm();
   else if (sessionStorage.getItem('intent:novoAgendamento')) { sessionStorage.removeItem('intent:novoAgendamento'); openForm(); }
 }

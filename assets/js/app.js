@@ -17,12 +17,16 @@ const ROUTES = {
   financeiro:    { title: 'Fluxo de Caixa', icon: 'wallet' },
   configuracoes: { title: 'Configurações',  icon: 'tool' },
 };
-const ORDER = Object.keys(ROUTES);
+// item 2: Configurações não é uma opção de navegação como as demais — mora no
+// mini-menu do rodapé (renderUserFooter), então sai do nav mas continua em
+// ROUTES pro router (#configuracoes) resolver normalmente.
+const ORDER = Object.keys(ROUTES).filter((k) => k !== 'configuracoes');
 
 const $ = (id) => document.getElementById(id);
 const navEl = $('nav'), rootEl = $('module-root'), actionsEl = $('header-actions'), titleEl = $('header-title');
 
 let session, settings;
+let closeDrawer = () => {};   // wireChrome() preenche; usado no menu do rodapé (mobile)
 const moduleCache = {};
 
 // ------------------------------------------------------------------- boot ---
@@ -73,16 +77,37 @@ function buildNav() {
     b.addEventListener('click', () => navigate(b.dataset.route)));
 }
 
+// item 1/2: rodapé é um único gatilho (avatar+nome+hamburger) que abre um
+// mini-menu com Configurações/Sair — colapsado, só o avatar sobra (sem 2º
+// elemento ao lado pra vazar do rail de 64px).
 function renderUserFooter() {
   const p = profile(session);
-  $('user-footer').innerHTML = `
-    <div class="avatar">${p.avatar ? `<img src="${esc(p.avatar)}" alt="">` : esc(initials(p.name))}</div>
-    <div class="sidebar__user-info">
-      <div class="name">${esc(p.name)}</div>
-      <div class="email">${esc(p.email)}</div>
-    </div>
-    <button class="btn btn--icon btn--ghost" id="logout" title="Sair">${icon('logout')}</button>`;
-  $('logout').addEventListener('click', () => signOut());
+  const footer = $('user-footer');
+  footer.innerHTML = `
+    <button class="user-menu__trigger" id="user-trigger" aria-haspopup="true" aria-expanded="false">
+      <div class="avatar">${p.avatar ? `<img src="${esc(p.avatar)}" alt="">` : esc(initials(p.name))}</div>
+      <div class="sidebar__user-info">
+        <div class="name">${esc(p.name)}</div>
+        <div class="email">${esc(p.email)}</div>
+      </div>
+      <span class="user-menu__icon">${icon('menu')}</span>
+    </button>
+    <div class="user-menu__pop" id="user-pop" hidden>
+      <button type="button" data-go>${icon('tool')} Configurações</button>
+      <button type="button" data-logout>${icon('logout')} Sair</button>
+    </div>`;
+
+  const trigger = $('user-trigger'), pop = $('user-pop');
+  const closePop = () => { pop.hidden = true; trigger.setAttribute('aria-expanded', 'false'); };
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const wasHidden = pop.hidden;
+    pop.hidden = !wasHidden;
+    trigger.setAttribute('aria-expanded', String(wasHidden));
+  });
+  pop.querySelector('[data-go]').addEventListener('click', () => { closePop(); closeDrawer(); navigate('configuracoes'); });
+  pop.querySelector('[data-logout]').addEventListener('click', () => signOut());
+  document.addEventListener('click', (e) => { if (!footer.contains(e.target)) closePop(); });
 }
 
 function wireChrome() {
@@ -99,7 +124,7 @@ function wireChrome() {
   const syncAria = () => collapse.setAttribute('aria-expanded',
     String(mobile.matches ? shell.classList.contains('sidebar-open')
                           : !shell.classList.contains('collapsed')));
-  const closeDrawer = () => { shell.classList.remove('sidebar-open'); scrim?.remove(); scrim = null; syncAria(); };
+  closeDrawer = () => { shell.classList.remove('sidebar-open'); scrim?.remove(); scrim = null; syncAria(); };
   collapse.addEventListener('click', () => {
     if (!mobile.matches) { shell.classList.toggle('collapsed'); return syncAria(); }
     if (shell.classList.toggle('sidebar-open')) {

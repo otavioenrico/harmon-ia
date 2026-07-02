@@ -7,7 +7,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, todayISO, daysSince, openModal, toast, busy, esc,
-  debounce, waLink, icon, clientAutocomplete, emptyBox } from './utils.js';
+  debounce, waLink, icon, clientAutocomplete, emptyBox, guard } from './utils.js';
 
 const STATUS_BADGE = {
   scheduled: '<span class="badge badge--warning">agendado</span>',
@@ -23,8 +23,8 @@ const METHODS = [
 ];
 
 export async function render(root, ctx) {
-  const state = { all: [], clients: [], services: [], stock: [],
-    view: 'proc', fCliente: '', fServico: '', fStatus: '', fDe: '', fAte: '',
+  const state = { all: [], clients: [], services: [], stock: [], dismissals: new Map(),
+    view: 'proc', qCliente: '', fServico: '', fStatus: '', fDe: '', fAte: '',
     reDays: 60, retMonths: 1 };
 
   const btn = document.createElement('button');
@@ -79,14 +79,15 @@ export async function render(root, ctx) {
     const opts = (arr, sel) => arr.map((x) =>
       `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}</option>`).join('');
     filters.innerHTML = `
-      <select class="select" id="f-cli" style="max-width:180px"><option value="">Toda cliente</option>${opts(state.clients, state.fCliente)}</select>
+      <input class="input search-input" id="f-cli-q" placeholder="Buscar cliente…" value="${esc(state.qCliente)}">
       <select class="select" id="f-svc" style="max-width:180px"><option value="">Todo serviço</option>${opts(state.services, state.fServico)}</select>
       <select class="select" id="f-st" style="max-width:150px">
         <option value="">Todo status</option><option value="scheduled">Agendados</option>
         <option value="completed">Realizados</option><option value="cancelled">Cancelados</option></select>
       <input class="input" id="f-de" type="date" value="${state.fDe}" title="De" style="max-width:150px">
       <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até" style="max-width:150px">`;
-    filters.querySelector('#f-cli').onchange = (e) => { state.fCliente = e.target.value; paint(); };
+    filters.querySelector('#f-cli-q').addEventListener('input',
+      debounce((e) => { state.qCliente = e.target.value.trim().toLowerCase(); paint(); }));
     filters.querySelector('#f-svc').onchange = (e) => { state.fServico = e.target.value; paint(); };
     filters.querySelector('#f-st').value = state.fStatus;
     filters.querySelector('#f-st').onchange = (e) => { state.fStatus = e.target.value; paint(); };
@@ -100,13 +101,14 @@ export async function render(root, ctx) {
       `<tr><td><div class="skeleton"></div></td></tr>`.repeat(5)}</tbody></table>`;
     // ponytail: busca tudo e filtra em memória (igual clientes); vira RPC/view se
     // uma profissional acumular milhares de procedimentos.
-    const [proc, cli, svc, stk] = await Promise.all([
+    const [proc, cli, svc, stk, dis] = await Promise.all([
       supabase.from('procedures')
         .select('id, date, price_charged, status, client_id, service_id, clients(name, phone), services(name), procedure_materials(quantity_used, unit_cost_at_time)')
         .order('date', { ascending: false }),
       supabase.from('clients').select('id, name, phone, active').eq('active', true).order('name'),
       supabase.from('services').select('id, name, default_price, active').eq('active', true).order('name'),
       supabase.from('stock_items').select('id, name, quantity, unit, cost_price').eq('active', true).order('name'),
+      supabase.from('return_dismissals').select('client_id, service_id, dismissed_at'),
     ]);
     if (proc.error || cli.error || svc.error || stk.error) {
       console.error(proc.error || cli.error || svc.error || stk.error);
@@ -120,6 +122,7 @@ export async function render(root, ctx) {
     state.clients = cli.data || [];
     state.services = svc.data || [];
     state.stock = stk.data || [];
+    state.dismissals = new Map((dis.data || []).map((d) => [`${d.client_id}|${d.service_id}`, d.dismissed_at]));
     paintFilters(); paint();
   }
 
@@ -127,7 +130,7 @@ export async function render(root, ctx) {
     if (state.view === 'reat') return paintReat();
     if (state.view === 'ret') return paintRetornos();
     let rows = state.all;
-    if (state.fCliente) rows = rows.filter((p) => p.client_id === state.fCliente);
+    if (state.qCliente) rows = rows.filter((p) => (p.clients?.name || '').toLowerCase().includes(state.qCliente));
     if (state.fServico) rows = rows.filter((p) => p.service_id === state.fServico);
     if (state.fStatus) rows = rows.filter((p) => (p.status || 'completed') === state.fStatus);
     if (state.fDe) rows = rows.filter((p) => p.date >= state.fDe);   // 'YYYY-MM-DD' lexicográfico
@@ -185,30 +188,63 @@ export async function render(root, ctx) {
       </tr>`).join(''));
   }
 
-  // item 9: lembretes de retorno em 1/3/6/12 meses. "Automático" = calculado ao
-  // abrir a tela (não há cron no projeto). Marca quem já passou do intervalo.
+  // último procedimento REALIZADO por combinação cliente+serviço (item 7: cada
+  // serviço parado vira sua própria linha — uma cliente com 2 procedimentos
+  // diferentes em datas diferentes aparece 2x, uma por serviço).
+  function lastCompletedByClientService() {
+    const last = new Map();
+    for (const p of state.all) {
+      if (p.status !== 'completed' || !p.client_id || !p.service_id || !p.date) continue;
+      const key = `${p.client_id}|${p.service_id}`;
+      const cur = last.get(key);
+      if (!cur || p.date > cur.date) last.set(key, { client_id: p.client_id, service_id: p.service_id, date: p.date });
+    }
+    return last;
+  }
+
+  // item 9/7: lembretes de retorno em 1/3/6/12 meses, por cliente+serviço.
+  // "Concluir" grava um dismissal (return_dismissals) — some da lista até um
+  // novo procedimento do mesmo serviço acontecer e a cliente ficar parada de novo.
   function paintRetornos() {
-    const last = lastCompletedByClient();
     const threshold = state.retMonths * 30;   // ponytail: mês ≈ 30 dias, suficiente p/ lembrete
-    const rows = state.clients
-      .map((c) => ({ ...c, _last: last.get(c.id) || null, _days: daysSince(last.get(c.id)) }))
-      .filter((c) => c._last && c._days >= threshold)
+    const rows = [...lastCompletedByClientService().values()]
+      .map((r) => ({ ...r,
+        name: state.clients.find((c) => c.id === r.client_id)?.name,
+        phone: state.clients.find((c) => c.id === r.client_id)?.phone,
+        service: state.services.find((s) => s.id === r.service_id)?.name,
+        _days: daysSince(r.date) }))
+      .filter((r) => r.name && r._days >= threshold)
+      .filter((r) => (state.dismissals.get(`${r.client_id}|${r.service_id}`) || '').slice(0, 10) < r.date)
       .sort((a, b) => b._days - a._days);
     if (!rows.length) {
       tableWrap.innerHTML = emptyBox(icon('bell'), `Nenhuma cliente para retorno de ${state.retMonths} ${state.retMonths === 1 ? 'mês' : 'meses'}.`); return;
     }
     const msg = (n) => `Oi ${n.split(' ')[0]}! Já faz um tempinho do seu último procedimento — que tal agendar seu retorno? 💛`;
     tableWrap.innerHTML = table(
-      ['Cliente', 'Último proc.', 'Dias', ''],
-      rows.map((c) => `<tr>
-        <td>${esc(c.name)}</td>
-        <td class="nowrap">${fmtDate(c._last)}</td>
-        <td class="num">${c._days}</td>
-        <td class="num">${c.phone
-          ? `<a class="btn btn--secondary btn--sm" target="_blank" rel="noopener"
-               href="${waLink(c.phone, msg(c.name))}">WhatsApp</a>`
-          : '<span class="faint">sem telefone</span>'}</td>
+      ['Cliente', 'Procedimento', 'Último proc.', 'Dias', ''],
+      rows.map((r) => `<tr data-cli="${r.client_id}" data-svc="${r.service_id}">
+        <td>${esc(r.name)}</td>
+        <td>${esc(r.service || '—')}</td>
+        <td class="nowrap">${fmtDate(r.date)}</td>
+        <td class="num">${r._days}</td>
+        <td class="num nowrap">
+          ${r.phone
+            ? `<a class="btn btn--secondary btn--sm" target="_blank" rel="noopener"
+                 href="${waLink(r.phone, msg(r.name))}">WhatsApp</a>`
+            : '<span class="faint">sem telefone</span>'}
+          <button class="btn btn--ghost btn--sm" data-concluir>Concluir</button>
+        </td>
       </tr>`).join(''));
+    tableWrap.querySelectorAll('[data-concluir]').forEach((b) => b.onclick = guard(async () => {
+      const tr = b.closest('tr');
+      const client_id = tr.dataset.cli, service_id = tr.dataset.svc;
+      const { error } = await supabase.from('return_dismissals')
+        .upsert({ user_id: ctx.session.user.id, client_id, service_id }, { onConflict: 'user_id,client_id,service_id' });
+      if (error) { console.error(error); return toast('Erro ao marcar como contatado.', 'error'); }
+      state.dismissals.set(`${client_id}|${service_id}`, new Date().toISOString());
+      toast('Marcado como contatado.');
+      paintRetornos();
+    }));
   }
 
   // intent deixado por Clientes: abre o registro já com a cliente selecionada

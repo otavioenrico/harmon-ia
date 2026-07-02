@@ -519,3 +519,75 @@ tabela `shopping_list_items`, coluna `user_settings.whatsapp_number`, RPC
 ### Pendente / próximo
 Verificação visual dos 11 itens direto na produção (não foi testado em
 browser real nesta sessão — só `node --check` + revisão manual do SQL).
+
+---
+
+## Rodada 5 — Fonte Satoshi + 8 aprimoramentos de UX (2026-07-01)
+
+### Fonte
+Satoshi (variável, woff2, pesos 300–900) instalada em `assets/fonts/` (só os
+2 arquivos web — `Satoshi-Variable.woff2`/`Satoshi-VariableItalic.woff2`; o
+pacote original com OTF/TTF/EOT foi descartado). `@font-face` + token
+`--font` em `tokens.css`, que já carrega antes de tudo — nenhuma outra
+mudança necessária.
+
+### Contexto
+Usuário revisou o app em uso real (screenshots) e levantou 7 pontos
+(um duplicado = 8 itens reais). Planejado em `plan mode`
+(`~/.claude/plans/parallel-forging-flamingo.md`) antes de codar, com 2
+perguntas de esclarecimento (local do item de retorno-por-procedimento e
+persistência do "Concluir" — usuário confirmou Histórico > Retornos +
+Supabase).
+
+### Feito
+1. **Sidebar recolhida**: botão de logout vazava do rail de 64px (avatar +
+   botão lado a lado não cabiam). Resolvido junto com o item 2.
+2. **Rodapé da sidebar**: Configurações saiu de `ORDER` (nav principal, em
+   `app.js`) e virou opção dentro de um mini-menu (`renderUserFooter`) aberto
+   pelo próprio card do usuário — avatar+nome+ícone de menu (`.user-menu`,
+   `.user-menu__pop` em `layout.css`), com "Configurações" e "Sair". Colapsado,
+   só o avatar sobra (sem 2º elemento pra vazar). Fecha ao clicar fora ou ao
+   navegar (mobile também fecha o drawer via `closeDrawer` compartilhado).
+3. **WhatsApp do administrador** (`configuracoes.js`): campo trava (`disabled`)
+   quando já há número salvo; botão vira "Alterar" (libera edição) em vez de
+   "Salvar WhatsApp"; ao salvar, trava de novo.
+4. **Filtros**: `.filters` perdeu o `overflow-x:auto`/scroll horizontal feio
+   (virou `flex-wrap:wrap; margin-left:auto` — empilha em vez de rolar, e já
+   fica à direita do toolbar sem precisar de `<div class="spacer">` manual).
+   Histórico > Procedimentos trocou o select "Toda cliente" por busca textual
+   (`.search-input`, mesmo padrão de Clientes); Fluxo de Caixa ganhou busca por
+   descrição/cliente nos lançamentos.
+5. **Estoque**: thumbnail 56px → 80px (`.thumb`).
+6. **Agenda — Lista nunca vazia**: `load(autoAdvance)` avança semana a semana
+   (parâmetro `AGENDA_AUTO_LOOKAHEAD_WEEKS = 8`) quando a carga é automática
+   (boot inicial e botão "Hoje") e a semana atual não tem nada. Navegação
+   manual (seta anterior/próxima) continua mostrando a semana pedida, mesmo
+   vazia — não teria sentido "corrigir" uma navegação intencional do usuário.
+7. **Histórico > Retornos**: agora agrupa por cliente+**serviço** (não só
+   cliente) — uma cliente com 2 procedimentos diferentes em datas diferentes
+   aparece 2x, cada linha com o nome do serviço. Botão **"Concluir"** grava um
+   dismissal (nova tabela `return_dismissals`, RLS padrão) que esconde a linha
+   até um novo procedimento do mesmo serviço acontecer (a comparação é por
+   data, não flag binária — reativa sozinho).
+8. **Dashboard**: coluna do aside (`estoque crítico`/`clientes para retorno`)
+   340px → 400px. "Próximos agendamentos" ganhou horário e duração — busca os
+   eventos do Google Calendar (`listEvents`, mesmo padrão de `agenda.js`) pros
+   `google_event_id` da janela de datas; sem conexão Google, cai de volta pra
+   só mostrar a data (`catch` silencioso, dashboard nunca dependeu do Google).
+
+### Verificação
+`node --check` limpo nos 9 arquivos JS tocados (app, configuracoes, historico,
+financeiro, agenda, home, estoque, clientes, utils). SQL revisado manualmente
+(8 blocos `do $$`/`language plpgsql as $$` = 8 `end $$;`, balanceado — só
+tabela nova + coluna no array de RLS, sem novo `do $$`). Servidor local
+(`python3 -m http.server`) confirmou todos os assets/paths servindo 200.
+
+### Deploy
+Usuário vai conferir visualmente antes do próximo passo. **Lembrar**: rodar o
+`schema.sql` atualizado no Supabase antes do próximo push (nova tabela
+`return_dismissals`).
+
+### Pendente / próximo
+Verificação visual dos 8 itens (não testado em browser real — extensão Chrome
+não conectada nesta sessão). Usuário tem mais itens de aprimoramento para
+depois.

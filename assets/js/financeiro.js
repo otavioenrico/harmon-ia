@@ -7,7 +7,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, todayISO, openModal, confirmDialog, guard, toast, busy, esc, parseMoney,
-  toCSV, download, icon, emptyBox } from './utils.js';
+  toCSV, download, icon, emptyBox, debounce } from './utils.js';
 
 const finIcon = icon('wallet');
 
@@ -33,7 +33,7 @@ function lucroOf(e) {
 }
 
 export async function render(root, ctx) {
-  const state = { all: [], tab: 'resumo', fStatus: '', fDe: '', fAte: '' };
+  const state = { all: [], tab: 'resumo', fStatus: '', fDe: '', fAte: '', q: '' };
 
   const btn = document.createElement('button');
   btn.className = 'btn btn--primary';
@@ -71,20 +71,25 @@ export async function render(root, ctx) {
   };
 
   filters.innerHTML = `
+    <input class="input search-input" id="f-q" placeholder="Buscar lançamento…" value="${esc(state.q)}">
     <select class="select" id="f-status" style="max-width:160px">
       <option value="">Todo status</option><option value="pending">Pendentes</option><option value="paid">Pagos</option></select>
     <input class="input" id="f-de" type="date" value="${state.fDe}" title="De" style="max-width:150px">
     <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até" style="max-width:150px">`;
+  filters.querySelector('#f-q').addEventListener('input',
+    debounce((e) => { state.q = e.target.value.trim().toLowerCase(); paint(); }));
   filters.querySelector('#f-status').onchange = (e) => { state.fStatus = e.target.value; paint(); };
   filters.querySelector('#f-de').onchange = (e) => { state.fDe = e.target.value; paint(); };
   filters.querySelector('#f-ate').onchange = (e) => { state.fAte = e.target.value; paint(); };
 
-  // filtro base (status + período); a aba decide o recorte por tipo.
+  // filtro base (status + período + busca); a aba decide o recorte por tipo.
   function filtered() {
     let rows = state.all;
     if (state.fStatus) rows = rows.filter((e) => (state.fStatus === 'paid') === !!e.paid);
     if (state.fDe) rows = rows.filter((e) => refDate(e) >= state.fDe);
     if (state.fAte) rows = rows.filter((e) => refDate(e) <= state.fAte);
+    if (state.q) rows = rows.filter((e) =>
+      (e.description || '').toLowerCase().includes(state.q) || (e.clients?.name || '').toLowerCase().includes(state.q));
     return rows;
   }
 

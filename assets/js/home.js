@@ -7,6 +7,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { profile } from './auth.js';
+import { listEvents, NeedsReconnect } from './google-cal.js';
 import { money, fmtDate, daysSince, esc, waLink, icon } from './utils.js';
 
 const isLow = (i) => i.active !== false && Number(i.quantity || 0) <= Number(i.min_quantity || 0);
@@ -14,6 +15,8 @@ const greeting = () => {
   const h = new Date().getHours();
   return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 };
+const evStart = (e) => new Date(e.start?.dateTime || `${e.start?.date}T00:00:00`);
+const hhmm = (d) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 export async function render(root, ctx) {
   const name = (profile(ctx.session).name || '').split(' ')[0] || 'por aqui';
@@ -46,7 +49,7 @@ export async function render(root, ctx) {
     supabase.from('clients').select('id, name, phone, created_at, active'),
     supabase.from('financial_entries').select('amount, type, paid, paid_at'),
     supabase.from('stock_items').select('name, quantity, min_quantity, unit, active'),
-    supabase.from('procedures').select('date, status, client_id, clients(name), services(name)'),
+    supabase.from('procedures').select('date, status, client_id, google_event_id, clients(name), services(name)'),
   ]);
   if (cli.error || fin.error || stk.error || proc.error) {
     console.error(cli.error || fin.error || stk.error || proc.error);
@@ -70,6 +73,26 @@ export async function render(root, ctx) {
     .filter((p) => p.status === 'scheduled' && p.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 6);
+
+  // horário/duração vêm do Google Calendar (procedures.date não tem hora). Se a
+  // conta Google não estiver conectada, cai de volta pra só mostrar a data.
+  const eventByGid = new Map();
+  const withGid = upcoming.filter((p) => p.google_event_id);
+  if (withGid.length) {
+    try {
+      const min = new Date();
+      const lastDate = withGid.reduce((m, p) => (p.date > m ? p.date : m), withGid[0].date);
+      const max = new Date(Math.max(new Date(`${lastDate}T00:00:00`).getTime() + 86400000, min.getTime() + 30 * 86400000));
+      for (const e of await listEvents(min, max)) eventByGid.set(e.id, e);
+    } catch (err) { if (!(err instanceof NeedsReconnect)) console.error(err); }
+  }
+  const whenLabel = (p) => {
+    const ev = p.google_event_id && eventByGid.get(p.google_event_id);
+    if (!ev?.start?.dateTime) return fmtDate(p.date);
+    const start = evStart(ev);
+    const dur = ev.end?.dateTime ? Math.round((new Date(ev.end.dateTime) - start) / 60000) : null;
+    return `${fmtDate(p.date)} às ${hhmm(start)}${dur ? ` (${dur}min)` : ''}`;
+  };
 
   // ---- clientes para retorno (último proc. realizado há 60+ dias) ------------
   const last = new Map();
@@ -123,7 +146,7 @@ export async function render(root, ctx) {
         <div class="panel__row">
           <span class="grow">${esc(p.clients?.name || 'Cliente')}
             <div class="sub">${esc(p.services?.name || 'Procedimento')}</div></span>
-          <span class="nowrap muted">${fmtDate(p.date)}</span>
+          <span class="nowrap muted">${whenLabel(p)}</span>
         </div>`).join('')
         : '<p class="faint">Nada agendado. Use “Agendar” para criar.</p>'}
     </div>`;

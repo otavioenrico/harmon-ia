@@ -121,25 +121,45 @@ button { font-family: inherit; }
   padding: 0 5px;
 }
 
-.sidebar__user {
-  border-top: 1px solid var(--border);
-  padding: var(--sp-3);
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
+.sidebar__user { border-top: 1px solid var(--border); position: relative; }
+/* item 1/2: rodapé virou um único gatilho (avatar+info+hamburger) que abre um
+   mini-menu com Configurações/Sair — sem 2º elemento ao lado do avatar, o
+   modo colapsado nunca mais vaza (só o avatar sobra, cabe no rail de 64px). */
+.user-menu__trigger {
+  display: flex; align-items: center; gap: var(--sp-3); width: 100%;
+  padding: var(--sp-3); background: none; border: none; cursor: pointer;
+  text-align: left; font: inherit; color: inherit;
 }
-.sidebar__user .avatar { flex-shrink: 0; }
+.user-menu__trigger:hover { background: var(--surface-2); }
+.user-menu__trigger .avatar { flex-shrink: 0; }
+.user-menu__icon { margin-left: auto; flex-shrink: 0; display: flex; color: var(--text-faint); }
+.user-menu__icon svg { width: 18px; height: 18px; }
 .sidebar__user-info { overflow: hidden; flex: 1; }
 .sidebar__user-info .name { font-size: var(--fs-sm); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 .sidebar__user-info .email { font-size: var(--fs-xs); color: var(--text-faint); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 
+.user-menu__pop {
+  position: absolute; left: var(--sp-2); bottom: calc(100% + 4px); width: 200px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow); z-index: 50; overflow: hidden;
+}
+.user-menu__pop button {
+  display: flex; align-items: center; gap: var(--sp-2); width: 100%;
+  padding: var(--sp-3); background: none; border: none; cursor: pointer;
+  text-align: left; font-size: var(--fs-sm); color: var(--text);
+}
+.user-menu__pop button:hover { background: var(--surface-2); }
+.user-menu__pop svg { width: 16px; height: 16px; color: var(--text-faint); flex-shrink: 0; }
+
 .collapsed .sidebar__brand span,
 .collapsed .sidebar__brand b.brand-mark,
 .collapsed .nav__item .label,
-.collapsed .sidebar__user-info { display: none; }
+.collapsed .sidebar__user-info,
+.collapsed .user-menu__icon { display: none; }
 .collapsed .sidebar__brand { justify-content: center; padding: 0 var(--sp-2); }
 .collapsed .sidebar__brand .collapse-btn { margin-left: 0; }
 .collapsed .nav__item { justify-content: center; }
+.collapsed .user-menu__trigger { justify-content: center; padding: var(--sp-3) var(--sp-2); }
 
 /* ------------------------------------------------------------- content ---- */
 .content { display: flex; flex-direction: column; min-width: 0; }
@@ -184,6 +204,8 @@ button { font-family: inherit; }
   .sidebar__brand { justify-content: center; padding: 0 var(--sp-2); }
   .sidebar__brand .collapse-btn { margin-left: 0; }
   .nav__item { justify-content: center; }
+  .user-menu__icon { display: none; }
+  .user-menu__trigger { justify-content: center; padding: var(--sp-3) var(--sp-2); }
 }
 
 /* mobile: sidebar vira drawer sobreposto (off-canvas). Não empurra o layout —
@@ -201,11 +223,12 @@ button { font-family: inherit; }
   /* drawer sempre mostra a sidebar cheia — anula o modo colapsado (inclusive se
      ficou ligado ao encolher a janela vindo do desktop) */
   .collapsed .sidebar__brand span, .collapsed .sidebar__brand b.brand-mark,
-  .collapsed .nav__item .label, .collapsed .sidebar__user-info,
-  .sidebar__brand span, .sidebar__brand b.brand-mark, .nav__item .label, .sidebar__user-info { display: revert; }
+  .collapsed .nav__item .label, .collapsed .sidebar__user-info, .collapsed .user-menu__icon,
+  .sidebar__brand span, .sidebar__brand b.brand-mark, .nav__item .label, .sidebar__user-info, .user-menu__icon { display: revert; }
   .collapsed .sidebar__brand, .sidebar__brand { justify-content: flex-start; padding: 0 var(--sp-4) 0 var(--sp-5); }
   .collapsed .sidebar__brand .collapse-btn, .sidebar__brand .collapse-btn { margin-left: auto; }
   .collapsed .nav__item, .nav__item { justify-content: flex-start; }
+  .collapsed .user-menu__trigger, .user-menu__trigger { justify-content: flex-start; padding: var(--sp-3); }
   .scrim { position: fixed; inset: 0; background: var(--overlay-bg); z-index: 55; }
 }
 

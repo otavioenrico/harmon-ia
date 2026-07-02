@@ -267,15 +267,14 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .flex { display: flex; gap: var(--sp-3); align-items: center; }
 /* linha de filtros (Fluxo de Caixa, Histórico, Clientes…): sempre lado a lado,
    nunca empilha — rolagem horizontal como fallback em telas estreitas. */
-.filters { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
-.filters > * { flex-shrink: 0; }
+.filters { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; margin-left: auto; }
 .mt-4 { margin-top: var(--sp-4); }
 .search-input { max-width: 280px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
 /* --------------------------------------------------------------- home ----- */
 /* 3ª coluna vira grid interno da Home; some abaixo de 1200px (spec 1) */
-.home-grid { display: grid; grid-template-columns: 1fr 340px; gap: var(--sp-5); align-items: start; }
+.home-grid { display: grid; grid-template-columns: 1fr 400px; gap: var(--sp-5); align-items: start; }
 .home-main { min-width: 0; display: flex; flex-direction: column; gap: var(--sp-5); }
 .home-aside { display: flex; flex-direction: column; gap: var(--sp-5); }
 @media (max-width: 1200px) { .home-grid { grid-template-columns: 1fr; } }
@@ -329,7 +328,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .wa-link svg { width: 15px; height: 15px; }
 
 /* thumbnail de item (estoque) */
-.thumb { width: 56px; height: 56px; border-radius: var(--radius-sm); object-fit: cover; background: var(--surface-2); flex-shrink: 0; }
+.thumb { width: 80px; height: 80px; border-radius: var(--radius-sm); object-fit: cover; background: var(--surface-2); flex-shrink: 0; }
 
 /* -------------------------------------------------------------- agenda ----- */
 .mb-3 { margin-bottom: var(--sp-3); }

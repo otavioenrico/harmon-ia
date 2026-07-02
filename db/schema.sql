@@ -171,6 +171,19 @@ create table if not exists public.shopping_list_items (
   unique (user_id, stock_item_id)
 );
 
+-- return_dismissals ---------------------------------------------------------
+-- Marca que a profissional já entrou em contato sobre um lembrete de retorno
+-- (cliente+serviço). Um novo procedimento do mesmo serviço, mais recente que o
+-- dismissal, volta a valer normalmente (comparação por data, não flag binária).
+create table if not exists public.return_dismissals (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references auth.users(id) on delete cascade not null,
+  client_id     uuid references public.clients(id) on delete cascade not null,
+  service_id    uuid references public.services(id) on delete cascade not null,
+  dismissed_at  timestamptz default now(),
+  unique (user_id, client_id, service_id)
+);
+
 -- migrações p/ bancos já implantados (idempotente) ----------------------------
 alter table public.clients add column if not exists address_complement text;
 alter table public.user_settings add column if not exists accent text default 'rose';
@@ -206,6 +219,7 @@ create index if not exists idx_fin_proc            on public.financial_entries(p
 create index if not exists idx_proc_status         on public.procedures(status, date);
 create index if not exists idx_drafts_user         on public.agenda_drafts(user_id);
 create index if not exists idx_shopping_user        on public.shopping_list_items(user_id);
+create index if not exists idx_retdis_user          on public.return_dismissals(user_id);
 
 -- ============================================================ RLS =============
 -- Cada conta Google só enxerga os próprios dados. USING + WITH CHECK explícitos
@@ -216,7 +230,7 @@ begin
   foreach t in array array[
     'user_settings','services','clients','stock_items','stock_transactions',
     'procedures','procedure_materials','financial_entries','agenda_drafts',
-    'shopping_list_items'
+    'shopping_list_items','return_dismissals'
   ] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists "own_data" on public.%I', t);
