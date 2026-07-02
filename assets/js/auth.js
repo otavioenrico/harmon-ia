@@ -48,7 +48,7 @@ export async function ensureSettings(session) {
   return data;
 }
 
-// Usado em app.html: sem sessão -> volta ao login.
+// Usado no painel (/app): sem sessão -> volta ao login.
 export async function requireSession() {
   const session = await getSession();
   if (!session) { location.replace('/entrar.html'); return null; }
