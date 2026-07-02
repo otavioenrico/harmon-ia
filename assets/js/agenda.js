@@ -595,11 +595,12 @@ export async function render(root, ctx) {
     }));
   }
 
-  // item 3.4: atalho "Ver agenda de hoje" do dashboard — Lista com período Dia
-  if (sessionStorage.getItem('intent:agendaHoje')) {
-    sessionStorage.removeItem('intent:agendaHoje');
-    state.period = 'day'; state.cursor = new Date();
-    periodEl.querySelectorAll('button').forEach((x) => x.classList.toggle('active', x.dataset.p === 'day'));
+  // item 3.4: atalho "Ver calendário" do dashboard — abre direto na grade mensal
+  if (sessionStorage.getItem('intent:agendaCalendario')) {
+    sessionStorage.removeItem('intent:agendaCalendario');
+    state.view = 'cal';
+    root.querySelectorAll('#ag-view button').forEach((x) => x.classList.toggle('active', x.dataset.v === 'cal'));
+    periodEl.hidden = true;
   }
 
   await load();

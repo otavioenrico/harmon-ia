@@ -11,10 +11,6 @@ import { listEvents, NeedsReconnect } from './google-cal.js';
 import { money, fmtDate, daysSince, esc, waLink, icon, guard, toast } from './utils.js';
 
 const isLow = (i) => i.active !== false && Number(i.quantity || 0) <= Number(i.min_quantity || 0);
-const greeting = () => {
-  const h = new Date().getHours();
-  return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
-};
 const evStart = (e) => new Date(e.start?.dateTime || `${e.start?.date}T00:00:00`);
 const hhmm = (d) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
@@ -136,18 +132,14 @@ export async function render(root, ctx) {
   main.innerHTML = `
     <div class="hero">
       <div>
-        <div class="hero__label">${greeting()}</div>
         <div class="hero__title">Olá, ${esc(name)} ${icon('sparkle')}</div>
-        <div class="hero__sub">${upcoming.length
-          ? `${upcoming.length} agendamento${upcoming.length > 1 ? 's' : ''} pela frente.`
-          : 'Nenhum agendamento futuro no momento.'}</div>
       </div>
       <div class="hero__actions">
-        <button class="btn btn--secondary" id="go-cliente">${icon('users')} Novo cliente</button>
-        <button class="btn btn--secondary" id="go-produto">${icon('box')} Novo produto</button>
-        <button class="btn btn--secondary" id="go-lancamento">${icon('wallet')} Novo lançamento</button>
-        <button class="btn btn--secondary" id="go-hoje">${icon('calendar')} Ver agenda de hoje</button>
-        <button class="btn btn--primary" id="go-agenda">${icon('plus')} Agendar</button>
+        <button class="btn btn--primary" id="go-agenda">${icon('plus')} Novo agendamento</button>
+        <button class="btn btn--secondary" id="go-calendario">${icon('calendar')} <span class="full-label">Ver calendário</span><span class="short-label">Calendário</span></button>
+        <button class="btn btn--secondary" id="go-cliente">${icon('users')} <span class="full-label">Novo cliente</span><span class="short-label">+ Cliente</span></button>
+        <button class="btn btn--secondary" id="go-produto">${icon('box')} <span class="full-label">Novo produto</span><span class="short-label">+ Produto</span></button>
+        <button class="btn btn--secondary" id="go-lancamento">${icon('wallet')} <span class="full-label">Novo lançamento</span><span class="short-label">+ Lançamento</span></button>
       </div>
     </div>
 
@@ -214,8 +206,8 @@ export async function render(root, ctx) {
   root.querySelector('#go-agenda')?.addEventListener('click', () => {
     sessionStorage.setItem('intent:novoAgendamento', '1'); ctx.navigate('agenda');
   });
-  root.querySelector('#go-hoje')?.addEventListener('click', () => {
-    sessionStorage.setItem('intent:agendaHoje', '1'); ctx.navigate('agenda');
+  root.querySelector('#go-calendario')?.addEventListener('click', () => {
+    sessionStorage.setItem('intent:agendaCalendario', '1'); ctx.navigate('agenda');
   });
   root.querySelector('#go-cliente')?.addEventListener('click', () => {
     sessionStorage.setItem('intent:novoCliente', '1'); ctx.navigate('clientes');

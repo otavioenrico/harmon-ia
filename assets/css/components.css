@@ -352,10 +352,11 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .hero__sub { color: var(--text-muted); margin-top: var(--sp-2); }
 /* min-width:0 quebra o "automatic minimum size" padrão do flexbox: sem ele,
    um item flex (mesmo com flex-wrap) nunca encolhe abaixo do min-content do
-   seu filho mais largo — aqui, o botão "Ver agenda de hoje" — e por isso
+   seu filho mais largo — aqui, o botão "Novo agendamento" — e por isso
    estourava a largura do card em vez de quebrar linha como devia. */
 .hero__actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; min-width: 0; }
 .hero__actions .btn { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.hero__actions .short-label { display: none; }
 
 /* mini stat-cards da Home (ícone em círculo pastel) */
 .mini-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
@@ -481,8 +482,16 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   .module__toolbar .search-input { max-width: none; flex: 1 1 100%; }
   .ag-nav { margin-left: 0; width: 100%; justify-content: space-between; }
 
-  /* home: 5 atalhos do hero em grade 2 colunas (em vez de torre) */
+  /* home: 5 atalhos do hero em grade 2 colunas — Cliente/Produto/Lançamento/
+     Calendário em 2×2 (rótulos curtos) e "Novo agendamento" full-width abaixo */
   .hero__actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .hero__actions .full-label { display: none; }
+  .hero__actions .short-label { display: inline; }
+  .hero__actions #go-cliente { order: 1; }
+  .hero__actions #go-produto { order: 2; }
+  .hero__actions #go-lancamento { order: 3; }
+  .hero__actions #go-calendario { order: 4; }
+  .hero__actions #go-agenda { order: 5; grid-column: 1 / -1; }
 
   /* toasts na largura da tela */
   .toasts { left: var(--sp-4); right: var(--sp-4); }
