@@ -122,50 +122,55 @@ export async function render(root, ctx) {
     if (!it) return;
     if (drawer) drawer.close();
 
+    // item 2.2: identificação/form ficam fixos; só o histórico rola (.drawer__body)
     const body = h(`
-      <div style="padding:24px">
-        <div class="flex" style="justify-content:space-between; align-items:flex-start">
-          <div>
-            <div style="font-size:18px">${esc(it.name)}${it.active === false ? ' <span class="badge badge--muted">inativo</span>' : ''}</div>
-            <div class="faint">${fmtQty(it.quantity)} ${esc(it.unit || '')} em estoque · mínimo ${fmtQty(it.min_quantity)}</div>
-          </div>
-          <button class="btn btn--icon btn--ghost" data-close aria-label="Fechar">×</button>
-        </div>
-
-        <div class="flex mt-4" id="thumb"></div>
-        ${it.description ? `<p class="muted mt-4">${esc(it.description)}</p>` : ''}
-        <div class="flex mt-4" id="links"></div>
-
-        <div class="flex mt-4">
-          <button class="btn btn--ghost btn--sm" data-edit>Editar item</button>
-          <button class="btn btn--ghost btn--sm" data-add-list>${icon('plus')} Lista de compras</button>
-        </div>
-
-        <h3 style="margin:20px 0 8px">Registrar movimentação</h3>
-        <form id="mov">
-          <div class="field-row" style="align-items:flex-end">
-            <div class="field"><label>Tipo</label>
-              <select class="select" name="type" style="min-width:120px">
-                <option value="in">Entrada (compra)</option>
-                <option value="out">Saída / descarte</option>
-                <option value="set">Ajuste (contagem)</option>
-              </select>
+      <div class="drawer__wrap">
+        <div class="drawer__head">
+          <div class="flex" style="justify-content:space-between; align-items:flex-start">
+            <div>
+              <div style="font-size:18px">${esc(it.name)}${it.active === false ? ' <span class="badge badge--muted">inativo</span>' : ''}</div>
+              <div class="faint">${fmtQty(it.quantity)} ${esc(it.unit || '')} em estoque · mínimo ${fmtQty(it.min_quantity)}</div>
             </div>
-            <div class="field"><label id="qlbl">Quantidade</label>
-              <input class="input" name="qty" type="number" step="0.001" min="0" required /></div>
-            <div class="field" id="paid-wrap"><label>Valor pago (R$)</label>
-              <input class="input" name="paid_total" type="number" step="0.01" min="0" placeholder="opcional" /></div>
+            <button class="btn btn--icon btn--ghost" data-close aria-label="Fechar">×</button>
           </div>
-          <p class="hint" id="paid-hint">Valor pago atualiza o custo unitário (÷ qtd).</p>
-          <div class="field-row" style="align-items:flex-end">
-            <div class="field" style="flex:1"><label>Observação</label>
-              <input class="input" name="notes" /></div>
-            <button class="btn btn--primary" type="submit">Registrar</button>
-          </div>
-        </form>
 
-        <h3 style="margin:20px 0 8px">Histórico</h3>
-        <div id="hist"><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
+          <div class="flex mt-4" id="thumb"></div>
+          ${it.description ? `<p class="muted mt-4">${esc(it.description)}</p>` : ''}
+          <div class="flex mt-4" id="links"></div>
+
+          <div class="flex mt-4">
+            <button class="btn btn--ghost btn--sm" data-edit>Editar item</button>
+            <button class="btn btn--ghost btn--sm" data-add-list>${icon('plus')} Lista de compras</button>
+          </div>
+
+          <h3 style="margin:20px 0 8px">Registrar movimentação</h3>
+          <form id="mov">
+            <div class="field-row" style="align-items:flex-end">
+              <div class="field"><label>Tipo</label>
+                <select class="select" name="type" style="min-width:120px">
+                  <option value="in">Entrada (compra)</option>
+                  <option value="out">Saída / descarte</option>
+                  <option value="set">Ajuste (contagem)</option>
+                </select>
+              </div>
+              <div class="field"><label id="qlbl">Quantidade</label>
+                <input class="input" name="qty" type="number" step="0.001" min="0" required /></div>
+              <div class="field" id="paid-wrap"><label>Valor pago (R$)</label>
+                <input class="input" name="paid_total" type="number" step="0.01" min="0" placeholder="opcional" /></div>
+            </div>
+            <p class="hint" id="paid-hint">Valor pago atualiza o custo unitário (÷ qtd).</p>
+            <div class="field-row" style="align-items:flex-end">
+              <div class="field" style="flex:1"><label>Observação</label>
+                <input class="input" name="notes" /></div>
+              <button class="btn btn--primary" type="submit">Registrar</button>
+            </div>
+          </form>
+
+          <h3 style="margin:20px 0 8px">Histórico</h3>
+        </div>
+        <div class="drawer__body">
+          <div id="hist"><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
+        </div>
       </div>`);
 
     drawer = openDrawer(body, { center: true });

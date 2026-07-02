@@ -104,39 +104,45 @@ export async function render(root, ctx) {
       c.address_zip,
     ].filter(Boolean).join(' — ') || '—';
 
+    // item 2.2: bloco fixo no topo (identificação/dados/botões/abas) + só as
+    // tabelas rolam dentro de .drawer__body — o cabeçalho nunca sai da tela.
     const body = h(`
-      <div style="padding:24px">
-        <div class="flex" style="justify-content:space-between; align-items:flex-start">
-          <div class="flex">
-            <div class="avatar avatar--lg">${esc(initials(c.name))}</div>
-            <div>
-              <div style="font-size:18px">${esc(c.name)}${c.active === false ? ' <span class="badge badge--muted">inativa</span>' : ''}</div>
-              <div class="faint">${esc(c.phone || '')}</div>
+      <div class="drawer__wrap">
+        <div class="drawer__head">
+          <div class="flex" style="justify-content:space-between; align-items:flex-start">
+            <div class="flex">
+              <div class="avatar avatar--lg">${esc(initials(c.name))}</div>
+              <div>
+                <div style="font-size:18px">${esc(c.name)}${c.active === false ? ' <span class="badge badge--muted">inativa</span>' : ''}</div>
+                <div class="faint">${esc(c.phone || '')}</div>
+              </div>
             </div>
+            <button class="btn btn--icon btn--ghost" data-close aria-label="Fechar">×</button>
           </div>
-          <button class="btn btn--icon btn--ghost" data-close aria-label="Fechar">×</button>
-        </div>
 
-        <div class="mt-4" style="display:flex; flex-direction:column; gap:6px; font-size:14px">
-          <div><span class="muted">E-mail:</span> ${esc(c.email || '—')}</div>
-          <div><span class="muted">CPF:</span> ${esc(c.cpf || '—')}</div>
-          <div><span class="muted">Nascimento:</span> ${c.birthdate ? fmtDate(c.birthdate) : '—'}</div>
-          <div><span class="muted">Endereço:</span> ${esc(addr)}</div>
-          ${c.notes ? `<div><span class="muted">Obs.:</span> ${esc(c.notes)}</div>` : ''}
-        </div>
+          <div class="mt-4" style="display:flex; flex-direction:column; gap:6px; font-size:14px">
+            <div><span class="muted">E-mail:</span> ${esc(c.email || '—')}</div>
+            <div><span class="muted">CPF:</span> ${esc(c.cpf || '—')}</div>
+            <div><span class="muted">Nascimento:</span> ${c.birthdate ? fmtDate(c.birthdate) : '—'}</div>
+            <div><span class="muted">Endereço:</span> ${esc(addr)}</div>
+            ${c.notes ? `<div><span class="muted">Obs.:</span> ${esc(c.notes)}</div>` : ''}
+          </div>
 
-        <div class="flex mt-4">
-          <button class="btn btn--primary btn--sm" data-agendar>Agendar</button>
-          <button class="btn btn--secondary btn--sm" data-proc>Novo procedimento</button>
-          <button class="btn btn--ghost btn--sm" data-edit>Editar</button>
-        </div>
+          <div class="flex mt-4">
+            <button class="btn btn--primary btn--sm" data-agendar>Agendar</button>
+            <button class="btn btn--secondary btn--sm" data-proc>Novo procedimento</button>
+            <button class="btn btn--ghost btn--sm" data-edit>Editar</button>
+          </div>
 
-        <div class="segmented mt-4" data-tabs>
-          <button class="active" data-tab="proc">Procedimentos</button>
-          <button data-tab="fin">Financeiro</button>
+          <div class="segmented mt-4" data-tabs>
+            <button class="active" data-tab="proc">Procedimentos</button>
+            <button data-tab="fin">Financeiro</button>
+          </div>
         </div>
-        <div id="pane-proc"><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
-        <div id="pane-fin" hidden><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
+        <div class="drawer__body">
+          <div id="pane-proc"><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
+          <div id="pane-fin" hidden><table class="data"><tbody>${skeletonRows(4, 3)}</tbody></table></div>
+        </div>
       </div>`);
 
     drawer = openDrawer(body, { center: true });

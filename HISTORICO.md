@@ -591,3 +591,107 @@ Usuário vai conferir visualmente antes do próximo passo. **Lembrar**: rodar o
 Verificação visual dos 8 itens (não testado em browser real — extensão Chrome
 não conectada nesta sessão). Usuário tem mais itens de aprimoramento para
 depois.
+
+---
+
+## Rodada 6 — Bugs críticos, padrões sistêmicos, módulos e novo login (2026-07-02)
+
+### Contexto
+Prompt de execução em `improvements/rodada6-prompt.md` (triagem já feita com o
+usuário): 3 bugs, 2 padrões sistêmicos (filtros e scroll de pop-ups), 4 ajustes
+de módulo e redesign da tela de login. Executado nas 4 fases previstas.
+
+### Feito
+**Fase 1 — bugs**
+1. **Agenda quebrada** (`agenda.js:130`): `ReferenceError: evs is not defined`
+   — `evs` é `const` dentro do `try{}` e era lida fora dele no `if` do
+   auto-avanço de semanas. Trocado por `state.events` (atribuído no try).
+2. **Fluxo de Caixa não carregava** — causa raiz encontrada por análise
+   estática (sem precisar reproduzir): `financial_entries.procedure_id`
+   **nunca teve foreign key** para `procedures`; o embed
+   `procedures(price_charged, procedure_materials(...))` adicionado na Rodada 4
+   (coluna Lucro, commit 600e91d) exige o relacionamento no catálogo — o
+   PostgREST rejeita a query inteira (PGRST200) e nenhuma aba pinta. Fix:
+   FK na definição da tabela (bancos novos) + migração idempotente
+   `not valid` (banco implantado; não varre órfãos históricos). De quebra, o
+   `load()` do módulo agora pinta um estado de erro no pane (antes ficava
+   skeleton infinito).
+3. **Histórico mascarava erro de carga** (`historico.js:115`): `tbody` não
+   existe naquele escopo (é `tableWrap`) — o handler de erro disparava um 2º
+   ReferenceError. Corrigido e agora mostra `emptyBox` de erro.
+
+**Fase 2 — padrões sistêmicos**
+4. **`.filters` virou grid responsivo** (`components.css`):
+   `repeat(auto-fit, minmax(150px,1fr))` + `flex-basis: 460px` — quebra de
+   linha desce em bloco alinhado (sem campo `dd/mm/aaaa` solto), e abaixo de
+   640px empilha em coluna única. Larguras inline (`max-width`) removidas dos
+   filtros de `historico.js` e `financeiro.js`. Busca de Histórico >
+   Procedimentos ampliada: cliente, serviço, status e valor (placeholder
+   "Buscar por cliente, serviço…").
+5. **Scroll de modais/drawers**: `.modal` e `.drawer`/`.drawer--center` agora
+   são flex-coluna com `overflow:hidden`; só `.modal__body` / nova
+   `.drawer__body` rolam (`flex:1; min-height:0`). Sticky do head/foot do modal
+   saiu (desnecessário no novo layout). Perfil de cliente (`clientes.js`) e
+   item de estoque (`estoque.js`) reestruturados com
+   `.drawer__wrap`/`.drawer__head`/`.drawer__body` — cabeçalho/botões/abas
+   fixos, só as tabelas rolam, barra de rolagem longe dos cantos arredondados.
+
+**Fase 3 — módulos**
+6. **Serviços em lista** (`servicos.js`): `.card-grid` → `table.data` (dot de
+   cor + nome + descrição, Preço, Duração, badge de status); linha clicável
+   abre o mesmo `openForm`. Filtro/busca/color picker preservados. `.card-grid`
+   ficou órfão e foi removido do CSS.
+7. **Dashboard — Próximos agendamentos** (`home.js`): panel-rows → `table.data`
+   com colunas Cliente / Procedimento / Duração / Data (`whenLabel` separado em
+   `durLabel`, "60 minutos" ou "—" sem evento Google).
+8. **Dashboard — Clientes para retorno**: substituída a regra de 60 dias por
+   cliente pela lógica de Histórico > Retornos (cliente+serviço, marcos
+   1/3/6/12 meses). **Migração de schema**: `return_dismissals` ganhou coluna
+   `months` (default 1 p/ linhas antigas) e a unique passou a
+   `(user_id, client_id, service_id, months)` — confirmar o marco de 1 mês não
+   silencia mais os de 3/6/12. Dashboard mostra o menor marco vencido e não
+   dispensado; linha = cliente + serviço + marco + "há N dias" + WhatsApp +
+   botão ✓ (mesmo upsert do Histórico). `historico.js` atualizado (chave do
+   Map e upsert com `months`; `dismissed_at` agora explícito no upsert — no
+   conflito a data é renovada, senão o filtro por data reexibiria a linha).
+9. **Atalho "Ver agenda de hoje"** no hero (`home.js` → `intent:agendaHoje`;
+   `agenda.js` lê/limpa antes do primeiro `load()`, força view Dia com cursor
+   hoje e sincroniza o botão ativo do `#ag-view`).
+
+**Fase 4 — login** (`index.html` + `layout.css`)
+10. Card 2 colunas sobre fundo com gradientes radiais suaves (tokens mauve).
+    Esquerda: "Olá, novamente", e-mail, senha (olho mostrar/ocultar funcional +
+    "Esqueceu a senha?"), "Entrar →", divisor "ou", **botão Google com o mesmo
+    handler de antes** (fluxo de auth intocado), "Criar conta". Direita: SVG
+    abstrato inline (curvas/círculos na paleta, marca d'água "Harmon IA") —
+    substituível por foto depois. Responsivo: <820px a coluna visual some.
+
+### Verificação
+`node --check` limpo nos 7 JS tocados (agenda, historico, financeiro, home,
+servicos, clientes, estoque). SQL revisado manualmente: 4 `do $$` + 6 funções
+= 10 `end $$;`, migrações idempotentes (add column if not exists / drop
+constraint if exists / exception duplicate_object). Sem referências órfãs de
+CSS (`card-grid`, `login__card`, `login__tagline` limpos).
+
+### Decisões / pegadinhas
+- E-mail/senha do login são **só visuais** (toast "Em breve") — auth continua
+  100% Google, decisão fechada com o usuário.
+- FK nova com `not valid`: PostgREST só precisa do relacionamento no catálogo;
+  evita travar a migração se houver órfão histórico.
+- Linhas antigas de `return_dismissals` viram marco de 1 mês (`default 1`) —
+  comportamento igual ao que o usuário via antes, e os marcos maiores voltam a
+  aparecer (que era o pedido).
+
+### Limpeza de repositório (pós-rodada, pedido do usuário)
+- `agent/skills/` removido — cópia antiga/parcial de `.agents/skills/` (a
+  canônica, que bate com `skills-lock.json`).
+- `credenciais/.fuse_hidden*` (restos de arquivos deletados em FS montado) e
+  `assets/.DS_Store` apagados.
+- `LAUNCH-ETAPA6.md` (prompt de sessão já cumprido) movido para
+  `improvements/`, junto dos outros prompts de rodada.
+
+### Pendente / próximo
+- **Rodar `db/schema.sql` no Supabase antes de testar** (FK do Fluxo de Caixa
+  + coluna `months`) — sem isso o Fluxo de Caixa continua quebrado.
+- Verificação visual do usuário em ambiente real (não testado em browser nesta
+  sessão). Sem commit/push/deploy, como combinado.

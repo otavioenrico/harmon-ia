@@ -72,10 +72,10 @@ export async function render(root, ctx) {
 
   filters.innerHTML = `
     <input class="input search-input" id="f-q" placeholder="Buscar lançamento…" value="${esc(state.q)}">
-    <select class="select" id="f-status" style="max-width:160px">
+    <select class="select" id="f-status">
       <option value="">Todo status</option><option value="pending">Pendentes</option><option value="paid">Pagos</option></select>
-    <input class="input" id="f-de" type="date" value="${state.fDe}" title="De" style="max-width:150px">
-    <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até" style="max-width:150px">`;
+    <input class="input" id="f-de" type="date" value="${state.fDe}" title="De">
+    <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até">`;
   filters.querySelector('#f-q').addEventListener('input',
     debounce((e) => { state.q = e.target.value.trim().toLowerCase(); paint(); }));
   filters.querySelector('#f-status').onchange = (e) => { state.fStatus = e.target.value; paint(); };
@@ -102,7 +102,12 @@ export async function render(root, ctx) {
       .select('id, type, amount, description, category, payment_method, installments, installment_of, due_date, paid, paid_at, client_id, procedure_id, created_at, clients(name), procedures(price_charged, procedure_materials(quantity_used, unit_cost_at_time))')
       .order('due_date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
-    if (error) { console.error(error); toast('Erro ao carregar lançamentos.', 'error'); return; }
+    if (error) {
+      console.error(error);
+      pane.innerHTML = emptyBox(icon('warning'), 'Não foi possível carregar os lançamentos.');
+      toast('Erro ao carregar lançamentos.', 'error');
+      return;
+    }
     state.all = data || [];
     paint();
   }

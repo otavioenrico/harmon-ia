@@ -26,7 +26,12 @@ export async function render(root, ctx) {
       <div class="spacer"></div>
       <input class="input search-input" id="svc-q" placeholder="Buscar por nome…" />
     </div>
-    <div id="svc-grid" class="card-grid"></div>`;
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Serviço</th><th class="num">Preço</th><th class="num">Duração</th><th>Status</th></tr></thead>
+        <tbody id="svc-rows"></tbody>
+      </table>
+    </div>`;
 
   root.querySelector('#svc-filter').onclick = (e) => {
     const b = e.target.closest('[data-f]'); if (!b) return;
@@ -36,41 +41,40 @@ export async function render(root, ctx) {
   };
   root.querySelector('#svc-q').addEventListener('input', debounce((e) => { state.q = e.target.value.trim(); load(); }));
 
-  const grid = root.querySelector('#svc-grid');
+  const tbody = root.querySelector('#svc-rows');
 
   async function load() {
-    grid.innerHTML = Array.from({ length: 4 }, () =>
-      `<div class="card"><div class="skeleton" style="width:60%"></div><div class="skeleton mt-4" style="height:40px"></div></div>`).join('');
+    tbody.innerHTML = Array.from({ length: 4 }, () =>
+      `<tr>${'<td><div class="skeleton"></div></td>'.repeat(4)}</tr>`).join('');
     let q = supabase.from('services').select('*').order('name');
     if (state.filter === 'active') q = q.eq('active', true);
     if (state.filter === 'inactive') q = q.eq('active', false);
     if (state.q) q = q.ilike('name', `%${state.q}%`);
     const { data, error } = await q;
-    if (error) { grid.innerHTML = ''; toast('Erro ao carregar serviços.', 'error'); return; }
+    if (error) { tbody.innerHTML = ''; toast('Erro ao carregar serviços.', 'error'); return; }
     if (!data.length) {
-      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="icon">${icon('scissors')}</div>
-        <p>Nenhum serviço ${state.q ? 'encontrado' : 'cadastrado'}.</p></div>`;
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="icon">${icon('scissors')}</div>
+        <p>Nenhum serviço ${state.q ? 'encontrado' : 'cadastrado'}.</p></div></td></tr>`;
       return;
     }
-    grid.innerHTML = data.map(card).join('');
-    grid.querySelectorAll('[data-id]').forEach((el) =>
+    tbody.innerHTML = data.map(row).join('');
+    tbody.querySelectorAll('[data-id]').forEach((el) =>
       el.onclick = () => openForm(ctx, data.find((s) => s.id === el.dataset.id), () => load()));
   }
 
-  function card(s) {
+  // item 3.1: listagem em linha (table.data), mesmo padrão de historico/clientes.
+  // Clique na linha abre o mesmo openForm de edição dos cards antigos.
+  function row(s) {
     return `
-      <div class="card" data-id="${s.id}" style="cursor:pointer">
-        <div class="flex" style="justify-content:space-between">
+      <tr class="clickable" data-id="${s.id}">
+        <td><div class="flex" style="gap:8px">
           <span class="dot" style="background:${esc(s.color || '#9e9892')}"></span>
-          ${s.active ? '' : '<span class="badge badge--muted">inativo</span>'}
-        </div>
-        <h3 style="margin:${'8px'} 0 4px">${esc(s.name)}</h3>
-        <p class="muted" style="min-height:20px">${esc(s.description || '')}</p>
-        <div class="flex mt-4" style="justify-content:space-between">
-          <strong>${s.default_price != null ? money(s.default_price) : '—'}</strong>
-          <span class="faint">${s.duration_min ? s.duration_min + ' min' : ''}</span>
-        </div>
-      </div>`;
+          <span>${esc(s.name)}${s.description ? `<div class="sub faint" style="font-size:var(--fs-xs)">${esc(s.description)}</div>` : ''}</span>
+        </div></td>
+        <td class="num">${s.default_price != null ? money(s.default_price) : '—'}</td>
+        <td class="num">${s.duration_min ? s.duration_min + ' min' : '—'}</td>
+        <td>${s.active ? '<span class="badge badge--success">ativo</span>' : '<span class="badge badge--muted">inativo</span>'}</td>
+      </tr>`;
   }
 
   await load();

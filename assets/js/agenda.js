@@ -127,7 +127,8 @@ export async function render(root, ctx) {
         console.error(err); body.innerHTML = `<div class="empty"><div class="icon">${icon('warning')}</div><p>${esc(err.message)}</p></div>`;
         return;
       }
-      if (autoAdvance && state.view === 'list' && !evs.length && hop < AGENDA_AUTO_LOOKAHEAD_WEEKS) {
+      // state.events (atribuído no try acima) — `evs` é const do bloco try e não existe aqui
+      if (autoAdvance && state.view === 'list' && !state.events.length && hop < AGENDA_AUTO_LOOKAHEAD_WEEKS) {
         state.cursor.setDate(state.cursor.getDate() + 7);
         continue;
       }
@@ -578,6 +579,13 @@ export async function render(root, ctx) {
       if (error) { console.error(error); return toast('Erro ao excluir o rascunho.', 'error'); }
       b.closest('[data-id]').remove(); toast('Rascunho excluído.');
     }));
+  }
+
+  // item 3.4: atalho "Ver agenda de hoje" do dashboard — abre direto na view Dia
+  if (sessionStorage.getItem('intent:agendaHoje')) {
+    sessionStorage.removeItem('intent:agendaHoje');
+    state.view = 'day'; state.cursor = new Date();
+    root.querySelectorAll('#ag-view button').forEach((x) => x.classList.toggle('active', x.dataset.v === 'day'));
   }
 
   await load(true);

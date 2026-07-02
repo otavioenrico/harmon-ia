@@ -8,7 +8,7 @@
 import { supabase } from './supabase.js';
 import { profile } from './auth.js';
 import { listEvents, NeedsReconnect } from './google-cal.js';
-import { money, fmtDate, daysSince, esc, waLink, icon } from './utils.js';
+import { money, fmtDate, daysSince, esc, waLink, icon, guard, toast } from './utils.js';
 
 const isLow = (i) => i.active !== false && Number(i.quantity || 0) <= Number(i.min_quantity || 0);
 const greeting = () => {
@@ -45,11 +45,12 @@ export async function render(root, ctx) {
   const main = root.querySelector('.home-main');
   const aside = root.querySelector('.home-aside');
 
-  const [cli, fin, stk, proc] = await Promise.all([
+  const [cli, fin, stk, proc, dis] = await Promise.all([
     supabase.from('clients').select('id, name, phone, created_at, active'),
     supabase.from('financial_entries').select('amount, type, paid, paid_at'),
     supabase.from('stock_items').select('name, quantity, min_quantity, unit, active'),
-    supabase.from('procedures').select('date, status, client_id, google_event_id, clients(name), services(name)'),
+    supabase.from('procedures').select('date, status, client_id, service_id, google_event_id, clients(name), services(name)'),
+    supabase.from('return_dismissals').select('client_id, service_id, months, dismissed_at'),
   ]);
   if (cli.error || fin.error || stk.error || proc.error) {
     console.error(cli.error || fin.error || stk.error || proc.error);
@@ -86,26 +87,41 @@ export async function render(root, ctx) {
       for (const e of await listEvents(min, max)) eventByGid.set(e.id, e);
     } catch (err) { if (!(err instanceof NeedsReconnect)) console.error(err); }
   }
+  // item 3.2: data e duração viram colunas separadas da tabela
   const whenLabel = (p) => {
     const ev = p.google_event_id && eventByGid.get(p.google_event_id);
     if (!ev?.start?.dateTime) return fmtDate(p.date);
-    const start = evStart(ev);
-    const dur = ev.end?.dateTime ? Math.round((new Date(ev.end.dateTime) - start) / 60000) : null;
-    return `${fmtDate(p.date)} às ${hhmm(start)}${dur ? ` (${dur}min)` : ''}`;
+    return `${fmtDate(p.date)} às ${hhmm(evStart(ev))}`;
+  };
+  const durLabel = (p) => {
+    const ev = p.google_event_id && eventByGid.get(p.google_event_id);
+    if (!ev?.start?.dateTime || !ev.end?.dateTime) return '—';
+    return `${Math.round((new Date(ev.end.dateTime) - evStart(ev)) / 60000)} minutos`;
   };
 
-  // ---- clientes para retorno (último proc. realizado há 60+ dias) ------------
-  const last = new Map();
+  // ---- clientes para retorno (item 3.3): mesma lógica de Histórico > Retornos —
+  // por cliente+serviço, marcos de 1/3/6/12 meses com dismissal por marco em
+  // return_dismissals. Sem seletor aqui: mostra o MENOR marco vencido e ainda
+  // não dispensado desde o último procedimento daquele serviço.
+  const MARCOS = [1, 3, 6, 12];               // mês ≈ 30 dias (mesmo teto do Histórico)
+  const lastCS = new Map();
   for (const p of procs) {
-    if (p.status !== 'completed' || !p.client_id || !p.date) continue;
-    if (!last.has(p.client_id) || p.date > last.get(p.client_id)) last.set(p.client_id, p.date);
+    if (p.status !== 'completed' || !p.client_id || !p.service_id || !p.date) continue;
+    const k = `${p.client_id}|${p.service_id}`;
+    const cur = lastCS.get(k);
+    if (!cur || p.date > cur.date) lastCS.set(k, {
+      client_id: p.client_id, service_id: p.service_id, date: p.date, service: p.services?.name });
   }
-  const retornos = clients
-    .filter((c) => c.active !== false)
-    .map((c) => ({ ...c, _last: last.get(c.id) || null, _days: daysSince(last.get(c.id)) }))
-    .filter((c) => c._last && c._days >= 60)
-    .sort((a, b) => b._days - a._days)
-    .slice(0, 6);
+  const dismissed = new Map((dis.data || []).map((d) => [`${d.client_id}|${d.service_id}|${d.months}`, d.dismissed_at]));
+  const activeClients = new Map(clients.filter((c) => c.active !== false).map((c) => [c.id, c]));
+  const retornos = [...lastCS.values()].map((r) => {
+    const c = activeClients.get(r.client_id);
+    if (!c) return null;
+    const days = daysSince(r.date);
+    const marco = MARCOS.find((m) => days >= m * 30 &&
+      (dismissed.get(`${r.client_id}|${r.service_id}|${m}`) || '').slice(0, 10) < r.date);
+    return marco ? { ...r, name: c.name, phone: c.phone, _days: days, _marco: marco } : null;
+  }).filter(Boolean).sort((a, b) => b._days - a._days).slice(0, 6);
 
   const lowItems = stock.filter(isLow);
 
@@ -130,6 +146,7 @@ export async function render(root, ctx) {
         <button class="btn btn--secondary" id="go-cliente">${icon('users')} Novo cliente</button>
         <button class="btn btn--secondary" id="go-produto">${icon('box')} Novo produto</button>
         <button class="btn btn--secondary" id="go-lancamento">${icon('wallet')} Novo lançamento</button>
+        <button class="btn btn--secondary" id="go-hoje">${icon('calendar')} Ver agenda de hoje</button>
         <button class="btn btn--primary" id="go-agenda">${icon('plus')} Agendar</button>
       </div>
     </div>
@@ -142,12 +159,17 @@ export async function render(root, ctx) {
 
     <div class="panel">
       <div class="panel__title">Próximos agendamentos</div>
-      ${upcoming.length ? upcoming.map((p) => `
-        <div class="panel__row">
-          <span class="grow">${esc(p.clients?.name || 'Cliente')}
-            <div class="sub">${esc(p.services?.name || 'Procedimento')}</div></span>
-          <span class="nowrap muted">${whenLabel(p)}</span>
-        </div>`).join('')
+      ${upcoming.length ? `
+        <table class="data">
+          <thead><tr><th>Cliente</th><th>Procedimento</th><th>Duração</th><th>Data</th></tr></thead>
+          <tbody>${upcoming.map((p) => `
+            <tr>
+              <td>${esc(p.clients?.name || 'Cliente')}</td>
+              <td>${esc(p.services?.name || 'Procedimento')}</td>
+              <td class="nowrap">${durLabel(p)}</td>
+              <td class="nowrap muted">${whenLabel(p)}</td>
+            </tr>`).join('')}</tbody>
+        </table>`
         : '<p class="faint">Nada agendado. Use “Agendar” para criar.</p>'}
     </div>`;
 
@@ -165,17 +187,35 @@ export async function render(root, ctx) {
 
     <div class="panel">
       <div class="panel__title">${icon('bell')} Clientes para retorno</div>
-      ${retornos.length ? retornos.map((c) => `
-        <div class="panel__row">
-          <span class="grow">${esc(c.name)}<div class="sub">há ${c._days} dias</div></span>
-          ${c.phone ? `<a class="btn btn--secondary btn--sm" target="_blank" rel="noopener"
-            href="${waLink(c.phone, `Oi ${esc(c.name.split(' ')[0])}! Que tal agendar seu retorno? 💛`)}">${icon('whatsapp')}</a>` : ''}
+      ${retornos.length ? retornos.map((r) => `
+        <div class="panel__row" data-cli="${r.client_id}" data-svc="${r.service_id}" data-m="${r._marco}">
+          <span class="grow">${esc(r.name)}
+            <div class="sub">${esc(r.service || '—')} · ${r._marco} ${r._marco === 1 ? 'mês' : 'meses'} · há ${r._days} dias</div></span>
+          ${r.phone ? `<a class="btn btn--secondary btn--sm" target="_blank" rel="noopener"
+            href="${waLink(r.phone, `Oi ${esc(r.name.split(' ')[0])}! Que tal agendar seu retorno? 💛`)}">${icon('whatsapp')}</a>` : ''}
+          <button class="btn btn--icon btn--ghost" data-ok title="Concluir — volta a avisar no próximo marco">${icon('check')}</button>
         </div>`).join('')
-        : '<p class="faint">Ninguém parado há 60+ dias.</p>'}
+        : '<p class="faint">Nenhum retorno pendente.</p>'}
     </div>`;
+
+  // ✓ grava o dismissal do marco mostrado (mesmo upsert de Histórico > Retornos)
+  aside.querySelectorAll('[data-ok]').forEach((b) => b.onclick = guard(async () => {
+    const rowEl = b.closest('.panel__row');
+    const { error } = await supabase.from('return_dismissals').upsert({
+      user_id: ctx.session.user.id, client_id: rowEl.dataset.cli,
+      service_id: rowEl.dataset.svc, months: Number(rowEl.dataset.m),
+      dismissed_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,client_id,service_id,months' });
+    if (error) { console.error(error); return toast('Erro ao concluir.', 'error'); }
+    rowEl.remove();
+    toast('Marcado como contatado.');
+  }));
 
   root.querySelector('#go-agenda')?.addEventListener('click', () => {
     sessionStorage.setItem('intent:novoAgendamento', '1'); ctx.navigate('agenda');
+  });
+  root.querySelector('#go-hoje')?.addEventListener('click', () => {
+    sessionStorage.setItem('intent:agendaHoje', '1'); ctx.navigate('agenda');
   });
   root.querySelector('#go-cliente')?.addEventListener('click', () => {
     sessionStorage.setItem('intent:novoCliente', '1'); ctx.navigate('clientes');

@@ -141,7 +141,7 @@ create table if not exists public.financial_entries (
   paid           boolean default false,
   paid_at        date,
   client_id      uuid references public.clients(id) on delete set null,
-  procedure_id   uuid,
+  procedure_id   uuid references public.procedures(id) on delete set null,
   notes          text,
   created_at     timestamptz default now(),
   updated_at     timestamptz default now()
@@ -180,14 +180,41 @@ create table if not exists public.return_dismissals (
   user_id       uuid references auth.users(id) on delete cascade not null,
   client_id     uuid references public.clients(id) on delete cascade not null,
   service_id    uuid references public.services(id) on delete cascade not null,
+  months        integer not null default 1,   -- marco dispensado: 1 | 3 | 6 | 12
   dismissed_at  timestamptz default now(),
-  unique (user_id, client_id, service_id)
+  constraint return_dismissals_user_client_service_months_key
+    unique (user_id, client_id, service_id, months)
 );
 
 -- migrações p/ bancos já implantados (idempotente) ----------------------------
 alter table public.clients add column if not exists address_complement text;
 alter table public.user_settings add column if not exists accent text default 'rose';
 alter table public.user_settings add column if not exists whatsapp_number text;
+
+-- FIX (Rodada 6, bug 1.2): financial_entries.procedure_id não tinha FK — sem o
+-- relacionamento, o PostgREST rejeita o embed `procedures(...)` usado pelo
+-- Fluxo de Caixa (coluna Lucro) e a listagem inteira falha.
+-- `not valid`: não varre linhas antigas ao criar (não trava a migração se
+-- existir algum órfão histórico); o PostgREST só precisa da FK no catálogo.
+do $$ begin
+  alter table public.financial_entries
+    add constraint financial_entries_procedure_id_fkey
+    foreign key (procedure_id) references public.procedures(id) on delete set null
+    not valid;
+exception when duplicate_object then null;
+end $$;
+
+-- Rodada 6 (item 3.3): dismissal de retorno passa a ter marco (1/3/6/12 meses).
+-- Confirmar o marco de 1 mês não silencia mais os de 3/6/12 — cada marco tem
+-- seu próprio dismissal. Linhas antigas (sem marco) valem como marco de 1 mês.
+alter table public.return_dismissals add column if not exists months integer not null default 1;
+alter table public.return_dismissals drop constraint if exists return_dismissals_user_id_client_id_service_id_key;
+do $$ begin
+  alter table public.return_dismissals
+    add constraint return_dismissals_user_client_service_months_key
+    unique (user_id, client_id, service_id, months);
+exception when duplicate_object then null; when duplicate_table then null;
+end $$;
 
 -- =================================================== updated_at triggers ======
 do $$

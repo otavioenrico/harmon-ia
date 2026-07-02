@@ -79,13 +79,13 @@ export async function render(root, ctx) {
     const opts = (arr, sel) => arr.map((x) =>
       `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}</option>`).join('');
     filters.innerHTML = `
-      <input class="input search-input" id="f-cli-q" placeholder="Buscar cliente…" value="${esc(state.qCliente)}">
-      <select class="select" id="f-svc" style="max-width:180px"><option value="">Todo serviço</option>${opts(state.services, state.fServico)}</select>
-      <select class="select" id="f-st" style="max-width:150px">
+      <input class="input search-input" id="f-cli-q" placeholder="Buscar por cliente, serviço…" value="${esc(state.qCliente)}">
+      <select class="select" id="f-svc"><option value="">Todo serviço</option>${opts(state.services, state.fServico)}</select>
+      <select class="select" id="f-st">
         <option value="">Todo status</option><option value="scheduled">Agendados</option>
         <option value="completed">Realizados</option><option value="cancelled">Cancelados</option></select>
-      <input class="input" id="f-de" type="date" value="${state.fDe}" title="De" style="max-width:150px">
-      <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até" style="max-width:150px">`;
+      <input class="input" id="f-de" type="date" value="${state.fDe}" title="De">
+      <input class="input" id="f-ate" type="date" value="${state.fAte}" title="Até">`;
     filters.querySelector('#f-cli-q').addEventListener('input',
       debounce((e) => { state.qCliente = e.target.value.trim().toLowerCase(); paint(); }));
     filters.querySelector('#f-svc').onchange = (e) => { state.fServico = e.target.value; paint(); };
@@ -108,11 +108,11 @@ export async function render(root, ctx) {
       supabase.from('clients').select('id, name, phone, active').eq('active', true).order('name'),
       supabase.from('services').select('id, name, default_price, active').eq('active', true).order('name'),
       supabase.from('stock_items').select('id, name, quantity, unit, cost_price').eq('active', true).order('name'),
-      supabase.from('return_dismissals').select('client_id, service_id, dismissed_at'),
+      supabase.from('return_dismissals').select('client_id, service_id, months, dismissed_at'),
     ]);
     if (proc.error || cli.error || svc.error || stk.error) {
       console.error(proc.error || cli.error || svc.error || stk.error);
-      tbody.innerHTML = ''; toast('Erro ao carregar histórico.', 'error'); return;
+      tableWrap.innerHTML = emptyBox(icon('warning'), 'Erro ao carregar histórico.'); toast('Erro ao carregar histórico.', 'error'); return;
     }
     state.all = (proc.data || []).map((p) => ({
       ...p,
@@ -122,7 +122,8 @@ export async function render(root, ctx) {
     state.clients = cli.data || [];
     state.services = svc.data || [];
     state.stock = stk.data || [];
-    state.dismissals = new Map((dis.data || []).map((d) => [`${d.client_id}|${d.service_id}`, d.dismissed_at]));
+    // item 3.3: dismissal por marco (1/3/6/12 meses) — chave inclui months
+    state.dismissals = new Map((dis.data || []).map((d) => [`${d.client_id}|${d.service_id}|${d.months}`, d.dismissed_at]));
     paintFilters(); paint();
   }
 
@@ -130,7 +131,12 @@ export async function render(root, ctx) {
     if (state.view === 'reat') return paintReat();
     if (state.view === 'ret') return paintRetornos();
     let rows = state.all;
-    if (state.qCliente) rows = rows.filter((p) => (p.clients?.name || '').toLowerCase().includes(state.qCliente));
+    // busca ampla: cliente, serviço, status e valor (mesmo espírito do #f-q do Fluxo de Caixa)
+    const STATUS_TXT = { scheduled: 'agendado', completed: 'realizado', cancelled: 'cancelado' };
+    if (state.qCliente) rows = rows.filter((p) =>
+      [p.clients?.name, p.services?.name, STATUS_TXT[p.status] || 'realizado',
+        p.price_charged != null ? money(p.price_charged) : '', String(p.price_charged ?? '')]
+        .join(' ').toLowerCase().includes(state.qCliente));
     if (state.fServico) rows = rows.filter((p) => p.service_id === state.fServico);
     if (state.fStatus) rows = rows.filter((p) => (p.status || 'completed') === state.fStatus);
     if (state.fDe) rows = rows.filter((p) => p.date >= state.fDe);   // 'YYYY-MM-DD' lexicográfico
@@ -214,7 +220,7 @@ export async function render(root, ctx) {
         service: state.services.find((s) => s.id === r.service_id)?.name,
         _days: daysSince(r.date) }))
       .filter((r) => r.name && r._days >= threshold)
-      .filter((r) => (state.dismissals.get(`${r.client_id}|${r.service_id}`) || '').slice(0, 10) < r.date)
+      .filter((r) => (state.dismissals.get(`${r.client_id}|${r.service_id}|${state.retMonths}`) || '').slice(0, 10) < r.date)
       .sort((a, b) => b._days - a._days);
     if (!rows.length) {
       tableWrap.innerHTML = emptyBox(icon('bell'), `Nenhuma cliente para retorno de ${state.retMonths} ${state.retMonths === 1 ? 'mês' : 'meses'}.`); return;
@@ -238,10 +244,13 @@ export async function render(root, ctx) {
     tableWrap.querySelectorAll('[data-concluir]').forEach((b) => b.onclick = guard(async () => {
       const tr = b.closest('tr');
       const client_id = tr.dataset.cli, service_id = tr.dataset.svc;
+      // dismissed_at explícito: no conflito (re-contato após novo procedimento) a
+      // data precisa ser atualizada, senão o filtro por data reexibiria a linha
       const { error } = await supabase.from('return_dismissals')
-        .upsert({ user_id: ctx.session.user.id, client_id, service_id }, { onConflict: 'user_id,client_id,service_id' });
+        .upsert({ user_id: ctx.session.user.id, client_id, service_id, months: state.retMonths, dismissed_at: new Date().toISOString() },
+          { onConflict: 'user_id,client_id,service_id,months' });
       if (error) { console.error(error); return toast('Erro ao marcar como contatado.', 'error'); }
-      state.dismissals.set(`${client_id}|${service_id}`, new Date().toISOString());
+      state.dismissals.set(`${client_id}|${service_id}|${state.retMonths}`, new Date().toISOString());
       toast('Marcado como contatado.');
       paintRetornos();
     }));

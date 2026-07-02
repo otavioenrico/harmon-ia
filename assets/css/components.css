@@ -111,8 +111,6 @@
   border-radius: var(--radius);
   padding: var(--sp-5);
 }
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-4); }
-
 .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-5); }
 .stat { background: var(--surface); box-shadow: var(--shadow-sm); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); }
 .stat .label { font-size: var(--fs-sm); color: var(--text-muted); }
@@ -178,16 +176,20 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   display: grid; place-items: center; padding: var(--sp-5);
   animation: fade var(--dur-fast) var(--ease-out);
 }
+/* card em flex-coluna com overflow:hidden: cabeçalho/rodapé ficam fixos e só o
+   .modal__body rola — a barra de rolagem fica no miolo, longe dos cantos
+   arredondados (antes o card inteiro rolava e a barra tocava o raio). */
 .modal {
   background: var(--surface); border-radius: var(--radius-lg);
-  width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
+  width: 100%; max-width: 520px; max-height: 88vh;
+  display: flex; flex-direction: column; overflow: hidden;
   animation: slideUp var(--dur-base) var(--ease-out);
 }
 .modal--wide { max-width: 720px; }
 .modal__head {
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--sp-5); border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; background: var(--surface);
+  flex-shrink: 0; background: var(--surface);
 }
 .modal__title { font-size: var(--fs-lg); font-weight: var(--fw-400); }
 .modal__close {
@@ -196,16 +198,18 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   width: 40px; height: 40px; display: grid; place-items: center;
   border-radius: var(--radius-sm); margin: calc(-1 * var(--sp-2));
 }
-.modal__body { padding: var(--sp-5); }
+.modal__body { padding: var(--sp-5); overflow-y: auto; flex: 1 1 auto; min-height: 0; }
 .modal__foot {
   display: flex; justify-content: flex-end; gap: var(--sp-3);
   padding: var(--sp-5); border-top: 1px solid var(--border);
-  position: sticky; bottom: 0; background: var(--surface);
+  flex-shrink: 0; background: var(--surface);
 }
-/* drawer lateral (perfil da cliente) */
+/* drawer lateral (perfil da cliente) — mesma receita do modal: o container não
+   rola; quem rola é a região .drawer__body montada pelo módulo. */
 .drawer { position: fixed; top: 0; right: 0; height: 100vh; width: 460px; max-width: 92vw;
   background: var(--surface); border-left: 1px solid var(--border); z-index: 100;
-  overflow-y: auto; animation: slideLeft var(--dur-base) var(--ease-out); }
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: slideLeft var(--dur-base) var(--ease-out); }
 /* variante central (perfil de cliente, item de estoque): mesmo componente,
    mas centralizado pelo grid do .modal-overlay em vez de fixo à direita */
 .drawer--center {
@@ -213,6 +217,11 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   width: 640px; max-width: 92vw; border-left: none; border-radius: var(--radius-lg);
   animation: slideUp var(--dur-base) var(--ease-out);
 }
+/* conteúdo do drawer: bloco fixo no topo (dados/botões/abas) + corpo rolável.
+   .drawer__wrap é o elemento que o módulo passa pro openDrawer(). */
+.drawer__wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.drawer__head { flex-shrink: 0; padding: var(--sp-5) var(--sp-5) 0; }
+.drawer__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--sp-4) var(--sp-5) var(--sp-5); }
 .closing .drawer.drawer--center { animation: slideDownOut var(--dur-exit) var(--ease-out) forwards; }
 
 @keyframes fade { from { opacity: 0; } }
@@ -265,9 +274,21 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .right { text-align: right; }
 .nowrap { white-space: nowrap; }
 .flex { display: flex; gap: var(--sp-3); align-items: center; }
-/* linha de filtros (Fluxo de Caixa, Histórico, Clientes…): sempre lado a lado,
-   nunca empilha — rolagem horizontal como fallback em telas estreitas. */
-.filters { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; margin-left: auto; }
+/* linha de filtros (Fluxo de Caixa, Histórico…): grid responsivo — quando não
+   cabe numa linha, quebra em colunas alinhadas (nada de campo "solto" à
+   esquerda, que era o defeito do flex-wrap cru). flex-basis alta faz o bloco
+   descer inteiro pra própria linha quando divide o toolbar com o segmented. */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-2);
+  align-items: center;
+  flex: 1 1 460px;
+  min-width: 0;
+  margin-left: auto;
+}
+.filters > .input, .filters > .select { max-width: none; width: 100%; }
+@media (max-width: 640px) { .filters { grid-template-columns: 1fr; } }
 .mt-4 { margin-top: var(--sp-4); }
 .search-input { max-width: 280px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
