@@ -45,13 +45,83 @@ centralizado** abaixo do grid.
 - Solução: ícone **✓** em destaque (`--text`), texto forte.
 **Aceite:** contraste antes/depois claro, sem risco no texto.
 
-## 5. Página Sobre em módulos
-**Problema:** a seção Sobre está vaga, com muito espaço vazio.
-**Correção:** reestruturar os 3 blocos (O que é / Pra quem é / A visão) como **módulos**:
-texto à esquerda + **placeholder de imagem à direita** (fundo neutro escuro, `radius`, rótulo
-"imagem"). **Preencher os três** com o texto correspondente (não deixar 2 e 3 vazios).
-Default: **imagem sempre à direita**. Mobile colapsa para 1 coluna.
-**Aceite:** 3 módulos preenchidos, texto + imagem, página bem ocupada.
+## 5. Página Sobre em módulos (SEGUIR O EXEMPLO VISUAL enviado)
+**Problema:** a implementação atual deixou o **texto solto sobre o fundo cinza** — não bateu
+com o exemplo visual enviado. No exemplo, o texto fica **dentro de um card branco** que se
+**sobrepõe/conecta** ao bloco escuro da imagem, formando um módulo em camadas.
+**Correção — replicar o exemplo:**
+- **Texto dentro de um card branco** (`background: var(--surface)`, `border-radius: var(--radius-xl)`,
+  `padding` generoso `--sp-6`, `box-shadow: var(--shadow)` sutil) — o card é uma forma
+  visível, não texto solto.
+- **Placeholder de imagem à direita**: bloco escuro (`--color-black`/near-black),
+  `radius-xl`, rótulo "imagem", **maior/mais alto** que o card de texto.
+- **Sobreposição/camada:** o card branco de texto **avança sobre** a borda esquerda do bloco
+  de imagem (usar `margin` negativo ou grid com colunas sobrepostas + `z-index`), exatamente
+  como no exemplo — os dois formam um módulo único em camadas, não duas caixas separadas com
+  um vão no meio.
+- **Preencher os 3** blocos (O que é / Pra quem é / A visão). Default: imagem à direita nos três
+  (ou alternar lados a cada módulo se ficar melhor — dev decide pelo exemplo).
+- **Largura menor:** não usar a largura cheia do container. Limitar os módulos a
+  `max-width: 960px` centralizados (`margin-inline: auto`).
+- Mobile: colapsa para 1 coluna (card de texto acima, imagem abaixo), sem sobreposição.
+**Aceite:** cada módulo = card branco de texto sobreposto a um bloco de imagem escuro,
+idêntico ao exemplo visual; nada de texto solto no fundo; largura contida (~960px).
+
+**HTML de referência (repetir para os 3 blocos, com o conteúdo de cada um):**
+```html
+<div class="about-modules">
+  <div class="about-module">
+    <div class="about-module__text">
+      <h3 class="about-module__title">O que é.</h3>
+      <p class="about-module__body">O Harmon IA junta agenda, clientes, estoque e
+        financeiro num só lugar, sincronizado com o Google Calendar. Chega de uma planilha
+        pra cada coisa e de sistema cheio de função que você nunca usa.</p>
+    </div>
+    <div class="about-module__media"><span>imagem</span></div>
+  </div>
+  <!-- Pra quem é. / A visão. — mesma estrutura -->
+</div>
+```
+
+**CSS de referência (zero hex cru — tudo via token):**
+```css
+.about-modules {
+  display: flex; flex-direction: column; gap: var(--sp-8);
+  max-width: 960px; margin-inline: auto;   /* largura contida + centralizado */
+}
+.about-module {
+  position: relative;
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+}
+/* card branco do texto: avança sobre a imagem e fica por cima */
+.about-module__text {
+  position: relative; z-index: 1;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow);
+  margin-right: calc(var(--sp-7) * -1);     /* sobreposição sobre o bloco de imagem */
+}
+.about-module__title { margin-bottom: var(--sp-3); letter-spacing: -0.02em; }
+.about-module__body  { color: var(--text-muted); }
+/* bloco escuro da imagem: maior/mais alto que o card de texto */
+.about-module__media {
+  background: var(--color-black);
+  color: var(--color-white);
+  border-radius: var(--radius-xl);
+  min-height: 340px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-sm);
+}
+@media (max-width: 720px) {
+  .about-module { grid-template-columns: 1fr; }
+  .about-module__text { margin-right: 0; }   /* sem sobreposição no mobile */
+  .about-module__media { min-height: 220px; }
+}
+```
+> Para alternar o lado da imagem a cada módulo (se ficar melhor), inverter a ordem das
+> colunas num modificador `.about-module--reverse` (imagem à esquerda, texto com
+> `margin-left` negativo em vez de `margin-right`).
 
 ## 6. Tipografia maior — GLOBAL (tokens)
 **Problema:** títulos 32px e corpo ~15px pequenos.
