@@ -286,6 +286,58 @@
 .feature__icon svg { width: 22px; height: 22px; }
 .feature__title { font-weight: var(--fw-600); }
 .feature__text { color: var(--text-muted); font-size: var(--fs-sm); }
+.features-cta { text-align: center; margin-top: var(--sp-6); }
+
+/* --------------------------------------------------------- soluções ---- */
+.solutions { display: flex; flex-direction: column; gap: var(--sp-6); }
+
+.solution-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-6);
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-6);
+  transition: box-shadow var(--transition);
+}
+.solution-card:hover { box-shadow: var(--shadow); }
+
+@media (min-width: 900px) {
+  .solution-card { grid-template-columns: 1fr 1fr; gap: var(--sp-8); padding: var(--sp-8); }
+  /* alterna: imagem à esquerda nos cards marcados --reverse */
+  .solution-card--reverse .solution-card__media { order: -1; }
+}
+
+.solution-card__title {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-700);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--sp-3);
+  text-wrap: balance;
+}
+@media (min-width: 900px) { .solution-card__title { font-size: var(--fs-2xl); } }
+
+.solution-card__text { color: var(--text-muted); font-size: var(--fs-base); margin-bottom: var(--sp-5); }
+
+.solution-card__list { display: flex; flex-direction: column; gap: var(--sp-2); font-size: var(--fs-sm); }
+.solution-card__list li { display: flex; gap: var(--sp-2); align-items: flex-start; color: var(--text); }
+.solution-card__list svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: var(--text-muted); }
+
+.solution-card__media {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--color-gray-100);
+}
+.solution-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.solution-card__media--placeholder {
+  aspect-ratio: 16 / 10;
+  display: grid; place-items: center;
+  color: var(--text-muted); font-size: var(--fs-sm);
+}
 
 /* -------------------------------------------------------- como funciona -- */
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }

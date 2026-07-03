@@ -88,4 +88,53 @@
      o módulo, .faq-js nunca existe e [open] assume sozinho. */
   .faq-js .faq__item.is-open .faq__a { grid-template-rows: 1fr; }
   html:not(.faq-js) .faq__item[open] .faq__a { grid-template-rows: 1fr; }
+
+  /* ------------------------------------------------------ solution cards -- */
+  /* cascata da lista de bullets, junto com o reveal do card (mesma classe
+     .is-visible que o observer já aplica ao artigo com [data-reveal]) */
+  .js .solution-card__list li {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
+  .js .solution-card__list li:nth-child(1) { transition-delay: 100ms; }
+  .js .solution-card__list li:nth-child(2) { transition-delay: 160ms; }
+  .js .solution-card__list li:nth-child(3) { transition-delay: 220ms; }
+  .js .solution-card.is-visible .solution-card__list li {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (min-width: 900px) {
+    /* no desktop as duas colunas entram das bordas em vez do card inteiro
+       como bloco; --reverse inverte o lado (texto/mídia trocados de lugar) */
+    .js .solution-card[data-reveal] {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .js .solution-card__body,
+    .js .solution-card__media {
+      opacity: 0;
+      transition: opacity var(--reveal-dur) var(--ease-out), transform var(--reveal-dur) var(--ease-out);
+    }
+    .js .solution-card__body { transform: translateX(-24px); }
+    .js .solution-card__media { transform: translateX(24px); transition-delay: 80ms; }
+    .js .solution-card--reverse .solution-card__body { transform: translateX(24px); }
+    .js .solution-card--reverse .solution-card__media { transform: translateX(-24px); }
+    .js .solution-card.is-visible .solution-card__body,
+    .js .solution-card.is-visible .solution-card__media {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* hover eleva a mídia; gated por (hover: hover) — em touch, :hover gruda
+     depois do tap e travaria a mídia elevada sem esse filtro */
+  .solution-card__media { transition: transform var(--dur-fast) var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) {
+    /* empatada em especificidade com a regra is-visible acima e declarada
+       depois, então vence mesmo após o reveal terminar */
+    .js .solution-card:hover .solution-card__media { transform: translateY(-4px); }
+  }
 }
