@@ -339,8 +339,11 @@ summary.faq__q {
 summary.faq__q::-webkit-details-marker { display: none; }
 summary.faq__q::after {
   content: '+'; color: var(--text-faint); font-weight: var(--fw-400); flex-shrink: 0;
+  display: inline-block;
 }
-.faq__item[open] summary.faq__q::after { content: '\2212'; }
+/* gira 45° em vez de trocar o caractere: dá pra animar (motion.css) e ainda
+   funciona sem JS/motion (rotação instantânea via o atributo nativo [open]) */
+.faq__item[open] summary.faq__q::after { transform: rotate(45deg); }
 .faq__item .faq__a { margin-top: var(--sp-3); }
 
 /* -------------------------------------------------------------- footer --- */

@@ -1,0 +1,88 @@
+/* ============================================================================
+   motion.css — motion sutil do site público (Início/Sobre/Planos/Entrar).
+   Carregar depois de landing.css. Tudo aqui dentro de
+   prefers-reduced-motion: no-preference — é reforço puro, nunca a única
+   fonte de acessibilidade: os elementos já nascem visíveis no HTML/CSS base.
+
+   A classe .js (setada por um script inline síncrono no <head>, não pelo
+   módulo landing.js) é o que autoriza o estado inicial oculto do reveal.
+   Sem JS, essa classe nunca existe → [data-reveal] nunca fica oculto.
+   ============================================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  :root {
+    --reveal-dur: 420ms;
+  }
+
+  /* -------------------------------------------------------- scroll reveal --- */
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity var(--reveal-dur) var(--ease-out), transform var(--reveal-dur) var(--ease-out);
+    transition-delay: calc(var(--reveal-i, 0) * 60ms);
+  }
+  .js [data-reveal].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* --------------------------------------------------------- hover botão --- */
+  .btn {
+    transition: opacity var(--transition), background var(--transition), border-color var(--transition),
+      transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .btn--primary:hover:not(:disabled),
+  .btn--secondary:hover:not(:disabled),
+  .btn-google:hover:not(:disabled) { opacity: 1; }
+  .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .btn:active:not(:disabled) { transform: scale(0.98); }
+  /* link puro (secundário do hero): sem elevação, é texto */
+  .lp-hero-full .btn--ghost:hover { transform: none; box-shadow: none; }
+
+  /* --------------------------------------------------------- hover card ---- */
+  .feature, .pain-card, .plan-card {
+    transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  .feature:hover, .pain-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--border-strong); }
+  .plan-card:hover { transform: translateY(-4px); border-color: var(--border-strong); }
+
+  .feature__icon { transition: transform var(--dur-fast) var(--ease-out); }
+  .feature:hover .feature__icon { transform: scale(1.06); }
+
+  .segment-chip { transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+  .segment-chip:hover { transform: scale(1.04); border-color: var(--border-strong); }
+
+  /* -------------------------------------------------------- nav underline -- */
+  .landing-nav a, .landing-footer__links a { position: relative; }
+  .landing-nav a::after, .landing-footer__links a::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px;
+    background: currentColor;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .landing-nav a:hover::after, .landing-nav a:focus-visible::after, .landing-nav a[aria-current="page"]::after,
+  .landing-footer__links a:hover::after, .landing-footer__links a:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  /* -------------------------------------------------------------- faq icon - */
+  summary.faq__q::after { transition: transform var(--dur-fast) var(--ease-out); }
+
+  /* faq__a: grid-template-rows 0fr→1fr em vez de animar height (evita layout
+     thrash — só transform-adjacent, sem reflow por frame). landing.js
+     alterna a classe .is-open com defasagem de frame p/ garantir o estado
+     "de"/"para" antes de disparar a transição (details alterna display:none
+     nativamente, então o "from" precisa já estar pintado). Guardado por .js:
+     sem esse módulo (ou com reduced-motion), o <details> nativo abre/fecha
+     instantâneo e nunca fica preso em 0fr. */
+  .js .faq__a {
+    display: grid; grid-template-rows: 0fr; overflow: hidden;
+    transition: grid-template-rows var(--reveal-dur) var(--ease-out);
+  }
+  /* .is-open cobre o fluxo orquestrado por landing.js; [open] é o fallback
+     nativo — se o módulo não carregar, o <details> ainda abre (só sem
+     transição suave) em vez de ficar preso em 0fr. */
+  .js .faq__item.is-open .faq__a, .js .faq__item[open] .faq__a { grid-template-rows: 1fr; }
+}

@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="assets/css/components.css" />
   <link rel="stylesheet" href="assets/css/theme.css" />
   <link rel="stylesheet" href="assets/css/landing.css" />
+  <link rel="stylesheet" href="assets/css/motion.css" />
+  <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -53,14 +55,14 @@
   <main id="main-content">
     <!-- ---------------------------------------------------------- hero --- -->
     <section class="landing-container section">
-      <div class="section__head">
+      <div class="section__head" data-reveal>
         <h1 class="section__title">Um sistema feito pra quem vive de atendimento.</h1>
         <p class="section__subtitle">Não é planilha adaptada, nem agendador genérico. É gestão pensada
           do zero para o negócio de beleza e estética.</p>
       </div>
 
       <div class="about-modules">
-        <div class="about-module">
+        <div class="about-module" data-reveal>
           <div class="about-module__text">
             <h2 class="about-module__title">O que é.</h2>
             <p class="about-module__body">O Harmon IA junta agenda, clientes, estoque e financeiro num só lugar,
@@ -69,7 +71,7 @@
           </div>
           <div class="about-module__media" aria-hidden="true"><span>imagem</span></div>
         </div>
-        <div class="about-module">
+        <div class="about-module" data-reveal>
           <div class="about-module__text">
             <h2 class="about-module__title">Pra quem é.</h2>
             <p class="about-module__body">Pra quem atende cliente e vive de agenda — do autônomo que trabalha
@@ -79,7 +81,7 @@
           </div>
           <div class="about-module__media" aria-hidden="true"><span>imagem</span></div>
         </div>
-        <div class="about-module">
+        <div class="about-module" data-reveal>
           <div class="about-module__text">
             <h2 class="about-module__title">A visão.</h2>
             <p class="about-module__body">Menos tempo em planilha, mais tempo com o cliente na cadeira. Cada módulo
@@ -105,5 +107,7 @@
       <span><!-- TROCAR nome -->© 2026 Harmon IA · Todos os direitos reservados</span>
     </div>
   </footer>
+
+  <script type="module" src="assets/js/landing.js"></script>
 </body>
 </html>

@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="assets/css/components.css" />
   <link rel="stylesheet" href="assets/css/theme.css" />
   <link rel="stylesheet" href="assets/css/landing.css" />
+  <link rel="stylesheet" href="assets/css/motion.css" />
+  <script>document.documentElement.classList.add('js');</script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -68,14 +70,14 @@
     <!-- --------------------------------------------------------- título --- -->
     <section class="section-band section-band--alt">
       <div class="landing-container section">
-      <div class="section__head">
+      <div class="section__head" data-reveal>
         <h1 class="section__title">Um plano pro seu momento.</h1>
         <p class="section__subtitle">Comece sozinho ou traga o time. Em pré-lançamento — os valores
           abaixo são provisórios. Entre na lista para ser avisado quando abrir.</p>
       </div>
 
       <div class="plan-grid plan-grid--2col">
-        <div class="plan-card card">
+        <div class="plan-card card" data-reveal>
           <h3 class="plan-card__name">Personal</h3>
           <div class="plan-card__audience">Para quem atende sozinho</div>
           <div class="plan-card__price">R$ --<span>/mês <!-- TROCAR --></span></div>
@@ -88,7 +90,7 @@
           <a class="btn btn--primary btn--block" href="#waitlist-planos" aria-label="Entrar na lista de espera — plano Personal">Entrar na lista de espera</a>
         </div>
 
-        <div class="plan-card card">
+        <div class="plan-card card" data-reveal>
           <h3 class="plan-card__name">Team</h3>
           <div class="plan-card__audience">Para estúdios, salões e clínicas com mais de uma pessoa</div>
           <div class="plan-card__price">R$ --<span>/mês <!-- TROCAR --></span></div>
@@ -108,7 +110,7 @@
     <!-- ------------------------------------------------------- waitlist --- -->
     <section class="section-band">
       <div class="landing-container section">
-        <div class="section__head">
+        <div class="section__head" data-reveal>
           <h2 class="section__title">Ainda não abrimos.</h2>
           <p class="section__subtitle">Deixe seu e-mail e avisamos assim que houver vagas novas.</p>
         </div>
@@ -124,32 +126,32 @@
     <!-- ------------------------------------------------------------ faq --- -->
     <section class="section-band">
       <div class="landing-container section">
-        <div class="section__head">
+        <div class="section__head" data-reveal>
           <h2 class="section__title">Perguntas frequentes.</h2>
         </div>
         <div class="faq">
-          <details class="faq__item">
+          <details class="faq__item" data-reveal>
             <summary class="faq__q">Quando lança?</summary>
             <p class="faq__a">Em desenvolvimento. Quem está na lista é avisado primeiro.</p>
           </details>
-          <details class="faq__item">
+          <details class="faq__item" data-reveal>
             <summary class="faq__q">Preciso de cartão pra entrar na lista?</summary>
             <p class="faq__a">Não. Só o e-mail. Nada de pagamento nesta fase.</p>
           </details>
-          <details class="faq__item">
+          <details class="faq__item" data-reveal>
             <summary class="faq__q">Qual a diferença entre Personal e Team?</summary>
             <p class="faq__a">Personal é pra quem atende sozinho. Team é pra mais de uma pessoa dividindo
               a mesma agenda e base de clientes.</p>
           </details>
-          <details class="faq__item">
+          <details class="faq__item" data-reveal>
             <summary class="faq__q">Serve pro meu ramo?</summary>
             <p class="faq__a">Se você agenda clientes e cobra por atendimento, serve — de unha a tatuagem.</p>
           </details>
-          <details class="faq__item">
+          <details class="faq__item" data-reveal>
             <summary class="faq__q">Dá pra usar no celular?</summary>
             <p class="faq__a">Sim. É 100% web, funciona em qualquer navegador, sem instalar nada.</p>
           </details>
-          <details class="faq__item">
+          <details class="faq__item" data-reveal>
             <summary class="faq__q">Meus dados ficam seguros?</summary>
             <p class="faq__a">Sim. Cada conta só acessa os próprios dados, com login pelo Google.</p>
           </details>
@@ -175,5 +177,6 @@
     import { initWaitlistForms } from './assets/js/waitlist.js';
     initWaitlistForms();
   </script>
+  <script type="module" src="assets/js/landing.js"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ Registro do que foi feito em cada janela de contexto. **Cada etapa = uma sessão
 Para registrar uma nova etapa, peça "registre o que foi feito até aqui" e eu
 adiciono uma seção `## Etapa N` no fim deste arquivo.
 
-**Versão atual:** v2.1.1
+**Versão atual:** v2.1.2
 
 ## Tabela de versões (semântico)
 
@@ -34,6 +34,7 @@ nova. PATCH = correção, ajuste visual ou polish sem feature nova.
 | v2.0.1 | Fix pós-Etapa 7 | Retorno do login (hash+query) e painel em `/app` |
 | v2.1.0 | Rodada 10-11 | Reforma visual (estilo elevenlabs) + copy/SEO neutra da landing |
 | v2.1.1 | Rodada 12 | 13 ajustes visuais da landing + revisão do item 5 (módulos da Sobre) |
+| v2.1.2 | Rodada 13 | Motion sutil (scroll-reveal, hover, accordion do FAQ) na landing pública |
 
 ---
 
@@ -1148,3 +1149,52 @@ tokens foram neutralizados (removido o viés amarelado). **Item 5 (revisado no
 commit seguinte):** os 3 módulos da página Sobre viraram cards brancos
 sobrepostos a blocos escuros de imagem (camadas), substituindo o texto solto
 sobre fundo cinza da primeira tentativa.
+
+---
+
+## Rodada 13 — Motion sutil na landing pública (2026-07-03)
+
+**Fonte:** `PLANO-LAPIDACAO-LANDING.md`, Fases 1 e 2 (fundação de motion +
+componentes). Fase 3 (L1-L5, lapidação visual/imagens) ficou de fora — fora do
+escopo pedido nesta rodada.
+
+### Arquitetura (no-build)
+Dois arquivos novos, sem dependências: `assets/css/motion.css` (todo o motion
+dentro de `@media (prefers-reduced-motion: no-preference)`) e
+`assets/js/landing.js` (IntersectionObserver do scroll-reveal, fechamento do
+menu mobile e o accordion animado do FAQ). Linkados nas 4 páginas do site
+público (`index.html`, `sobre.html`, `planos.html`, `entrar.html`).
+
+**Progressive enhancement:** um `<script>` inline síncrono no `<head>` de cada
+página seta `document.documentElement.classList.add('js')` — é essa classe
+(não o módulo) que autoriza o CSS a esconder qualquer coisa. Sem JS, ela nunca
+existe e o conteúdo nasce visível. Verificado removendo a classe em runtime:
+todos os `[data-reveal]` voltam a `opacity: 1`.
+
+### O que foi implementado
+- **Scroll-reveal** (`data-reveal` + `--reveal-i` para stagger): hero, cabeçalhos
+  de seção, cards de feature/pain/step/plano, módulos da Sobre, itens do FAQ.
+- **Entrada do hero** sem esperar scroll — mesmo mecanismo do reveal, só que os
+  elementos já estão na viewport no load.
+- **Hover de botão/card**: `translateY` + sombra em vez de só opacidade (o link
+  puro do hero fica de fora, não tem elevação por ser só texto).
+- **FAQ accordion animado**: `grid-template-rows: 0fr → 1fr` em vez de animar
+  `height` direto (apontado pelo hook de design do `impeccable` como risco de
+  layout thrash) — `landing.js` orquestra a classe `.is-open` com defasagem de
+  frame (abertura) e espera o `transitionend` antes de soltar o `<details>`
+  nativo (fechamento). Tem fallback via `[open]` nativo caso o módulo não
+  carregue, pra nunca travar em `0fr`.
+- **Ícone do FAQ**: trocou o swap de caractere `+`/`−` por `rotate(45deg)` — dá
+  pra animar e ainda funciona sem JS (a rotação via `[open]` é instantânea).
+- **Nav underline** que desliza (`scaleX`) no hover/foco dos links do header e
+  rodapé.
+
+### Verificação
+Testado via Chrome (servidor estático local): reveal com stagger, hover de
+card/botão, accordion do FAQ (abrir/fechar, ícone), underline do nav, e os 3
+mecanismos de fechar o menu mobile (link, scroll, resize) — todos OK. Fallback
+sem JS confirmado (remoção da classe `.js` em runtime → tudo visível). Não deu
+pra testar 320px real nem `prefers-reduced-motion: reduce` do SO nesta sessão
+(sem acesso a emulação de mídia do Chrome DevTools no harness usado) — a
+garantia aí é por revisão de código: toda regra de motion está dentro do
+media query certo.
