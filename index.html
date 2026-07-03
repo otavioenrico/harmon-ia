@@ -4,17 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="light dark" />
-  <title>Harmon IA — Gestão inteligente para saúde estética</title>
-  <!-- SEO placeholder — preencher de verdade junto do rename da marca (§8) -->
-  <meta name="description" content="Harmon IA — CRM para profissionais de saúde estética. Em breve." />
-  <meta property="og:title" content="Harmon IA" />
-  <meta property="og:description" content="Gestão inteligente para saúde estética." />
+  <title>Harmon IA — Gestão para profissionais de beleza e estética</title>
+  <meta name="description" content="Agenda, clientes, estoque e financeiro num só app — feito para quem vive de atendimento: manicure, sobrancelha, tatuador, estética e muito mais. Entre na lista de espera." />
+  <meta property="og:title" content="Harmon IA — a gestão do seu negócio de beleza num só lugar" />
+  <meta property="og:description" content="Agenda sincronizada, clientes, estoque e caixa sem planilha. Feito para profissionais de beleza e estética." />
   <meta property="og:image" content="/assets/img/login-visual.png" />
   <link rel="stylesheet" href="assets/css/tokens.css" />
   <link rel="stylesheet" href="assets/css/layout.css" />
   <link rel="stylesheet" href="assets/css/components.css" />
   <link rel="stylesheet" href="assets/css/theme.css" />
   <link rel="stylesheet" href="assets/css/landing.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Serve pro meu ramo?", "acceptedAnswer": { "@type": "Answer", "text": "Se você agenda clientes e cobra por atendimento, serve. De unha a tatuagem." } },
+      { "@type": "Question", "name": "Precisa instalar?", "acceptedAnswer": { "@type": "Answer", "text": "Não. É web, abre em qualquer navegador, no celular ou no computador." } },
+      { "@type": "Question", "name": "Meus dados ficam seguros?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Cada conta só vê os próprios dados, com login pelo Google." } }
+    ]
+  }
+  </script>
   <script>
     // Retorno do OAuth do Google cai na raiz (redirectTo = "/", evita
     // reconfigurar Redirect URLs no Supabase). Dependendo do flow do Supabase,
@@ -45,8 +55,8 @@
       </nav>
 
       <div class="landing-header__actions">
-        <a class="landing-header__login" href="/entrar.html">Entrar</a>
-        <a class="btn btn--primary btn--sm" href="#waitlist-hero">Avise-me</a>
+        <a class="btn btn--ghost btn--sm" href="#waitlist-hero">Quero ser avisado</a>
+        <a class="btn btn--primary btn--sm" href="/entrar.html">Entrar</a>
       </div>
 
       <details class="landing-nav-mobile">
@@ -57,6 +67,7 @@
           <a href="/" aria-current="page">Início</a>
           <a href="/sobre.html">Sobre</a>
           <a href="/planos.html">Planos</a>
+          <a href="#waitlist-hero">Quero ser avisado</a>
           <a href="/entrar.html">Entrar</a>
         </div>
       </details>
@@ -65,97 +76,181 @@
 
   <main id="main-content">
     <!-- ---------------------------------------------------------- hero --- -->
-    <section class="landing-container lp-hero">
-      <div>
-        <!-- TROCAR: copy de marketing abaixo é placeholder -->
-        <h1 class="lp-hero__title">Sua clínica, organizada do jeito que ela merece.</h1>
-        <p class="lp-hero__subtitle">Agenda, clientes, estoque e financeiro num só lugar — feito para
-          profissionais de saúde estética. Estamos em desenvolvimento; entre na lista de espera
-          para ser avisada do lançamento.</p>
+    <section class="lp-hero-full">
+      <div class="lp-hero-full__media">
+        <!-- imagem removida por ora (placeholder mauve destoava) — fundo sólido via CSS.
+             pra voltar com foto/vídeo, destrocar a linha abaixo: -->
+        <!-- <img src="assets/img/login-visual.png" alt="Painel do Harmon IA com agenda, ficha de cliente e financeiro" fetchpriority="high" /> -->
+      </div>
+      <div class="lp-hero-full__overlay landing-container">
+        <h1 class="lp-hero__title">A gestão do seu negócio de beleza, num só lugar.</h1>
+        <p class="lp-hero__subtitle">Agenda, clientes, estoque e caixa sem planilha e sem enrolação —
+          feito para quem vive de atendimento: manicure, sobrancelha, tatuagem, estética e muito mais.
+          Estamos abrindo aos poucos; entre na lista de espera e seja o primeiro a saber.</p>
         <div class="lp-hero__actions">
           <form id="waitlist-hero" class="waitlist-form" data-waitlist data-source="hero">
             <label class="sr-only" for="wl-hero-email">Seu e-mail</label>
             <input class="input" id="wl-hero-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" />
             <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
-            <button class="btn btn--primary" type="submit">Avise-me</button>
+            <button class="btn btn--primary" type="submit">Quero ser avisado</button>
           </form>
-          <a class="btn btn--ghost btn--sm" href="/planos.html">Ver planos&nbsp;→</a>
+          <a class="btn btn--ghost btn--sm" href="/planos.html">Ver planos e preços&nbsp;→</a>
         </div>
       </div>
-      <div class="lp-hero__visual">
-        <img src="assets/img/login-visual.png" alt="" fetchpriority="high" />
+    </section>
+
+    <!-- -------------------------------------------------------- segmentos -- -->
+    <section class="section-band">
+      <div class="landing-container section segments">
+        <div class="section__head">
+          <h2 class="section__title">Feito para o seu trabalho</h2>
+          <p class="section__subtitle">Se você atende cliente e vive de agenda, o Harmon IA é pra você.</p>
+        </div>
+        <ul class="segment-list">
+          <li class="segment-chip">Manicure e nail design</li>
+          <li class="segment-chip">Sobrancelha</li>
+          <li class="segment-chip">Cílios (lash)</li>
+          <li class="segment-chip">Tatuagem</li>
+          <li class="segment-chip">Estética</li>
+          <li class="segment-chip">Micropigmentação</li>
+          <li class="segment-chip">Maquiagem</li>
+          <li class="segment-chip">Barbearia</li>
+          <li class="segment-chip">Depilação</li>
+          <li class="segment-chip">e muito mais</li>
+        </ul>
       </div>
     </section>
 
     <!-- ------------------------------------------------------- features --- -->
-    <section class="landing-container section">
+    <section class="section-band section-band--alt">
+      <div class="landing-container section">
       <div class="section__head">
-        <h2 class="section__title">Tudo que a sua rotina precisa</h2>
-        <p class="section__subtitle">Os módulos abaixo já existem no app — nada de promessa vaga.</p>
+        <h2 class="section__title">Tudo que a sua rotina precisa — e nada que ela não usa</h2>
+        <p class="section__subtitle">Cada módulo já existe no app. Sem promessa vaga.</p>
       </div>
       <div class="feature-grid">
         <div class="feature">
           <div class="feature__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
           </div>
-          <h3 class="feature__title">Agenda + Google Calendar</h3>
-          <p class="feature__text">Agendamentos sincronizados com o Google Calendar, sem retrabalho.</p>
+          <h3 class="feature__title">Agenda que nunca desencontra</h3>
+          <p class="feature__text">Agendamentos sincronizados com o Google Calendar. O que você marca
+            no celular aparece na hora, sem retrabalho e sem cliente marcado em dobro.</p>
         </div>
         <div class="feature">
           <div class="feature__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5M21 20c0-2.3-1.3-4-3.5-4.6"/></svg>
           </div>
-          <h3 class="feature__title">Clientes e histórico</h3>
-          <p class="feature__text">Ficha completa, procedimentos realizados e lembretes de retorno.</p>
+          <h3 class="feature__title">Cada cliente na palma da mão</h3>
+          <p class="feature__text">Ficha completa, histórico de atendimentos e lembrete de retorno.
+            Você lembra de tudo — o cliente sente.</p>
         </div>
         <div class="feature">
           <div class="feature__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-4 9 4v8l-9 4-9-4V8Z"/><path d="M3 8l9 4 9-4M12 12v8"/></svg>
           </div>
-          <h3 class="feature__title">Estoque</h3>
-          <p class="feature__text">Controle de materiais com alerta de mínimo e lista de compras.</p>
+          <h3 class="feature__title">Estoque que avisa antes de faltar</h3>
+          <p class="feature__text">Controle de materiais com alerta de mínimo e lista de compras
+            pronta. Nunca mais descobrir que acabou na hora do atendimento.</p>
         </div>
         <div class="feature">
           <div class="feature__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/></svg>
           </div>
-          <h3 class="feature__title">Financeiro</h3>
-          <p class="feature__text">Fluxo de caixa, parcelas e lucro por procedimento, sem planilha.</p>
+          <h3 class="feature__title">O caixa no azul, sem planilha</h3>
+          <p class="feature__text">Fluxo de caixa, parcelas e lucro de verdade por serviço. Você vê
+            quanto entra, quanto sai e o que realmente dá dinheiro.</p>
         </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------- trocar planilha -- -->
+    <section class="section-band">
+      <div class="landing-container section">
+        <div class="section__head">
+          <h2 class="section__title">A planilha te trouxe até aqui. Ela não te leva adiante.</h2>
+        </div>
+        <ul class="pain-grid">
+          <li class="pain-card"><span class="pain-card__before">Cliente marcado em dobro, ou esquecido.</span><span class="pain-card__after">Agenda sincronizada.</span></li>
+          <li class="pain-card"><span class="pain-card__before">“Quanto eu lucrei esse mês?” sem resposta.</span><span class="pain-card__after">Caixa por serviço.</span></li>
+          <li class="pain-card"><span class="pain-card__before">Material que acaba no meio do atendimento.</span><span class="pain-card__after">Alerta de estoque.</span></li>
+          <li class="pain-card"><span class="pain-card__before">Histórico do cliente espalhado no WhatsApp.</span><span class="pain-card__after">Ficha completa num lugar.</span></li>
+        </ul>
+        <a class="btn btn--ghost" href="#waitlist-hero">Quero sair da planilha&nbsp;→</a>
       </div>
     </section>
 
     <!-- ------------------------------------------------------ como funciona -- -->
-    <section class="landing-container section">
+    <section class="section-band section-band--alt">
+      <div class="landing-container section">
       <div class="section__head">
-        <h2 class="section__title">Como funciona</h2>
+        <h2 class="section__title">Comece em três passos</h2>
       </div>
       <div class="steps">
         <div class="step">
           <div class="step__num">1</div>
           <h3 class="step__title">Entre na lista de espera</h3>
-          <p class="step__text">Deixe seu e-mail e avisamos assim que abrirmos novas vagas.</p>
+          <p class="step__text">Deixe seu e-mail. Avisamos assim que abrir uma vaga pra você.</p>
         </div>
         <div class="step">
           <div class="step__num">2</div>
-          <h3 class="step__title">Receba o convite</h3>
-          <p class="step__text">Quando sua conta for aprovada, você entra com o Google.</p>
+          <h3 class="step__title">Receba seu convite</h3>
+          <p class="step__text">Conta liberada, você entra com o Google. Sem instalar nada.</p>
         </div>
         <div class="step">
           <div class="step__num">3</div>
-          <h3 class="step__title">Comece a usar</h3>
-          <p class="step__text">Cadastre clientes, serviços e estoque, e organize sua agenda.</p>
+          <h3 class="step__title">Comece a atender organizado</h3>
+          <p class="step__text">Cadastre serviços, clientes e estoque e coloque sua agenda no eixo —
+            em minutos, não em dias.</p>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- prova social -- -->
+    <section class="section-band">
+      <div class="landing-container section proof">
+        <div class="section__head">
+          <h2 class="section__title">Construído com quem está na cadeira, não só na tela</h2>
+        </div>
+        <blockquote class="proof__quote">Cada função nasceu de um problema real de quem atende todo dia.
+          Estamos abrindo o acesso aos poucos, ouvindo cada pessoa da lista — por isso o app tem o que a
+          sua rotina usa e não o que sobra.</blockquote>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- faq home -- -->
+    <section class="section-band section-band--alt">
+      <div class="landing-container section">
+        <div class="section__head">
+          <h2 class="section__title">Perguntas rápidas</h2>
+        </div>
+        <div class="faq">
+          <details class="faq__item">
+            <summary class="faq__q">Serve pro meu ramo?</summary>
+            <p class="faq__a">Se você agenda clientes e cobra por atendimento, serve. De unha a tatuagem.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Precisa instalar?</summary>
+            <p class="faq__a">Não. É web, abre em qualquer navegador, no celular ou no computador.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Meus dados ficam seguros?</summary>
+            <p class="faq__a">Sim. Cada conta só vê os próprios dados, com login pelo Google.</p>
+          </details>
         </div>
       </div>
     </section>
 
     <!-- --------------------------------------------------------- cta final -- -->
-    <section class="cta-band" data-theme="dark">
+    <section class="cta-band">
       <div class="landing-container">
-        <!-- TROCAR: copy de marketing placeholder -->
-        <h2 class="cta-band__title">Pronta para organizar sua clínica?</h2>
-        <p class="cta-band__subtitle">Contas aprovadas entram direto — as demais, pela lista de espera.</p>
-        <a class="btn btn--primary" href="/entrar.html">Comece agora&nbsp;→</a>
+        <h2 class="cta-band__title">Pronto pra tirar seu negócio da planilha?</h2>
+        <p class="cta-band__subtitle">Estamos abrindo vagas aos poucos. Entre na lista e seja avisado
+          antes de todo mundo.</p>
+        <a class="btn btn--primary" href="#waitlist-hero">Entrar na lista de espera&nbsp;→</a>
+        <p class="cta-band__footnote"><a href="/entrar.html">Já tem convite? Entrar</a></p>
       </div>
     </section>
   </main>

@@ -117,6 +117,16 @@
   --header-h: 68px;
   --tabbar-h: 64px;   /* barra de abas mobile (≤900px) */
 
+  /* header da landing: fundo semitransparente + blur ao rolar */
+  --header-bg: rgba(255, 255, 255, 0.72);
+  --header-blur: 12px;
+
+  /* scrim escuro sobre a imagem do hero full-bleed — texto branco legível (AA) */
+  --hero-overlay-strong: rgb(from var(--color-black) r g b / 0.72);
+  --hero-overlay-soft:   rgb(from var(--color-black) r g b / 0.05);
+  --hero-text-muted:     rgb(from var(--color-white) r g b / 0.85);
+  --hero-border:         rgb(from var(--color-white) r g b / 0.4);
+
   /* -------- motion -------- */
   /* hovers/estados: ease genérico e rápido; entradas de overlay: ease-out com
      desaceleração natural; saídas sempre mais curtas que entradas */

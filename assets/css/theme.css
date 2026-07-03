@@ -34,6 +34,7 @@
   --focus-ring: 2px solid var(--color-mauve-300);
   --overlay-bg: rgba(0, 0, 0, 0.55);
   --switch-thumb: #0d0d0d;
+  --header-bg: rgba(13, 13, 13, 0.72);
 }
 
 /* o switch fica bege no escuro */

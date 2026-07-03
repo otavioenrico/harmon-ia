@@ -11,8 +11,10 @@
   border: 1px solid transparent;
   font-size: var(--fs-base); font-weight: var(--fw-400);
   cursor: pointer; white-space: nowrap;
+  text-decoration: none;
   transition: opacity var(--transition), background var(--transition), border-color var(--transition);
 }
+.btn:hover, .btn:focus { text-decoration: none; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn--primary   { background: var(--btn-primary-bg);   color: var(--btn-primary-text); }
 .btn--primary:hover:not(:disabled)   { opacity: 0.88; }

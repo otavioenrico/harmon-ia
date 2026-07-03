@@ -20,7 +20,7 @@ function wireForm(form) {
 
     const emailInput = form.querySelector('input[type="email"]');
     const email = emailInput?.value.trim().toLowerCase();
-    if (!email || !EMAIL_RE.test(email)) { toast('Digite um e-mail válido.', 'error'); return; }
+    if (!email || !EMAIL_RE.test(email)) { toast('Não consegui salvar seu e-mail. Confere e tenta de novo?', 'error'); return; }
 
     const btn = form.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
@@ -31,10 +31,10 @@ function wireForm(form) {
 
     if (error) {
       console.error('[waitlist]', error);
-      toast('Não deu para entrar na lista agora. Tente de novo.', 'error');
+      toast('Não consegui salvar seu e-mail. Confere e tenta de novo?', 'error');
       if (btn) btn.disabled = false;
       return;
     }
-    form.innerHTML = '<p class="waitlist__done">Pronto! Avisamos você quando abrir.</p>';
+    form.innerHTML = '<p class="waitlist__done">Pronto! Você está na lista. Avisamos assim que abrir uma vaga.</p>';
   });
 }

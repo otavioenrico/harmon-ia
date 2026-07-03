@@ -4,17 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="light dark" />
-  <title>Planos — Harmon IA</title>
-  <!-- SEO placeholder — preencher de verdade junto do rename da marca (§8) -->
-  <meta name="description" content="Planos do Harmon IA — em breve. Entre na lista de espera." />
+  <title>Planos e preços — Harmon IA</title>
+  <meta name="description" content="Planos para quem atende sozinho e para estúdios, salões e clínicas. Em pré-lançamento — entre na lista de espera e seja avisado primeiro." />
   <meta property="og:title" content="Planos — Harmon IA" />
-  <meta property="og:description" content="Gestão inteligente para saúde estética." />
+  <meta property="og:description" content="Planos para quem atende sozinho e para estúdios, salões e clínicas." />
   <meta property="og:image" content="/assets/img/login-visual.png" />
   <link rel="stylesheet" href="assets/css/tokens.css" />
   <link rel="stylesheet" href="assets/css/layout.css" />
   <link rel="stylesheet" href="assets/css/components.css" />
   <link rel="stylesheet" href="assets/css/theme.css" />
   <link rel="stylesheet" href="assets/css/landing.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Quando lança?", "acceptedAnswer": { "@type": "Answer", "text": "Em desenvolvimento. Quem está na lista é avisado primeiro." } },
+      { "@type": "Question", "name": "Preciso de cartão pra entrar na lista?", "acceptedAnswer": { "@type": "Answer", "text": "Não. Só o e-mail. Nada de pagamento nesta fase." } },
+      { "@type": "Question", "name": "Qual a diferença entre Personal e Team?", "acceptedAnswer": { "@type": "Answer", "text": "Personal é pra quem atende sozinho. Team é pra mais de uma pessoa dividindo a mesma agenda e base de clientes." } },
+      { "@type": "Question", "name": "Serve pro meu ramo?", "acceptedAnswer": { "@type": "Answer", "text": "Se você agenda clientes e cobra por atendimento, serve — de unha a tatuagem." } },
+      { "@type": "Question", "name": "Dá pra usar no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. É 100% web, funciona em qualquer navegador, sem instalar nada." } },
+      { "@type": "Question", "name": "Meus dados ficam seguros?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Cada conta só acessa os próprios dados, com login pelo Google." } }
+    ]
+  }
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
@@ -32,8 +45,8 @@
       </nav>
 
       <div class="landing-header__actions">
-        <a class="landing-header__login" href="/entrar.html">Entrar</a>
-        <a class="btn btn--primary btn--sm" href="#waitlist-planos">Avise-me</a>
+        <a class="btn btn--ghost btn--sm" href="#waitlist-planos">Quero ser avisado</a>
+        <a class="btn btn--primary btn--sm" href="/entrar.html">Entrar</a>
       </div>
 
       <details class="landing-nav-mobile">
@@ -44,6 +57,7 @@
           <a href="/">Início</a>
           <a href="/sobre.html">Sobre</a>
           <a href="/planos.html" aria-current="page">Planos</a>
+          <a href="#waitlist-planos">Quero ser avisado</a>
           <a href="/entrar.html">Entrar</a>
         </div>
       </details>
@@ -52,25 +66,24 @@
 
   <main id="main-content">
     <!-- --------------------------------------------------------- título --- -->
-    <section class="landing-container section">
+    <section class="section-band">
+      <div class="landing-container section">
       <div class="section__head">
-        <!-- TROCAR: copy de marketing abaixo é placeholder -->
-        <h1 class="section__title">Planos para cada tamanho de operação</h1>
-        <p class="section__subtitle">Ainda em pré-lançamento — os valores abaixo são placeholders.
-          Entre na lista de espera para ser avisada quando abrir.</p>
+        <h1 class="section__title">Um plano pro seu momento</h1>
+        <p class="section__subtitle">Comece sozinho ou traga o time. Em pré-lançamento — os valores
+          abaixo são provisórios. Entre na lista para ser avisado quando abrir.</p>
       </div>
 
-      <!-- TROCAR: features de cada plano são placeholder -->
       <div class="plan-grid plan-grid--2col">
         <div class="plan-card card">
           <h3 class="plan-card__name">Personal</h3>
-          <div class="plan-card__audience">Para profissionais autônomas</div>
+          <div class="plan-card__audience">Para quem atende sozinho</div>
           <div class="plan-card__price">R$ --<span>/mês <!-- TROCAR --></span></div>
           <ul class="plan-card__features">
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Agenda com Google Calendar</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Agenda sincronizada com o Google Calendar</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Clientes e histórico ilimitados</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Estoque e lista de compras</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Fluxo de caixa</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Estoque com lista de compras</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Fluxo de caixa e lucro por serviço</li>
           </ul>
           <a class="btn btn--secondary btn--block" href="#waitlist-planos" aria-label="Entrar na lista de espera — plano Personal">Entrar na lista de espera</a>
         </div>
@@ -78,59 +91,69 @@
         <div class="plan-card plan-card--popular card">
           <span class="plan-card__badge">Recomendado</span>
           <h3 class="plan-card__name">Team</h3>
-          <div class="plan-card__audience">Para clínicas com mais de uma profissional</div>
+          <div class="plan-card__audience">Para estúdios, salões e clínicas com mais de uma pessoa</div>
           <div class="plan-card__price">R$ --<span>/mês <!-- TROCAR --></span></div>
           <ul class="plan-card__features">
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Tudo do Personal</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Múltiplos profissionais <!-- TROCAR --></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Permissões por usuário <!-- TROCAR --></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Suporte prioritário <!-- TROCAR --></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Vários profissionais na mesma conta</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Agenda e clientes compartilhados</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Permissões por usuário</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg>Suporte prioritário</li>
           </ul>
           <a class="btn btn--primary btn--block" href="#waitlist-planos" aria-label="Entrar na lista de espera — plano Team">Entrar na lista de espera</a>
         </div>
       </div>
+      </div>
     </section>
 
     <!-- ------------------------------------------------------- waitlist --- -->
-    <section class="landing-container section">
-      <div class="section__head">
-        <h2 class="section__title">Ainda não abrimos</h2>
-        <p class="section__subtitle">Deixe seu e-mail e avisamos assim que houver vagas novas.</p>
+    <section class="section-band section-band--alt">
+      <div class="landing-container section">
+        <div class="section__head">
+          <h2 class="section__title">Ainda não abrimos</h2>
+          <p class="section__subtitle">Deixe seu e-mail e avisamos assim que houver vagas novas.</p>
+        </div>
+        <form id="waitlist-planos" class="waitlist-form" data-waitlist data-source="planos">
+          <label class="sr-only" for="wl-planos-email">Seu e-mail</label>
+          <input class="input" id="wl-planos-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" />
+          <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <button class="btn btn--primary" type="submit">Quero ser avisado</button>
+        </form>
       </div>
-      <form id="waitlist-planos" class="waitlist-form" data-waitlist data-source="planos">
-        <label class="sr-only" for="wl-planos-email">Seu e-mail</label>
-        <input class="input" id="wl-planos-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" />
-        <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
-        <button class="btn btn--primary" type="submit">Avise-me</button>
-      </form>
     </section>
 
     <!-- ------------------------------------------------------------ faq --- -->
-    <section class="landing-container section">
-      <div class="section__head">
-        <h2 class="section__title">Perguntas frequentes</h2>
-      </div>
-      <!-- TROCAR: respostas abaixo são placeholder -->
-      <div class="faq">
-        <div>
-          <h3 class="faq__q">Quando lança?</h3>
-          <p class="faq__a">Estamos em desenvolvimento. Quem estiver na lista de espera é avisado primeiro, antes do público geral.</p>
+    <section class="section-band">
+      <div class="landing-container section">
+        <div class="section__head">
+          <h2 class="section__title">Perguntas frequentes</h2>
         </div>
-        <div>
-          <h3 class="faq__q">Preciso de cartão de crédito para entrar na lista de espera?</h3>
-          <p class="faq__a">Não — é só o seu e-mail. Nada de pagamento nesta fase.</p>
-        </div>
-        <div>
-          <h3 class="faq__q">Qual a diferença entre Personal e Team?</h3>
-          <p class="faq__a">Personal é para quem atende sozinha. Team é para clínicas com mais de uma profissional usando a mesma conta.</p>
-        </div>
-        <div>
-          <h3 class="faq__q">Dá para usar em qualquer dispositivo?</h3>
-          <p class="faq__a">Sim — é 100% web, funciona em qualquer navegador, sem instalar nada.</p>
-        </div>
-        <div>
-          <h3 class="faq__q">Meus dados ficam seguros?</h3>
-          <p class="faq__a">Sim — cada conta só acessa os próprios dados, com login pelo Google.</p>
+        <div class="faq">
+          <details class="faq__item">
+            <summary class="faq__q">Quando lança?</summary>
+            <p class="faq__a">Em desenvolvimento. Quem está na lista é avisado primeiro.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Preciso de cartão pra entrar na lista?</summary>
+            <p class="faq__a">Não. Só o e-mail. Nada de pagamento nesta fase.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Qual a diferença entre Personal e Team?</summary>
+            <p class="faq__a">Personal é pra quem atende sozinho. Team é pra mais de uma pessoa dividindo
+              a mesma agenda e base de clientes.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Serve pro meu ramo?</summary>
+            <p class="faq__a">Se você agenda clientes e cobra por atendimento, serve — de unha a tatuagem.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Dá pra usar no celular?</summary>
+            <p class="faq__a">Sim. É 100% web, funciona em qualquer navegador, sem instalar nada.</p>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Meus dados ficam seguros?</summary>
+            <p class="faq__a">Sim. Cada conta só acessa os próprios dados, com login pelo Google.</p>
+          </details>
         </div>
       </div>
     </section>
