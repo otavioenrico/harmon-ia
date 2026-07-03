@@ -39,6 +39,10 @@
   transition: background-color var(--transition), border-color var(--transition);
 }
 
+.page-home .landing-header {
+  position: fixed; left: 0; right: 0;
+}
+
 /* home: hero escuro cobre o topo -> header nasce transparente (texto claro),
    só ganha fundo/blur/borda quando landing.js marca .is-scrolled (scrollY > 8). */
 .page-home .landing-header:not(.is-scrolled) {
