@@ -48,18 +48,29 @@ export async function render(root, ctx) {
 
       <section class="card">
         <h3>Google</h3>
-        <p class="mt-4">Conta conectada: <strong>${esc(p.email)}</strong></p>
-        <p class="muted">Agenda: <span class="badge badge--success">${icon('check')} conectada</span></p>
 
-        <label class="flex mt-4" style="cursor:pointer">
+        <!-- status: conta + conexões -->
+        <div class="mt-4" style="display:flex; flex-direction:column; gap:8px; font-size:14px">
+          <div><span class="muted">Conta:</span> <strong>${esc(p.email)}</strong></div>
+          <div class="flex"><span class="muted">Agenda:</span>
+            <span class="badge badge--success">${icon('check')} conectada</span></div>
+        </div>
+
+        <div class="setting-divider"></div>
+
+        <!-- função: espelho de contatos -->
+        <label class="setting-row" style="cursor:pointer">
+          <span style="font-weight:500">Sincronizar clientes com Google Contatos</span>
           <span class="switch"><input type="checkbox" id="sync-contacts" ${ctx.settings?.sync_contacts !== false ? 'checked' : ''}><span class="track"></span></span>
-          Sincronizar clientes com Google Contatos
         </label>
-        <p class="hint mt-4">Quando ligado, cada cliente criada ou editada é espelhada nos seus Contatos do Google (nome, telefone, e-mail, endereço). O sistema continua sendo a fonte da verdade — nada volta do Google para cá.</p>
+        <p class="hint mt-4">Cada cliente criada ou editada é espelhada nos seus Contatos do Google (nome, telefone, e-mail, endereço). O sistema continua sendo a fonte da verdade — nada volta do Google para cá.</p>
         <button class="btn btn--secondary mt-4" id="sync-now">Sincronizar clientes agora</button>
 
-        <p class="hint mt-4">Se a agenda ou os contatos pararem de sincronizar, reconecte sua conta Google para renovar o acesso.</p>
-        <button class="btn btn--secondary mt-4" id="reconnect">Reconectar Google</button>
+        <div class="setting-divider"></div>
+
+        <!-- manutenção -->
+        <p class="hint">Se a agenda ou os contatos pararem de sincronizar, reconecte sua conta Google para renovar o acesso.</p>
+        <button class="btn btn--ghost mt-4" id="reconnect">Reconectar Google</button>
       </section>
 
       <section class="card">

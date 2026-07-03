@@ -523,3 +523,8 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ajustes: linha rótulo-à-esquerda / controle-à-direita + divisor sutil entre
+   grupos dentro de um mesmo card (usado na seção Google de Configurações). */
+.setting-row { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-4); margin: 0; }
+.setting-divider { border-top: 1px solid var(--border); margin: var(--sp-5) 0; }
