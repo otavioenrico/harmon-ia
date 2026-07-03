@@ -25,7 +25,7 @@
 
 /* kerning "estilo Apple" nos títulos — regra única, todos os títulos da landing */
 .lp-hero__title, .section__title, .cta-band__title, .feature__title,
-.plan-card__name, .step__title, .faq__q, .module__title {
+.plan-card__name, .step__title, .faq__q, .about-module__title {
   letter-spacing: -0.02em;
 }
 
@@ -90,6 +90,11 @@
    pronta pra receber foto/vídeo de volta (só destrocar a <img> comentada). */
 .lp-hero-full__media { position: absolute; inset: 0; z-index: 0; background: var(--color-black); }
 .lp-hero-full__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* gradiente de legibilidade sobre a imagem — escurece a base (texto fica em baixo/esquerda) */
+.lp-hero-full__media::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, var(--hero-overlay-strong), var(--hero-overlay-soft) 60%);
+}
 /* .lp-hero-full é flex: sem width:100%, o .landing-container (filho flex) encolhe
    pro conteúdo em vez de ocupar 1160px, descentralizando do eixo do logo. */
 .lp-hero-full > .landing-container { width: 100%; }
@@ -275,17 +280,38 @@
 .plan-card .btn { margin-top: auto; }
 
 /* ------------------------------------------------------------ about-modules -- */
-.about-modules { display: flex; flex-direction: column; gap: var(--sp-7); margin-top: var(--sp-7); }
-.about-module { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: var(--sp-6); }
-.module__title { font-size: var(--fs-xl); font-weight: var(--fw-600); margin-bottom: var(--sp-2); }
-.module__text { color: var(--text-muted); line-height: 1.6; }
-.about-module__media {
-  background: var(--color-black); border-radius: var(--radius-lg);
-  min-height: 240px; display: flex; align-items: center; justify-content: center;
-  color: var(--hero-text-muted); font-size: var(--fs-sm);
+.about-modules {
+  display: flex; flex-direction: column; gap: var(--sp-8);
+  max-width: 960px; margin-inline: auto; margin-top: var(--sp-7);
 }
-@media (max-width: 900px) {
+.about-module {
+  position: relative;
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+}
+/* card branco do texto: avança sobre a imagem e fica por cima */
+.about-module__text {
+  position: relative; z-index: 1;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow);
+  margin-right: calc(var(--sp-7) * -1);
+}
+.about-module__title { font-size: var(--fs-lg); font-weight: var(--fw-600); margin-bottom: var(--sp-3); }
+.about-module__body { color: var(--text-muted); line-height: 1.6; }
+/* bloco escuro da imagem: maior/mais alto que o card de texto */
+.about-module__media {
+  background: var(--color-black);
+  color: var(--color-white);
+  border-radius: var(--radius-xl);
+  min-height: 340px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-sm);
+}
+@media (max-width: 720px) {
   .about-module { grid-template-columns: 1fr; }
+  .about-module__text { margin-right: 0; }
+  .about-module__media { min-height: 220px; }
 }
 
 /* ----------------------------------------------------------------- faq --- */
