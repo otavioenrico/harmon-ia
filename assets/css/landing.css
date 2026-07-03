@@ -81,7 +81,7 @@
 /* --------------------------------------------------------------- hero ---- */
 .lp-hero-full {
   position: relative;
-  min-height: 65vh;
+  min-height: calc(65vh + 80px);
   display: flex;
   align-items: flex-end;
   overflow: hidden;
@@ -101,8 +101,10 @@
 .lp-hero-full__overlay {
   position: relative; z-index: 1;
   max-width: 640px;
+  margin-inline: auto;
   padding-block: var(--sp-7);
-  display: flex; flex-direction: column; align-items: flex-start;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
 }
 .lp-hero__title {
   font-size: clamp(2rem, 4.5vw, 3.25rem);
@@ -116,10 +118,11 @@
   font-size: var(--fs-lg);
   color: var(--text-muted);
   max-width: 60ch;
+  margin-inline: auto;
   line-height: 1.5;
   margin-bottom: var(--sp-5);
 }
-.lp-hero__actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-4); }
+.lp-hero__actions { display: flex; flex-direction: column; align-items: center; gap: var(--sp-4); width: 100%; }
 
 /* dentro do hero full-bleed o texto fica branco sobre o scrim da foto */
 .lp-hero-full .lp-hero__title { color: var(--color-white); }
@@ -135,6 +138,11 @@
 /* ------------------------------------------------------- waitlist form --- */
 .waitlist-form { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 .waitlist-form .input { width: auto; flex: 1 1 240px; }
+/* no hero: input em linha própria e os dois botões lado a lado, centralizados */
+.lp-hero__actions .waitlist-form { flex-direction: column; align-items: stretch; gap: var(--sp-3); width: 100%; max-width: 420px; }
+.lp-hero__actions .waitlist-form .input { flex: 1 1 auto; width: 100%; }
+.waitlist-form__actions { display: flex; gap: var(--sp-3); justify-content: center; flex-wrap: wrap; }
+.waitlist-form__actions .btn { flex: 1 1 auto; }
 .waitlist-form input[name="company"] { position: absolute; left: -9999px; }
 .waitlist__done { font-weight: var(--fw-500); color: var(--success); }
 
