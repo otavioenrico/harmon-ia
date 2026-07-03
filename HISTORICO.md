@@ -4,6 +4,37 @@ Registro do que foi feito em cada janela de contexto. **Cada etapa = uma sessão
 Para registrar uma nova etapa, peça "registre o que foi feito até aqui" e eu
 adiciono uma seção `## Etapa N` no fim deste arquivo.
 
+**Versão atual:** v2.1.1
+
+## Tabela de versões (semântico)
+
+MAJOR = muda a superfície do produto (ex.: site público novo). MINOR = módulo/feature
+nova. PATCH = correção, ajuste visual ou polish sem feature nova.
+
+| Versão | Etapa/Rodada | Resumo |
+|---|---|---|
+| v1.0.0 | Etapa 1 | Fundação: schema, RLS, RPC, design system, auth, shell |
+| v1.1.0 | Etapa 2 | Módulo Clientes |
+| v1.2.0 | Etapa 3 | Módulo Estoque |
+| v1.3.0 | Etapa 4 | Módulo Histórico / Registro de Procedimento |
+| v1.4.0 | Etapa 5 | Módulo Fluxo de Caixa |
+| v1.4.1 | Deploy/Setup | Primeiro deploy em produção (Supabase/GitHub/Vercel/Google) |
+| v1.5.0 | Etapa 6 | Agenda + integração Google Calendar |
+| v1.6.0 | Rodada 2 | Specs de auditoria visual, redesign do design system e dashboard (parcialmente adotadas depois) |
+| v1.7.0 | Rodada 3 | Acessibilidade, robustez de UX e motion polish |
+| v1.8.0 | Rodada 4 | 11 aprimoramentos de UI (Sidebar, Caixa, Clientes, Estoque, Agenda, Dashboard) |
+| v1.9.0 | Rodada 5 | Fonte Satoshi + 8 aprimoramentos de UX |
+| v1.10.0 | Rodada 6 | Bugs críticos, padrões sistêmicos, módulos em tabela e novo login |
+| v1.11.0 | Rodada 7 | Diagnóstico geral + limpeza em massa + filtro de período + cadastro inline |
+| v1.12.0 | Rodada 7 (continuação) | Estoque em massa, Agenda Lista/Calendário, versão mobile completa |
+| v1.13.0 | Rodada 8 | Contraste de tema, navegação mobile, hero do dashboard, cadastro rápido, login |
+| v1.13.1 | commit `a3e7c04` | Accent "neutral" + ajustes de contraste em tema/layout (sem etapa detalhada em HISTORICO) |
+| v1.13.2 | commit `f566273` | Reordena hero da Home e simplifica atalhos (sem etapa detalhada em HISTORICO) |
+| v2.0.0 | Etapa 7 | Landing comercial (site público de 3 páginas) em pré-lançamento — muda a superfície pública do produto |
+| v2.0.1 | Fix pós-Etapa 7 | Retorno do login (hash+query) e painel em `/app` |
+| v2.1.0 | Rodada 10-11 | Reforma visual (estilo elevenlabs) + copy/SEO neutra da landing |
+| v2.1.1 | Rodada 12 | 13 ajustes visuais da landing + revisão do item 5 (módulos da Sobre) |
+
 ---
 
 ## Etapa 1 — Análise (Fase 0) + Fundação, Auth, Shell e primeiros módulos
@@ -393,6 +424,26 @@ Esta etapa revisou os arquivos prontos e completou o que faltava.
   (config de máquina, descartável e já no `.gitignore`).
 - Resolvido com **`git push --force-with-lease`**: a Etapa 6 virou o estado
   canônico no GitHub (`bb57c34` → `cfad5a0`). Redeploy na Vercel disparado pelo push.
+
+## Rodada 2 — Auditoria visual, redesign do design system e revisão do dashboard (specs) (2026-07-01)
+
+Três documentos de diagnóstico/spec, fechados e prontos para execução, mas nunca
+registrados aqui: `auditoria-visual-rodada2-especificacoes.md` (achados de UI com
+causa raiz no código — ícones gigantes, sidebar mobile, overflow, sistema de cor),
+`design-system-redesign-specs.md` (proposta de redesign baseada numa referência
+visual — `visual.png` — com paleta rosé/mauve, `--radius-xl`, layout de 3 colunas
+com painel direito e tipografia system-font) e `revisao-aprimoramentos-dashboard.md`
+(fecha as decisões de arquitetura do agendamento: `schedule_procedure`/
+`complete_procedure`, Home como rota padrão, autocomplete de cliente).
+
+**O que foi de fato adotado depois:** paleta mauve e o sistema de 5 acentos
+(Rodada 3/8), `--radius-xl` (aparece em `tokens.css`), ícones/overflow/sidebar
+mobile corrigidos (Rodada 3/7), Home como rota padrão e autocomplete de cliente
+(rodadas seguintes). **Não adotado:** tipografia system-font/Helvetica (a Rodada 5
+decidiu por Satoshi) e o layout de 3 colunas com painel direito (o shell
+continua em 2 colunas: sidebar + conteúdo).
+
+---
 
 ## Rodada 3 — Acessibilidade, robustez de UX e motion polish (2026-07-01)
 
@@ -1046,3 +1097,54 @@ toast, sem precisar da tabela existir).
   `<span class="wordmark">Harmon&nbsp;<b>IA</b></span>` — rename é
   find-replace de `Harmon` + ajuste do `<b>IA</b>` se o nome novo não tiver
   duas palavras.
+
+---
+
+## Fix — Retorno do login (hash+query) e painel em `/app` (2026-07-02)
+
+Correção pontual pós-Etapa 7 (commit `cc80f37`), sem documento de spec próprio:
+ajuste no tratamento do retorno do OAuth do Google (parâmetros por hash e por
+query string) e no roteamento do painel autenticado em `/app`. Detalhe do
+código no diff do commit — não há prompt/spec original para resumir aqui.
+
+---
+
+## Rodada 10-11 — Reforma da landing: visual (estilo elevenlabs) + copy/SEO neutra (2026-07-02)
+
+**Fonte:** `rodada10-prompt.md` + `rodada10-plano-reforma-landing.md` (Parte A
+visual + Parte B copy/SEO) e `ESCOPO-REFORMA-COPY.md` (copy literal). Correções
+de acabamento em `rodada11-correcoes-landing.md`. Commit `612eef2`.
+
+### Copy/SEO (Parte B)
+Reposicionamento de "clínica de saúde estética" para "profissionais de beleza e
+estética" em geral (manicure, sobrancelha, tatuador, barbeiro etc.), copy neutra
+em gênero, meta tags reais (title/description/og) nas 3 páginas, nova arquitetura
+da Home (barra de segmentos, "por que trocar a planilha", prova social, FAQ),
+FAQ Schema JSON-LD.
+
+### Visual (Parte A + Rodada 11)
+Header fixo com blur, hero full-bleed com imagem de fundo e overlay (depois
+trocado por fundo neutro escuro na Rodada 11 até haver imagem/vídeo definitivo),
+bandas de seção alternadas (branco/cinza), FAQ em accordion nativo
+(`<details>/<summary>`), remoção de sublinhado em botões/links. Rodada 11 também
+**removeu a cor de destaque (mauve) da landing** — site passou a ser 100%
+neutro (cinza/preto/branco), ao contrário do resto do app que mantém o sistema
+de 5 acentos.
+
+---
+
+## Rodada 12 — 13 ajustes visuais da landing + item 5 revisado (2026-07-02)
+
+**Fonte:** `rodada12-ajustes-landing.md`. Commits `cbec202` (13 itens) e
+`8978488` (item 5 revisado — o exemplo visual enviado exigia um redesenho do
+módulo da Sobre).
+
+Refinamentos sobre a Rodada 10-11: FAQ e cabeçalhos de seção centralizados,
+"por que trocar a planilha" fixado em grid 2×2 com CTA preto, barra de
+segmentos virou esteira (marquee) com ícone por profissão, hero alinhado à
+esquerda, planos com pesos visuais iguais (removido o destaque do plano Team),
+logo virou link para a home, kerning + ponto final nos títulos, e os cinzas dos
+tokens foram neutralizados (removido o viés amarelado). **Item 5 (revisado no
+commit seguinte):** os 3 módulos da página Sobre viraram cards brancos
+sobrepostos a blocos escuros de imagem (camadas), substituindo o texto solto
+sobre fundo cinza da primeira tentativa.
