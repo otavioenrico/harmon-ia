@@ -124,8 +124,11 @@
 /* dentro do hero full-bleed o texto fica branco sobre o scrim da foto */
 .lp-hero-full .lp-hero__title { color: var(--color-white); }
 .lp-hero-full .lp-hero__subtitle { color: var(--hero-text-muted); }
-.lp-hero-full .btn--ghost { color: var(--color-white); border-color: var(--hero-border); }
-.lp-hero-full .btn--ghost:hover { background: var(--hero-overlay-soft); }
+/* primário preto ganha contorno branco sólido no hero escuro */
+.lp-hero-full .btn--primary { border-color: var(--color-white); }
+/* secundário (Planos e preços): só texto — sem preenchimento e sem contorno */
+.lp-hero-full .btn--ghost { color: var(--color-white); background: transparent; border-color: transparent; padding-inline: 0; }
+.lp-hero-full .btn--ghost:hover { background: transparent; text-decoration: underline; }
 
 @media (max-width: 900px) {
   .lp-hero-full { min-height: 55vh; }
