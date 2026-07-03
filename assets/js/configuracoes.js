@@ -6,6 +6,7 @@ import { supabase } from './supabase.js';
 import { profile, signOut, signInWithGoogle } from './auth.js';
 import { upsertContact, NeedsScope } from './google-people.js';
 import { listEvents, NeedsReconnect } from './google-cal.js';
+import { uploadJSON, NeedsScope as DriveNeedsScope } from './google-drive.js';
 
 // logos oficiais (SVG inline, sem CDN) usados como identificação visual.
 const GOOGLE_LOGO = `<span class="g-logo"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
@@ -23,7 +24,7 @@ const CONTACTS_LOGO = `<span class="g-logo"><svg viewBox="0 0 48 48" width="20" 
   <circle cx="24" cy="21" r="5" fill="#4285F4"/>
   <path d="M14 34c0-5 4.5-8 10-8s10 3 10 8z" fill="#4285F4"/>
 </svg></span>`;
-import { toast, esc, initials, download, todayISO, icon, confirmDialog, maskPhone, bindMask, busy } from './utils.js';
+import { toast, esc, initials, download, todayISO, icon, confirmDialog, maskPhone, bindMask, busy, openModal } from './utils.js';
 
 const TABLES = ['user_settings', 'services', 'clients', 'stock_items',
   'stock_transactions', 'procedures', 'procedure_materials', 'financial_entries'];
@@ -118,6 +119,21 @@ export async function render(root, ctx) {
         <h3>Dados</h3>
         <p class="muted mt-4">Baixe uma cópia completa dos seus dados.</p>
         <button class="btn btn--secondary mt-4" id="backup">Criar backup (JSON)</button>
+
+        <div class="setting-divider"></div>
+
+        <label class="setting-row" style="cursor:pointer">
+          <span style="font-weight:500">Backup automático semanal no Google Drive</span>
+          <span class="switch"><input type="checkbox" id="backup-auto" ${ctx.settings?.backup_enabled ? 'checked' : ''}><span class="track"></span></span>
+        </label>
+        <p class="hint mt-4">Uma vez por semana, o app salva uma cópia dos seus dados numa pasta "Harmon IA Backups" no seu Google Drive — mantendo os 12 mais recentes. Seus dados continuam no sistema; isso é só uma rede de segurança.</p>
+        <button class="btn btn--secondary mt-4" id="backup-now">Fazer backup no Drive agora</button>
+
+        <div class="setting-divider"></div>
+
+        <p class="muted">Restaurar de um backup <span class="faint">— substitui todos os dados atuais pelos do arquivo.</span></p>
+        <button class="btn btn--secondary mt-4" id="restore">Restaurar de um backup…</button>
+        <input type="file" id="restore-file" accept="application/json,.json" hidden>
       </section>
     </div>`;
 
@@ -259,4 +275,85 @@ export async function render(root, ctx) {
     e.target.disabled = false; e.target.textContent = 'Criar backup (JSON)';
     toast('Backup gerado.');
   };
+
+  root.querySelector('#backup-auto').onchange = async (e) => {
+    const prev = !!ctx.settings?.backup_enabled;
+    const backup_enabled = e.target.checked;
+    const { error } = await supabase.from('user_settings')
+      .upsert({ user_id: ctx.session.user.id, backup_enabled }, { onConflict: 'user_id' });
+    if (error) { console.error(error); e.target.checked = prev; return toast('Não foi possível salvar a preferência.', 'error'); }
+    ctx.settings.backup_enabled = backup_enabled;
+    toast(backup_enabled ? 'Backup automático ligado.' : 'Backup automático desligado.');
+  };
+
+  root.querySelector('#backup-now').onclick = async (e) => {
+    const btn = e.currentTarget;
+    busy(btn, true, 'Enviando…');
+    try {
+      const dump = {};
+      for (const t of TABLES) {
+        const { data } = await supabase.from(t).select('*');
+        dump[t] = (data || []).map((row) => { const { google_refresh_token, ...rest } = row; return rest; });
+      }
+      await uploadJSON('Harmon IA Backups', `harmon-backup-${todayISO()}.json`, dump);
+      toast('Backup salvo no seu Google Drive.');
+    } catch (err) {
+      if (err instanceof DriveNeedsScope || err instanceof NeedsReconnect)
+        toast('Reconecte o Google e autorize o Drive para o backup.', 'warning');
+      else { console.error(err); toast('Não foi possível enviar o backup.', 'error'); }
+    } finally { busy(btn, false); }
+  };
+
+  // ------------------------------------------------------------- restaurar ----
+  // Substitui TODOS os dados pelos do arquivo (RPC transacional). Antes, baixa um
+  // backup de segurança do estado atual e pede confirmação digitada.
+  root.querySelector('#restore').onclick = () => root.querySelector('#restore-file').click();
+  root.querySelector('#restore-file').onchange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';                          // permite reescolher o mesmo arquivo depois
+    if (!file) return;
+
+    let payload;
+    try { payload = JSON.parse(await file.text()); }
+    catch { return toast('Arquivo inválido — não é um JSON.', 'error'); }
+    const looksLikeBackup = payload && typeof payload === 'object' && !Array.isArray(payload)
+      && ['clients', 'procedures', 'financial_entries', 'services', 'stock_items'].some((k) => k in payload);
+    if (!looksLikeBackup) return toast('Este arquivo não parece um backup do Harmon.', 'error');
+
+    // rede de proteção: baixa o estado atual antes de qualquer coisa
+    const current = {};
+    for (const t of TABLES) {
+      const { data } = await supabase.from(t).select('*');
+      current[t] = (data || []).map((row) => { const { google_refresh_token, ...rest } = row; return rest; });
+    }
+    download(`harmon-antes-de-restaurar-${todayISO()}.json`, JSON.stringify(current, null, 2), 'application/json');
+
+    const ok = await typedConfirm();
+    if (!ok) return;
+
+    const { error } = await supabase.rpc('restore_backup', { p_payload: payload });
+    if (error) { console.error(error); return toast('Não foi possível restaurar. Nada foi alterado.', 'error'); }
+    toast('Dados restaurados. Recarregando…');
+    setTimeout(() => location.reload(), 900);
+  };
+}
+
+// confirmação forte: só habilita "Restaurar" quando o usuário digita RESTAURAR.
+function typedConfirm() {
+  return new Promise((resolve) => {
+    const body = document.createElement('div');
+    body.innerHTML = `
+      <p style="margin:0 0 12px">Isto vai <strong>apagar todos os dados atuais</strong> e substituí-los pelos do arquivo. Já baixamos um backup de segurança do estado atual no seu computador.</p>
+      <p style="margin:0 0 8px">Para confirmar, digite <strong>RESTAURAR</strong>:</p>
+      <input class="input" id="rc-input" placeholder="RESTAURAR" autocomplete="off" spellcheck="false">`;
+    const foot = document.createElement('div');
+    foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Cancelar</button>
+      <button class="btn btn--danger" type="button" data-go disabled>Restaurar</button>`;
+    const m = openModal({ title: 'Restaurar backup', body, footer: foot, onClose: () => resolve(false) });
+    const input = body.querySelector('#rc-input');
+    const go = foot.querySelector('[data-go]');
+    input.oninput = () => { go.disabled = input.value.trim().toUpperCase() !== 'RESTAURAR'; };
+    foot.querySelector('[data-x]').onclick = () => m.close();
+    go.onclick = () => { resolve(true); m.close(true); };
+  });
 }

@@ -211,6 +211,7 @@ alter table public.clients add column if not exists address_complement text;
 alter table public.user_settings add column if not exists accent text default 'rose'; -- valores: rose | sand | sky | lilac | mint | neutral
 alter table public.user_settings add column if not exists whatsapp_number text;
 alter table public.user_settings add column if not exists sync_contacts boolean default true; -- Parte 1: espelho de clientes no Google Contatos
+alter table public.user_settings add column if not exists backup_enabled boolean default false; -- Parte 1 / Feature 4: backup automático semanal no Google Drive
 
 -- FIX (Rodada 6, bug 1.2): financial_entries.procedure_id não tinha FK — sem o
 -- relacionamento, o PostgREST rejeita o embed `procedures(...)` usado pelo
@@ -608,6 +609,58 @@ begin
     where procedure_id = any(p_ids) and user_id = v_user;
   delete from public.procedures
     where id = any(p_ids) and user_id = v_user;
+end $$;
+
+-- ===================== RPC: restaurar backup (Configurações → Dados) ===========
+-- Substitui TODOS os dados do usuário pelos do JSON, numa transação atômica (ou
+-- vai inteiro, ou não mexe em nada). Apaga na ordem segura de FKs e reinsere na
+-- ordem pai->filho, FORÇANDO user_id = auth.uid() em cada linha (não dá para
+-- importar dados de outra conta; a RLS ainda protege). NÃO toca user_settings —
+-- tema/cor/flags e a conexão Google ficam intactos. security invoker: roda como
+-- o usuário chamador, sob a RLS dele.
+
+-- helper: devolve o array de linhas com user_id sobrescrito p/ o usuário atual.
+create or replace function public._force_user(p_rows jsonb, p_user uuid)
+returns jsonb language sql immutable as $$
+  select coalesce(jsonb_agg(e || jsonb_build_object('user_id', p_user)), '[]'::jsonb)
+  from jsonb_array_elements(coalesce(p_rows, '[]'::jsonb)) e;
+$$;
+
+create or replace function public.restore_backup(p_payload jsonb)
+returns void
+language plpgsql
+security invoker
+as $$
+declare v_user uuid := auth.uid();
+begin
+  if v_user is null then raise exception 'not authenticated'; end if;
+  if p_payload is null or jsonb_typeof(p_payload) <> 'object' then
+    raise exception 'backup inválido';
+  end if;
+
+  -- apaga os dados atuais (ordem filho->pai)
+  delete from public.financial_entries  where user_id = v_user;
+  delete from public.procedure_materials where user_id = v_user;
+  delete from public.stock_transactions  where user_id = v_user;
+  delete from public.return_dismissals   where user_id = v_user;
+  delete from public.shopping_list_items where user_id = v_user;
+  delete from public.agenda_drafts       where user_id = v_user;
+  delete from public.procedures          where user_id = v_user;
+  delete from public.clients             where user_id = v_user;
+  delete from public.services            where user_id = v_user;
+  delete from public.stock_items         where user_id = v_user;
+
+  -- reinsere do backup (ordem pai->filho), forçando user_id
+  insert into public.services            select * from jsonb_populate_recordset(null::public.services,            public._force_user(p_payload->'services', v_user));
+  insert into public.clients             select * from jsonb_populate_recordset(null::public.clients,             public._force_user(p_payload->'clients', v_user));
+  insert into public.stock_items         select * from jsonb_populate_recordset(null::public.stock_items,         public._force_user(p_payload->'stock_items', v_user));
+  insert into public.procedures          select * from jsonb_populate_recordset(null::public.procedures,          public._force_user(p_payload->'procedures', v_user));
+  insert into public.procedure_materials select * from jsonb_populate_recordset(null::public.procedure_materials, public._force_user(p_payload->'procedure_materials', v_user));
+  insert into public.stock_transactions  select * from jsonb_populate_recordset(null::public.stock_transactions,  public._force_user(p_payload->'stock_transactions', v_user));
+  insert into public.financial_entries   select * from jsonb_populate_recordset(null::public.financial_entries,   public._force_user(p_payload->'financial_entries', v_user));
+  insert into public.agenda_drafts       select * from jsonb_populate_recordset(null::public.agenda_drafts,       public._force_user(p_payload->'agenda_drafts', v_user));
+  insert into public.shopping_list_items select * from jsonb_populate_recordset(null::public.shopping_list_items, public._force_user(p_payload->'shopping_list_items', v_user));
+  insert into public.return_dismissals   select * from jsonb_populate_recordset(null::public.return_dismissals,   public._force_user(p_payload->'return_dismissals', v_user));
 end $$;
 
 -- ============================================================ STORAGE =========

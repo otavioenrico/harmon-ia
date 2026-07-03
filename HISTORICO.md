@@ -4,7 +4,7 @@ Registro do que foi feito em cada janela de contexto. **Cada etapa = uma sessão
 Para registrar uma nova etapa, peça "registre o que foi feito até aqui" e eu
 adiciono uma seção `## Etapa N` no fim deste arquivo.
 
-**Versão atual:** v2.1.2
+**Versão atual:** v2.2.0
 
 ## Tabela de versões (semântico)
 
@@ -35,6 +35,7 @@ nova. PATCH = correção, ajuste visual ou polish sem feature nova.
 | v2.1.0 | Rodada 10-11 | Reforma visual (estilo elevenlabs) + copy/SEO neutra da landing |
 | v2.1.1 | Rodada 12 | 13 ajustes visuais da landing + revisão do item 5 (módulos da Sobre) |
 | v2.1.2 | Rodada 13 | Motion sutil (scroll-reveal, hover, accordion do FAQ) na landing pública |
+| v2.2.0 | Etapa 8 | Integrações Google (Parte 1): Contatos, Exportar Sheets, Backup+Restaurar no Drive; melhorias na Agenda |
 
 ---
 
@@ -1198,3 +1199,107 @@ pra testar 320px real nem `prefers-reduced-motion: reduce` do SO nesta sessão
 (sem acesso a emulação de mídia do Chrome DevTools no harness usado) — a
 garantia aí é por revisão de código: toda regra de motion está dentro do
 media query certo.
+
+---
+
+## Etapa 8 — Integrações Google (Parte 1) + melhorias na Agenda (2026-07-03)
+
+### Contexto
+Rodada dedicada a aprimorar as integrações Google. Decisão-guia: **espelho** — o
+Supabase segue a única fonte da verdade; Drive/Sheets/Contatos só recebem cópias
+projetadas, nada volta para o banco (preserva RLS, RPCs atômicos e integridade).
+O trabalho de WhatsApp/disparos virou **Parte 2** (feature "Leads") e a ideia de
+tornar o Google opcional (login próprio) virou **Parte 3** — ambas registradas em
+`APRIMORAMENTOS-PENDENTES.md`, sem implementação nesta etapa.
+
+### Feito
+
+**Agenda (agenda.js)**
+- **"Registrar procedimento"** para eventos criados direto no Google Calendar:
+  no detalhe de um evento sem `procedure`, um botão abre o form em modo "link" —
+  ajusta o evento existente (sem duplicar) e cria a linha em `procedures` amarrada
+  pelo `google_event_id` via `schedule_procedure`. Fecha o único ponto onde a
+  integração "vazava" (eventos externos apareciam sem valor/status/materiais).
+- **Polling leve (45s)**: refresh silencioso que só repinta quando algo muda
+  (assinatura dos eventos), pausa com aba oculta ou modal aberto, e se autodesliga
+  ao trocar de tela (checa `body.isConnected`). Reflete no app o que foi criado/
+  alterado direto no Google, sem recarregar a página.
+
+**Fundação Google (serve a todas as features)**
+- `auth.js`: escopos `contacts` + `drive.file` (arquivos do app) no login.
+- `google-cal.js`: passa a exportar `accessToken()` — cache de token compartilhado
+  com os novos módulos (People/Drive/Sheets). `google-refresh.js` não mudou.
+
+**Feature 1 — Google Contatos (People API)**
+- `google-people.js` (novo): `upsertContact`/`deleteContact` (cria/atualiza pelo
+  `resourceName`, recria se sumiu no Google; usa etag no update).
+- `clientes.js`: espelha ao criar/editar/quickCreate/excluir — **best-effort**,
+  nunca bloqueia nem desfaz o cadastro; gated pelo toggle `sync_contacts`.
+- `configuracoes.js`: toggle liga/desliga + "Sincronizar clientes agora" (massa).
+
+**Feature 2 — Exportar Financeiro pro Sheets**
+- `google-sheets.js` (novo): `createSheet` cria a planilha, escreve valores
+  (Valor/Lucro como número) e formata (cabeçalho negrito+congelado, auto-resize).
+- `financeiro.js`: botão "Exportar Sheets" ao lado do CSV — exporta as linhas do
+  filtro atual para uma planilha NOVA no Drive (foto do momento, não espelho vivo).
+
+**Feature 4 — Backup automático semanal no Drive (multi-tenant, opt-in)**
+- `google-drive.js` (novo): upload de JSON pro Drive (pasta "Harmon IA Backups"),
+  usado no backup manual.
+- `api/backup.js` (novo): Serverless + Vercel Cron. Varre só usuárias com
+  `backup_enabled`, dump por `user_id` (service role, contorna RLS), sobe pro
+  Drive de cada uma via refresh token dela + retenção (12). Protegido por
+  `CRON_SECRET`.
+- `vercel.json`: cron `/api/backup` aos domingos 06:00 UTC (Hobby: máx 1x/dia).
+- `configuracoes.js`: toggle `backup_enabled` + "Fazer backup no Drive agora".
+
+**Restaurar de backup**
+- RPC `restore_backup(jsonb)` + helper `_force_user` (schema.sql): substitui TODOS
+  os dados numa transação atômica (delete filho→pai, insert pai→filho), força
+  `user_id = auth.uid()`, preserva IDs (vínculos intactos) e NÃO toca
+  `user_settings` (Google/preferências ficam). `configuracoes.js`: upload `.json`,
+  baixa backup de segurança do estado atual, confirmação digitada ("RESTAURAR"),
+  chama a RPC e recarrega.
+
+**UI — card Google (configuracoes.js)**
+- Reorganizado em linhas por app com logos (Google / Google Agenda / Google
+  Contatos): cabeçalho com reconectar, refresh por linha (Agenda = testar conexão;
+  Contatos = ressincronizar) e toggle nos Contatos. Ícones novos `refresh`/`table`
+  em `utils.js`; classes `.setting-row`/`.setting-divider`/`.g-logo` + spin do
+  botão-ícone em `components.css`.
+
+**Schema (db/schema.sql)** — migrações idempotentes: `sync_contacts`,
+`backup_enabled`, funções `restore_backup` e `_force_user`.
+
+### Verificação
+`node --check` em todos os `.js` alterados/criados (auth, google-cal, google-people,
+google-sheets, google-drive, clientes, financeiro, configuracoes, utils, api/backup)
+e `vercel.json` validado como JSON. Testes funcionais end-to-end (People/Sheets/
+Drive contra as APIs reais) dependem dos passos manuais do usuário e foram feitos
+por ele: sincronização de Contatos e Exportar Sheets confirmados OK em produção.
+
+### Decisões / pegadinhas
+- **Espelho, não base.** Nada do Google volta pro Supabase. Sheets é "foto do
+  momento" (arquivo novo por exportação), não planilha viva.
+- **People API** é a correta (a "Contacts API" legada não é usada).
+- **`drive.file`** é escopo "não confidencial" (só arquivos do app) — evita a
+  verificação pesada do Google; Drive total/Gmail (restritos) foram evitados.
+- **Backup no servidor** precisa da SERVICE ROLE (contorna RLS) + `CRON_SECRET`;
+  sem sessão de usuário, o cron mint o token de cada uma pelo refresh_token salvo.
+- **Restore** força `user_id` e roda como o usuário (security invoker) — impossível
+  injetar dados de outra conta; a RLS protege por cima.
+- **Card com toggle da Agenda** ficou só como status+refresh: a Agenda é fonte da
+  verdade e não pode ser "desligada" sem a Parte 3 (app dono dos agendamentos).
+
+### Passos manuais do usuário (uma vez) — ver SETUP.md
+1. Google Cloud: ativar People API, Google Drive API, Google Sheets API.
+2. Tela de consentimento: adicionar escopos `contacts` + `drive.file` → Reconectar.
+3. Supabase SQL Editor: re-rodar `db/schema.sql` (idempotente — traz colunas e RPCs).
+4. Vercel: env vars `SUPABASE_SERVICE_ROLE_KEY` e `CRON_SECRET` (Production) + deploy.
+
+### Pendente / próximo
+- **Feature 3 — Documentos no Drive** (pasta por cliente): adiada por escolha do
+  usuário. `drive.file` já autorizado — é só código quando quiser.
+- **Parte 2 — WhatsApp/Leads** e **Parte 3 — Google opcional (login próprio)**:
+  planejadas em `APRIMORAMENTOS-PENDENTES.md`.
+- Rotação (opcional) da service_role do Supabase, já que passou pelo chat.

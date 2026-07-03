@@ -233,3 +233,46 @@ criar/editar/excluir cliente reflete automaticamente (se o toggle estiver ligado
 
 **Espelho, não base:** nada do Google volta para o Supabase. O contato guarda o
 `resourceName` em `clients.google_contact_id` só para saber qual atualizar depois.
+
+---
+
+## Integrações Google — Feature 4 (Backup automático semanal no Drive)
+
+Cada usuária liga/desliga em **Configurações → Dados → "Backup automático semanal"**
+(padrão desligado). Um cron semanal na Vercel varre só quem ligou e salva um JSON
+dos dados dela numa pasta "Harmon IA Backups" no Drive dela (mantém os 12 mais
+recentes). O botão **"Fazer backup no Drive agora"** roda na hora, sem esperar.
+
+### Migração (Supabase SQL Editor)
+    alter table public.user_settings add column if not exists backup_enabled boolean default false;
+
+### Duas variáveis novas na Vercel (Project → Settings → Environment Variables)
+- **SUPABASE_SERVICE_ROLE_KEY** — Supabase → Project Settings → API → `service_role`
+  (a chave "secret", NÃO a anon). O cron usa para ler os dados de cada usuária
+  contornando a RLS. É secreta: fica só no servidor, nunca no frontend.
+- **CRON_SECRET** — um valor aleatório longo (ex.: gere com um gerenciador de
+  senhas). A Vercel envia como `Authorization: Bearer <valor>` nas chamadas do
+  cron; sem ele, o endpoint recusa tudo (evita disparo público).
+
+Depois de setar as duas, faça um novo deploy. O agendamento já está no
+`vercel.json` (`/api/backup`, domingos 06:00 UTC). No plano Hobby o cron roda no
+máximo 1×/dia — semanal cabe folgado.
+
+### Testar sem esperar
+Ligue o toggle e clique em "Fazer backup no Drive agora" — deve aparecer a pasta
+"Harmon IA Backups" com um arquivo no seu Drive.
+
+---
+
+## Restaurar de um backup (Configurações → Dados)
+
+Permite subir um `.json` de backup e **substituir todos os dados atuais** por ele
+(reset). Antes de apagar, o app baixa um backup de segurança do estado atual e
+pede confirmação digitada. A troca roda numa transação atômica no banco (função
+`restore_backup`) — ou vai inteiro, ou não altera nada — e força o `user_id` para
+a conta atual (não dá para importar dados de outra pessoa). NÃO mexe em
+`user_settings` (tema/cor/conexão Google ficam intactos).
+
+### Migração (Supabase SQL Editor)
+Re-rode o `db/schema.sql` inteiro (é idempotente) — ele já traz as funções novas
+`restore_backup` e `_force_user`. Sem isso, o botão "Restaurar" dá erro.

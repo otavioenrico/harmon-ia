@@ -173,6 +173,21 @@ linha de baixo. Sem scroll horizontal no desktop.
 
 ---
 
+## PARTE 1 (Google) — STATUS
+
+**Concluída em 03/07/2026 (Etapa 8 do HISTORICO).** Princípio: espelho (Supabase = fonte da verdade).
+
+- **Feature 1 — Contatos (People API):** ✅ entregue e validado em produção.
+- **Feature 2 — Exportar Financeiro pro Sheets:** ✅ entregue e validado em produção.
+- **Feature 4 — Backup automático semanal no Drive** (multi-tenant, opt-in) + **Restaurar backup**
+  (RPC transacional): ✅ entregue; depende dos passos manuais do usuário (envs na Vercel + migração).
+- **Feature 3 — Documentos no Drive** (pasta por cliente): ⏭️ ADIADA por escolha do usuário.
+  `drive.file` já autorizado — é só código quando quiser retomar.
+
+Passos manuais e detalhes técnicos: ver SETUP.md e HISTORICO.md (Etapa 8).
+
+---
+
 ## PARTE 2 (versão futura) — Feature "Leads / Relacionamento": disparos de WhatsApp
 
 **Status:** planejado (não implementar agora — estruturado aqui para a próxima versão)
