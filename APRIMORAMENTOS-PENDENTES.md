@@ -223,3 +223,35 @@ reutilizável por todos os gatilhos.
    pronto e botão de enviar via `wa.me`. Entrega ~80% do valor.
 2. **Cloud API oficial + templates + cron** quando o volume justificar pagar por
    conversa e a profissional aceitar um número dedicado.
+
+---
+
+## PARTE 3 (versão futura) — Google como integração OPCIONAL (login próprio)
+
+**Status:** planejado (decisão de 03/07/2026: por ora, Google segue como fonte da
+verdade — NÃO implementar agora). Estruturado aqui para a próxima versão.
+
+### Visão
+Tirar o Google do papel de alicerce e torná-lo uma integração opcional. A pessoa
+pode usar o app sem conta Google.
+
+### Frentes (ordem natural 2 → 1 → 3)
+1. **App dono dos agendamentos.** Hoje não há tabela de agendamentos — o Google
+   Calendar É o banco da agenda e `procedures` exige `google_event_id`. Criar uma
+   tabela própria de agendamentos; Calendar vira espelho opcional (grava lá só se
+   conectado). Mexe em schema, `agenda.js` e na ligação com `procedures`
+   (`google_event_id` passa a ser opcional). Se a Agenda for desconectada: a
+   pessoa continua agendando, só não replica no Google.
+2. **Login sem Google (e-mail/senha).** Supabase Auth já suporta. Adicionar
+   cadastro/login próprio e tornar CADA função Google condicional a "Google
+   conectado" (hoje o app assume que sempre está). Rever `auth.js`, allowlist,
+   `ensureSettings`, e o card de Conta.
+3. **Desconectar Google com opções.** Pop-up de confirmação com 3 escolhas:
+   cancelar / desconectar e remover os itens sincronizados (eventos criados pelo
+   app + contatos-espelho) / desconectar e manter os registros no app. Só faz
+   sentido depois de 1 e 2.
+
+### Observação de UI (já adiantada na Parte 1)
+O card Google em Configurações já foi reorganizado com linhas por app (Google /
+Google Agenda / Google Contatos) e logos. Quando a Parte 3 chegar, a linha da
+Agenda ganha o toggle real de liga/desliga (hoje é só status + refresh).

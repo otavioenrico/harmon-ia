@@ -8,6 +8,7 @@
 import { supabase } from './supabase.js';
 import { money, fmtDate, todayISO, openModal, confirmDialog, guard, toast, busy, esc, parseMoney,
   toCSV, download, icon, emptyBox, debounce, bulkBar, periodFilter } from './utils.js';
+import { createSheet, NeedsScope, NeedsReconnect } from './google-sheets.js';
 
 const finIcon = icon('wallet');
 
@@ -44,7 +45,12 @@ export async function render(root, ctx) {
   csvBtn.innerHTML = `${icon('download')}<span class="btn-label">Exportar CSV</span>`;
   csvBtn.title = 'Exportar CSV';
   csvBtn.onclick = () => exportCSV(filtered());
-  ctx.actions.append(btn, csvBtn);
+  const sheetBtn = document.createElement('button');
+  sheetBtn.className = 'btn btn--secondary';
+  sheetBtn.innerHTML = `${icon('table')}<span class="btn-label">Exportar Sheets</span>`;
+  sheetBtn.title = 'Exportar para Google Sheets';
+  sheetBtn.onclick = () => exportSheets(filtered());
+  ctx.actions.append(btn, csvBtn, sheetBtn);
 
   // item 11: apresentação em abas por cima da mesma query/estado.
   root.innerHTML = `
@@ -271,6 +277,41 @@ function exportCSV(rows) {
     e.paid ? 'Pago' : 'Pendente', e.paid_at ? fmtDate(e.paid_at) : '',
   ]);
   download(`fluxo-caixa-${todayISO()}.csv`, toCSV([head, ...body]), 'text/csv');
+}
+
+// Exporta as linhas filtradas para uma planilha NOVA no Google Drive (espelho).
+// Valor/Lucro vão como número (permitem somar/pivotar no Sheets).
+async function exportSheets(rows) {
+  if (!rows.length) return toast('Nada para exportar no filtro.', 'warning');
+  // abre a aba já no gesto do clique (evita bloqueio de pop-up); redireciona ao final.
+  const win = window.open('', '_blank');
+  if (win) win.document.write('<p style="font:16px system-ui;padding:24px">Gerando planilha no Google Drive…</p>');
+  const header = ['Data', 'Tipo', 'Descrição', 'Cliente', 'Categoria', 'Forma', 'Valor (R$)', 'Lucro (R$)', 'Status', 'Pago em'];
+  const body = rows.map((e) => {
+    const l = lucroOf(e);
+    return [
+      fmtDate(refDate(e)),
+      e.type === 'income' ? 'Receita' : 'Despesa',
+      e.description || '', e.clients?.name || '', e.category || '',
+      e.payment_method ? methodLabel(e.payment_method) : '',
+      Number(e.amount) || 0,
+      l != null ? Number(l.toFixed(2)) : '',
+      e.paid ? 'Pago' : 'Pendente',
+      e.paid_at ? fmtDate(e.paid_at) : '',
+    ];
+  });
+  try {
+    const url = await createSheet({
+      title: `Fluxo de Caixa — ${todayISO()}`, tabTitle: 'Fluxo de Caixa', header, rows: body,
+    });
+    if (win) win.location = url; else window.open(url, '_blank', 'noopener');
+    toast('Planilha criada no seu Google Drive.');
+  } catch (err) {
+    if (win) win.close();
+    if (err instanceof NeedsScope || err instanceof NeedsReconnect)
+      toast('Reconecte o Google e autorize o Drive/Sheets para exportar.', 'warning');
+    else { console.error(err); toast('Não foi possível gerar a planilha.', 'error'); }
+  }
 }
 
 // --------------------------------------------------------------- formulário --

@@ -528,3 +528,10 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
    grupos dentro de um mesmo card (usado na seção Google de Configurações). */
 .setting-row { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-4); margin: 0; }
 .setting-divider { border-top: 1px solid var(--border); margin: var(--sp-5) 0; }
+
+/* botão-ícone em processamento: gira o ícone e bloqueia clique */
+@keyframes spin-icon { to { transform: rotate(360deg); } }
+.btn--icon.is-busy { pointer-events: none; opacity: .65; }
+.btn--icon.is-busy svg { animation: spin-icon .8s linear infinite; }
+/* logo de app do Google ao lado do rótulo (não encolhe) */
+.g-logo { display: inline-flex; flex: 0 0 auto; line-height: 0; }
