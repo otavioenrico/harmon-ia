@@ -10,7 +10,7 @@ const DRIVE_SCOPE    = 'https://www.googleapis.com/auth/drive.file';        // s
 
 // Pré-lançamento: só e-mails aprovados entram no app.
 // TODO: migrar p/ tabela allowlist quando abrir beta.
-const ALLOWLIST = ['otavio.enrico@gmail.com'];
+const ALLOWLIST = ['otavio.enrico@gmail.com', 'dratayanadomiciano@gmail.com'];
 
 export function isAllowed(email) {
   return !!email && ALLOWLIST.includes(email.toLowerCase());
