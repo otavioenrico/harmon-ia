@@ -21,6 +21,17 @@ const observer = new IntersectionObserver((entries) => {
 
 reveal.forEach((el) => observer.observe(el));
 
+// header overlay (home): sem fundo no topo, fundo+blur ao rolar
+// (landing.css .page-home .landing-header:not(.is-scrolled)).
+const landingHeader = document.querySelector('.landing-header');
+if (landingHeader) {
+  const updateHeaderScrolled = () => {
+    landingHeader.classList.toggle('is-scrolled', window.scrollY > 8);
+  };
+  updateHeaderScrolled();
+  window.addEventListener('scroll', updateHeaderScrolled, { passive: true });
+}
+
 // menu mobile: fecha ao clicar num link ou ao rolar/redimensionar
 const mobileNav = document.querySelector('.landing-nav-mobile');
 if (mobileNav) {
@@ -32,19 +43,28 @@ if (mobileNav) {
 
 // FAQ accordion animado: .is-open controla o grid-template-rows (motion.css).
 // Abrir espera um frame pintado em 0fr antes de animar; fechar só solta o
-// <details> nativo (item.open = false) quando a transição termina.
-document.querySelectorAll('.faq__item').forEach((item) => {
-  const summary = item.querySelector('summary');
-  const answer = item.querySelector('.faq__a');
-  if (!summary || !answer) return;
-  summary.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (item.classList.contains('is-open')) {
-      item.classList.remove('is-open');
-      answer.addEventListener('transitionend', () => { item.open = false; }, { once: true });
-    } else {
-      item.open = true;
-      requestAnimationFrame(() => requestAnimationFrame(() => item.classList.add('is-open')));
-    }
+// <details> nativo (item.open = false) quando a transição termina. Só 1
+// sanfona aberta por vez: abrir uma fecha qualquer outra já aberta.
+const faqItems = document.querySelectorAll('.faq__item');
+if (faqItems.length) {
+  document.documentElement.classList.add('faq-js');
+  const closeFaqItem = (item) => {
+    const answer = item.querySelector('.faq__a');
+    item.classList.remove('is-open');
+    answer.addEventListener('transitionend', () => { item.open = false; }, { once: true });
+  };
+  faqItems.forEach((item) => {
+    const summary = item.querySelector('summary');
+    if (!summary) return;
+    summary.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (item.classList.contains('is-open')) {
+        closeFaqItem(item);
+      } else {
+        faqItems.forEach((other) => { if (other !== item && other.classList.contains('is-open')) closeFaqItem(other); });
+        item.open = true;
+        requestAnimationFrame(() => requestAnimationFrame(() => item.classList.add('is-open')));
+      }
+    });
   });
-});
+}

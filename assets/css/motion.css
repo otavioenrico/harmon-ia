@@ -81,8 +81,11 @@
     display: grid; grid-template-rows: 0fr; overflow: hidden;
     transition: grid-template-rows var(--reveal-dur) var(--ease-out);
   }
-  /* .is-open cobre o fluxo orquestrado por landing.js; [open] é o fallback
-     nativo — se o módulo não carregar, o <details> ainda abre (só sem
-     transição suave) em vez de ficar preso em 0fr. */
-  .js .faq__item.is-open .faq__a, .js .faq__item[open] .faq__a { grid-template-rows: 1fr; }
+  /* .faq-js (setada pelo landing.js) separa o caminho JS do fallback nativo:
+     enquanto o JS controla a animação, só .is-open expande — o atributo
+     [open] nativo não pode competir e travar a transição de fechamento (ele
+     só some no transitionend, depois de .is-open já ter sido removida). Sem
+     o módulo, .faq-js nunca existe e [open] assume sozinho. */
+  .faq-js .faq__item.is-open .faq__a { grid-template-rows: 1fr; }
+  html:not(.faq-js) .faq__item[open] .faq__a { grid-template-rows: 1fr; }
 }

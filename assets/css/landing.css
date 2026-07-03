@@ -36,6 +36,39 @@
   background: var(--header-bg);
   backdrop-filter: blur(var(--header-blur));
   -webkit-backdrop-filter: blur(var(--header-blur));
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+/* home: hero escuro cobre o topo -> header nasce transparente (texto claro),
+   só ganha fundo/blur/borda quando landing.js marca .is-scrolled (scrollY > 8). */
+.page-home .landing-header:not(.is-scrolled) {
+  background: transparent;
+  border-bottom-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.page-home .landing-header:not(.is-scrolled) .wordmark,
+.page-home .landing-header:not(.is-scrolled) .landing-nav a,
+.page-home .landing-header:not(.is-scrolled) .landing-nav-mobile summary {
+  color: var(--color-white);
+}
+.page-home .landing-header:not(.is-scrolled) .landing-nav-mobile summary {
+  border-color: var(--hero-border);
+}
+.page-home .landing-header:not(.is-scrolled) .badge--muted {
+  background: rgb(from var(--color-white) r g b / 0.12);
+  color: var(--color-white);
+}
+.page-home .landing-header:not(.is-scrolled) .btn--ghost {
+  color: var(--color-white);
+  border-color: var(--hero-border);
+}
+.page-home .landing-header:not(.is-scrolled) .btn--ghost:hover {
+  background: rgb(from var(--color-white) r g b / 0.08);
+}
+.page-home .landing-header:not(.is-scrolled) .btn--primary {
+  background: var(--color-white);
+  color: var(--color-black);
 }
 .landing-header__inner {
   position: relative;
@@ -152,7 +185,11 @@
 
 /* já é filho direto de .section-band (sem max-width) — full-bleed sem
    precisar do truque 100vw, que soma a largura da scrollbar e causa overflow-x. */
-.segment-marquee { overflow: hidden; }
+.segment-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
+}
 .segment-track {
   display: flex; gap: var(--sp-3); list-style: none; width: max-content;
   animation: segment-scroll 36s linear infinite;
