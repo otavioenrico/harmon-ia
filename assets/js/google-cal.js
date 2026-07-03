@@ -28,6 +28,10 @@ async function token() {
   return access_token;
 }
 
+// Access token fresco compartilhado com outros módulos Google (People/Drive/
+// Sheets). Reaproveita o mesmo cache em memória.
+export async function accessToken() { return token(); }
+
 async function call(url, opts = {}) {
   const t = await token();
   const r = await fetch(url, { ...opts, headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json', ...opts.headers } });

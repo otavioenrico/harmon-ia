@@ -7,6 +7,29 @@
 import { supabase } from './supabase.js';
 import { money, fmtDate, maskPhone, maskCPF, bindMask, openModal, openDrawer, confirmDialog,
   toast, busy, debounce, esc, initials, skeletonRows, h, waLink, icon, emptyBox, guard, bulkBar } from './utils.js';
+import { upsertContact, deleteContact, NeedsScope } from './google-people.js';
+
+// Espelha a cliente no Google Contatos. BEST-EFFORT: nunca bloqueia nem desfaz o
+// cadastro no Supabase (a fonte da verdade). Gated pelo toggle sync_contacts.
+async function syncContact(ctx, client) {
+  if (!ctx.settings?.sync_contacts || !client) return;
+  try {
+    const rid = await upsertContact(client);
+    if (rid && rid !== client.google_contact_id) {
+      await supabase.from('clients').update({ google_contact_id: rid }).eq('id', client.id);
+      client.google_contact_id = rid;                      // mantém em memória coerente
+    }
+  } catch (e) {
+    if (e instanceof NeedsScope) return;                   // escopo não concedido: silencioso
+    console.warn('[contatos] não sincronizou', e);
+  }
+}
+
+// Remove o contato-espelho ao excluir a cliente (best-effort, não bloqueia).
+function removeContact(ctx, client) {
+  if (!ctx.settings?.sync_contacts || !client?.google_contact_id) return;
+  deleteContact(client.google_contact_id).catch((e) => console.warn('[contatos] não removeu', e));
+}
 
 export async function render(root, ctx) {
   const state = { all: [], q: '', sort: 'name', selected: new Set() };
@@ -105,6 +128,7 @@ export async function render(root, ctx) {
       if (!ok) return;
       const { error } = await supabase.from('clients').delete().in('id', ids);
       if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+      ids.forEach((id) => removeContact(ctx, state.all.find((c) => c.id === id)));
       state.selected.clear();
       toast(`${ids.length} cliente${ids.length > 1 ? 's excluídas' : ' excluída'}.`);
       load();
@@ -198,6 +222,7 @@ export async function render(root, ctx) {
       if (!ok) return;
       const { error } = await supabase.from('clients').delete().eq('id', c.id);
       if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+      removeContact(ctx, c);
       state.selected.delete(c.id);
       drawer.close();
       toast('Cliente excluída.');
@@ -374,7 +399,9 @@ export function openForm(ctx, c, onSaved, preset = {}) {
     busy(submit, false);
     if (res.error) { console.error(res.error); return toast('Erro ao salvar.', 'error'); }
     toast(editing ? 'Cliente atualizada.' : 'Cliente criada.');
-    m.markClean(); m.close(true); onSaved(res.data);
+    m.markClean(); m.close(true);
+    await syncContact(ctx, res.data);
+    onSaved(res.data);
   };
 }
 
@@ -419,6 +446,8 @@ export function quickCreate(ctx, name, onSaved) {
     busy(submit, false);
     if (res.error) { console.error(res.error); return toast('Erro ao salvar.', 'error'); }
     toast('Cliente criada.');
-    m.markClean(); m.close(true); onSaved(res.data);
+    m.markClean(); m.close(true);
+    await syncContact(ctx, res.data);
+    onSaved(res.data);
   };
 }

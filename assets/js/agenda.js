@@ -122,33 +122,45 @@ export async function render(root, ctx) {
     return `${min.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${new Date(max - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`;
   }
 
-  async function load() {
-    // skeleton na forma de linhas de evento (hora + resumo), não um bloco cego
-    body.innerHTML = `<div class="card">${`<div class="ag-row">
+  async function load({ silent = false } = {}) {
+    // silent = atualização em background (Gap 2): sem skeleton e só repinta se algo
+    // realmente mudou (evita flicker e reset de scroll na grade do mês).
+    if (!silent) body.innerHTML = `<div class="card">${`<div class="ag-row">
       <div class="skeleton" style="width:48px"></div>
       <div class="skeleton" style="flex:1;max-width:60%"></div>
     </div>`.repeat(5)}</div>`;
 
     const [min, max] = rangeOf();
-    root.querySelector('#ag-label').textContent = labelOf(min, max);
+    if (!silent) root.querySelector('#ag-label').textContent = labelOf(min, max);
+    let evs, procs;
     try {
-      const [evs, procs] = await Promise.all([
+      [evs, procs] = await Promise.all([
         listEvents(min, max),
         supabase.from('procedures')
           .select('id, google_event_id, status, price_charged, client_id, service_id, procedure_materials(stock_item_id, quantity_used, unit_cost_at_time)')
           .not('google_event_id', 'is', null)
           .gte('date', isoDay(min)).lt('date', isoDay(max)),
       ]);
-      state.events = evs;
-      // FS-3 (diagnóstico): erro do Supabase não pode ser engolido — sem os
-      // procedures a lista pinta sem valor/status/Concluir e ninguém percebe.
-      if (procs.error) { console.error(procs.error); toast('Não foi possível carregar os dados dos agendamentos.', 'error'); }
-      state.procByEvent = new Map((procs.data || []).map((p) => [p.google_event_id, p]));
     } catch (err) {
+      if (silent) return;                        // background nunca mexe na tela
       if (err instanceof NeedsReconnect) return reconnect();
       console.error(err); body.innerHTML = `<div class="empty"><div class="icon">${icon('warning')}</div><p>${esc(err.message)}</p></div>`;
       return;
     }
+    // FS-3 (diagnóstico): erro do Supabase não pode ser engolido — sem os
+    // procedures a lista pinta sem valor/status/Concluir e ninguém percebe.
+    if (procs.error) { console.error(procs.error); if (!silent) toast('Não foi possível carregar os dados dos agendamentos.', 'error'); }
+
+    // assinatura leve do que foi buscado — no modo silent, se nada mudou não repinta.
+    const sig = JSON.stringify([
+      evs.map((e) => [e.id, e.updated || e.start?.dateTime || e.start?.date, e.summary]),
+      (procs.data || []).map((p) => [p.id, p.status, p.price_charged]),
+    ]);
+    if (silent && sig === state.sig) return;
+
+    state.events = evs;
+    state.procByEvent = new Map((procs.data || []).map((p) => [p.google_event_id, p]));
+    state.sig = sig;
     paintView();
   }
 
@@ -300,11 +312,13 @@ export async function render(root, ctx) {
       ${client?.phone ? `<a class="btn btn--secondary" target="_blank" rel="noopener"
         href="${waLink(client.phone, `Olá ${esc(client.name.split(' ')[0])}! Confirmando seu horário em ${start.toLocaleDateString('pt-BR')} às ${hhmm(start)}. 💛`)}">${icon('whatsapp')} WhatsApp</a>` : ''}
       ${canComplete ? `<button class="btn btn--secondary" data-done>${icon('check')} Concluir</button>` : ''}
+      ${!proc ? `<button class="btn btn--secondary" data-register>Registrar procedimento</button>` : ''}
       <button class="btn btn--secondary" data-edit>Editar</button>
       <button class="btn btn--ghost" data-x>Fechar</button>`;
     const m = openModal({ title: 'Agendamento', body: bodyEl, footer: foot });
     foot.querySelector('[data-x]').onclick = () => m.close();
     foot.querySelector('[data-edit]').onclick = () => { m.close(); openForm(null, ev); };
+    foot.querySelector('[data-register]')?.addEventListener('click', () => { m.close(); openForm(null, null, null, ev); });
     foot.querySelector('[data-del-d]').onclick = async () => { m.close(); await cancelEvent(ev.id); };
     const done = foot.querySelector('[data-done]');
     if (done) done.onclick = async () => { m.close(); await completeProc(proc.id); };
@@ -314,11 +328,15 @@ export async function render(root, ctx) {
   // openForm(presetDay)                 -> criar (autocomplete + materiais + valor)
   // openForm(null, editEvent)           -> editar (completo se ainda 'scheduled', senão só título/hora/notas)
   // openForm(null, null, draft)         -> criar a partir de rascunho
-  async function openForm(presetDay, editEvent, draft) {
+  // openForm(null, null, null, linkEvent) -> registrar procedimento p/ um evento que
+  //   já existe no Google (criado fora do app): NÃO cria evento novo — anexa uma
+  //   linha em procedures pelo google_event_id e pode ajustar o evento existente.
+  async function openForm(presetDay, editEvent, draft, linkEvent) {
     const isEdit = !!editEvent;
+    const isLink = !!linkEvent;
     const p = draft?.payload || {};
-    const prefClient = isEdit ? null : (p.client_id || sessionStorage.getItem('intent:agendar'));
-    if (!isEdit && !draft && sessionStorage.getItem('intent:agendar')) sessionStorage.removeItem('intent:agendar');
+    const prefClient = (isEdit || isLink) ? null : (p.client_id || sessionStorage.getItem('intent:agendar'));
+    if (!isEdit && !isLink && !draft && sessionStorage.getItem('intent:agendar')) sessionStorage.removeItem('intent:agendar');
 
     const pad = (n) => String(n).padStart(2, '0');
     let day = presetDay || p.date || todayISO();
@@ -332,6 +350,14 @@ export async function render(root, ctx) {
       notesVal = editEvent.description || '';
       titleVal = editEvent.summary || '';
       editProc = state.procByEvent.get(editEvent.id) || null;
+    }
+    if (isLink) {
+      const s = evStart(linkEvent);
+      day = `${s.getFullYear()}-${pad(s.getMonth() + 1)}-${pad(s.getDate())}`;
+      if (linkEvent.start?.dateTime) timeVal = `${pad(s.getHours())}:${pad(s.getMinutes())}`;
+      if (linkEvent.end?.dateTime) durVal = Math.max(5, Math.round((new Date(linkEvent.end.dateTime) - s) / 60000));
+      notesVal = linkEvent.description || '';
+      titleVal = linkEvent.summary || '';
     }
 
     // edição completa (cliente/serviço/materiais/pagamento) só é segura enquanto
@@ -351,7 +377,7 @@ export async function render(root, ctx) {
 
     const form = document.createElement('form'); form.id = 'ag-form';
     const pickers = `
-      ${isEdit ? `<div class="field"><label>Título <span class="req">*</span></label>
+      ${isEdit || isLink ? `<div class="field"><label>Título <span class="req">*</span></label>
         <input class="input" name="title" required value="${esc(titleVal)}"></div>` : ''}
       ${isEdit && !fullEdit && editProc && editProc.price_charged != null
         ? `<div class="field"><label>Valor cobrado (R$)</label>
@@ -460,9 +486,9 @@ export async function render(root, ctx) {
 
     const foot = document.createElement('div');
     foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Cancelar</button>
-      ${isEdit ? '' : '<button class="btn btn--secondary" type="button" data-draft>Salvar rascunho</button>'}
-      <button class="btn btn--primary" type="submit" form="ag-form">${isEdit ? 'Salvar' : 'Agendar'}</button>`;
-    const m = openModal({ title: isEdit ? 'Editar agendamento' : 'Novo agendamento', body: form, footer: foot, wide: showClientService });
+      ${isEdit || isLink ? '' : '<button class="btn btn--secondary" type="button" data-draft>Salvar rascunho</button>'}
+      <button class="btn btn--primary" type="submit" form="ag-form">${isEdit ? 'Salvar' : isLink ? 'Registrar' : 'Agendar'}</button>`;
+    const m = openModal({ title: isEdit ? 'Editar agendamento' : isLink ? 'Registrar procedimento' : 'Novo agendamento', body: form, footer: foot, wide: showClientService });
     foot.querySelector('[data-x]').onclick = () => m.close();
 
     // coleta os campos do form (usada por agendar e por salvar rascunho)
@@ -485,7 +511,7 @@ export async function render(root, ctx) {
     };
 
     // salvar rascunho (item 17) — não cria evento no Google nem procedimento
-    if (!isEdit) foot.querySelector('[data-draft]').onclick = async (e) => {
+    if (!isEdit && !isLink) foot.querySelector('[data-draft]').onclick = async (e) => {
       busy(e.target, true);
       const payload = collect();
       const row = { user_id: ctx.session.user.id, payload };
@@ -524,6 +550,26 @@ export async function render(root, ctx) {
           });
           if (error) { console.error(error); toast('Erro ao salvar as alterações.', 'error'); return; }
           toast('Agendamento atualizado.');
+        } else if (isLink) {
+          const d = collect();
+          const client = state.clients.find((c) => c.id === d.client_id);
+          const service = state.services.find((s) => s.id === d.service_id);
+          const summary = form.title.value.trim() || [service?.name, client?.name].filter(Boolean).join(' — ') || 'Agendamento';
+          // o evento já existe no Google — só ajustamos, não criamos outro.
+          await updateEvent(linkEvent.id, { summary, description: d.notes || undefined, start, end });
+          const { error } = await supabase.rpc('schedule_procedure', {
+            p_client_id: d.client_id, p_service_id: d.service_id, p_date: d.date,
+            p_price_charged: d.price, p_notes: d.notes || null, p_google_event_id: linkEvent.id,
+            p_materials: d.materials.length ? d.materials : null,
+            p_payment_method: d.method, p_installments: d.installments,
+          });
+          if (error) {
+            // evento pré-existente — NÃO apagamos no erro (seria destrutivo).
+            console.error(error);
+            toast('Não foi possível registrar o procedimento. Tente de novo.', 'error');
+            return;
+          }
+          toast('Procedimento registrado.');
         } else {
           const d = collect();
           const client = state.clients.find((c) => c.id === d.client_id);
@@ -604,6 +650,22 @@ export async function render(root, ctx) {
   }
 
   await load();
+
+  // Gap 2 — atualização automática leve: reflete eventos criados/alterados direto
+  // no Google Calendar sem recarregar a página. Só roda com a aba visível e sem
+  // modal aberto (não interrompe um form em edição), e se autodesliga quando o
+  // módulo sai da tela (o router zera #module-root -> body deixa de estar conectado).
+  let refreshing = false;
+  const tick = async () => {
+    if (!body.isConnected) { clearInterval(timer); document.removeEventListener('visibilitychange', onVis); return; }
+    if (document.hidden || refreshing || document.querySelector('.modal-overlay')) return;
+    refreshing = true;
+    try { await load({ silent: true }); } catch (_) { /* background: silencioso */ } finally { refreshing = false; }
+  };
+  const onVis = () => { if (!document.hidden) tick(); };
+  const timer = setInterval(tick, 45000);
+  document.addEventListener('visibilitychange', onVis);
+
   if (sessionStorage.getItem('intent:agendar')) openForm();
   else if (sessionStorage.getItem('intent:novoAgendamento')) { sessionStorage.removeItem('intent:novoAgendamento'); openForm(); }
 }

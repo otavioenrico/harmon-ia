@@ -210,6 +210,7 @@ create policy "waitlist_insert" on public.waitlist
 alter table public.clients add column if not exists address_complement text;
 alter table public.user_settings add column if not exists accent text default 'rose'; -- valores: rose | sand | sky | lilac | mint | neutral
 alter table public.user_settings add column if not exists whatsapp_number text;
+alter table public.user_settings add column if not exists sync_contacts boolean default true; -- Parte 1: espelho de clientes no Google Contatos
 
 -- FIX (Rodada 6, bug 1.2): financial_entries.procedure_id não tinha FK — sem o
 -- relacionamento, o PostgREST rejeita o embed `procedures(...)` usado pelo

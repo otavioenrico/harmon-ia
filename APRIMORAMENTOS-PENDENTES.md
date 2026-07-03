@@ -170,3 +170,56 @@ linha de baixo. Sem scroll horizontal no desktop.
   visível é o rótulo acessível).
 - Garantir alvo de toque mínimo (~40px) nos botões só-ícone.
 - Verificar em 1280 / 1024 / 900 / 700 / 375px que nunca quebra a linha.
+
+---
+
+## PARTE 2 (versão futura) — Feature "Leads / Relacionamento": disparos de WhatsApp
+
+**Status:** planejado (não implementar agora — estruturado aqui para a próxima versão)
+**Origem:** decisão de 03/07/2026 — separar Google (Parte 1, feita agora) dos disparos.
+
+### Visão
+Uma feature nova no app que centraliza a comunicação com clientes e leads:
+mensagens pré-moldadas (templates), gatilhos automáticos e um motor de envio.
+
+### A pegadinha do WhatsApp (decidir antes de codar)
+Não existe forma legítima de automatizar o WhatsApp *pessoal* da profissional.
+Bibliotecas não-oficiais (Z-API/Baileys/whatsapp-web.js) violam os termos e
+arriscam banir o número — o ativo mais valioso dela. Dois caminhos reais:
+
+- **Assistido (Fase 1):** links `wa.me` com mensagem pronta; 1 clique por envio.
+  Zero custo/risco, mantém o toque humano. Reaproveita `waLink()` e os dados
+  que já existem no banco.
+- **Oficial (Fase 2):** WhatsApp Business Cloud API (Meta). Exige número
+  dedicado, verificação business, **templates pré-aprovados** para mensagens
+  proativas, e é **pago por conversa** (utilidade = faixa mais barata). Confirmar
+  preços/BSP no Brasil na hora de decidir.
+
+### Fundação já existente no schema
+- `user_settings.whatsapp_number` + helper `waLink()`.
+- `return_dismissals` (marcos 1/3/6/12 meses) — "quem está na hora do retorno".
+- `clients.birthdate` — aniversário.
+- `financial_entries.due_date` + `paid` — parcela a vencer.
+
+### Gatilhos previstos (todos = template no caminho oficial)
+- Novo agendamento → confirmação (utilidade).
+- Véspera (1 dia antes) e no dia → lembrete (utilidade; o caso mais barato).
+- Confirmação com botões "Confirmar / Remarcar" → resposta atualiza o status
+  do agendamento (exige webhook de entrada).
+- Retorno/recall (marcos já calculados) → reagendar (marketing/utilidade).
+- Aniversário (marketing).
+- Pós-procedimento / aftercare X horas depois de concluído (utilidade).
+- Parcela a vencer → lembrete de pagamento (utilidade).
+
+### Peça de infra que falta
+Disparo por tempo ("1 dia antes às 9h") precisa de **agendador** — hoje o projeto
+não tem cron (expiração preguiçosa na leitura). Opções: Vercel Cron ou pg_cron do
+Supabase batendo num endpoint serverless que varre os gatilhos e envia. Pequeno e
+reutilizável por todos os gatilhos.
+
+### Plano faseado
+1. **Central de mensagens assistida** (sem custo/risco): tela "Mensagens de hoje"
+   juntando consultas de amanhã + retornos + aniversários, cada uma com texto
+   pronto e botão de enviar via `wa.me`. Entrega ~80% do valor.
+2. **Cloud API oficial + templates + cron** quando o volume justificar pagar por
+   conversa e a profissional aceitar um número dedicado.

@@ -4,6 +4,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { profile, signOut, signInWithGoogle } from './auth.js';
+import { upsertContact, NeedsScope } from './google-people.js';
 import { toast, esc, initials, download, todayISO, icon, confirmDialog, maskPhone, bindMask, busy } from './utils.js';
 
 const TABLES = ['user_settings', 'services', 'clients', 'stock_items',
@@ -49,7 +50,15 @@ export async function render(root, ctx) {
         <h3>Google</h3>
         <p class="mt-4">Conta conectada: <strong>${esc(p.email)}</strong></p>
         <p class="muted">Agenda: <span class="badge badge--success">${icon('check')} conectada</span></p>
-        <p class="hint mt-4">Se a agenda parar de sincronizar, reconecte sua conta Google para renovar o acesso ao Calendar.</p>
+
+        <label class="flex mt-4" style="cursor:pointer">
+          <span class="switch"><input type="checkbox" id="sync-contacts" ${ctx.settings?.sync_contacts !== false ? 'checked' : ''}><span class="track"></span></span>
+          Sincronizar clientes com Google Contatos
+        </label>
+        <p class="hint mt-4">Quando ligado, cada cliente criada ou editada é espelhada nos seus Contatos do Google (nome, telefone, e-mail, endereço). O sistema continua sendo a fonte da verdade — nada volta do Google para cá.</p>
+        <button class="btn btn--secondary mt-4" id="sync-now">Sincronizar clientes agora</button>
+
+        <p class="hint mt-4">Se a agenda ou os contatos pararem de sincronizar, reconecte sua conta Google para renovar o acesso.</p>
         <button class="btn btn--secondary mt-4" id="reconnect">Reconectar Google</button>
       </section>
 
@@ -119,6 +128,36 @@ export async function render(root, ctx) {
       toast(err.message, 'error');
       e.target.disabled = false; e.target.textContent = 'Reconectar Google';
     }
+  };
+
+  root.querySelector('#sync-contacts').onchange = async (e) => {
+    const prev = ctx.settings?.sync_contacts !== false;
+    const sync_contacts = e.target.checked;
+    const { error } = await supabase.from('user_settings')
+      .upsert({ user_id: ctx.session.user.id, sync_contacts }, { onConflict: 'user_id' });
+    if (error) { console.error(error); e.target.checked = prev; return toast('Não foi possível salvar a preferência.', 'error'); }
+    ctx.settings.sync_contacts = sync_contacts;
+    toast(sync_contacts ? 'Sincronização de contatos ligada.' : 'Sincronização de contatos desligada.');
+  };
+
+  root.querySelector('#sync-now').onclick = async (e) => {
+    const btn = e.target;
+    busy(btn, true, 'Sincronizando…');
+    const { data, error } = await supabase.from('clients').select('*').eq('active', true);
+    if (error) { console.error(error); busy(btn, false); return toast('Não foi possível ler os clientes.', 'error'); }
+    let ok = 0, fail = 0;
+    for (const c of (data || [])) {
+      try {
+        const rid = await upsertContact(c);
+        if (rid && rid !== c.google_contact_id) await supabase.from('clients').update({ google_contact_id: rid }).eq('id', c.id);
+        ok++;
+      } catch (err) {
+        if (err instanceof NeedsScope) { busy(btn, false); return toast('Reconecte o Google e autorize os Contatos para sincronizar.', 'warning'); }
+        console.warn(err); fail++;
+      }
+    }
+    busy(btn, false);
+    toast(`Contatos sincronizados: ${ok}${fail ? ` · ${fail} falharam` : ''}.`);
   };
 
   root.querySelector('#theme').onchange = async (e) => {

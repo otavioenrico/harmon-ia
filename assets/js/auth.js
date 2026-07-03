@@ -5,6 +5,8 @@
 import { supabase } from './supabase.js';
 
 const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar';
+const CONTACTS_SCOPE = 'https://www.googleapis.com/auth/contacts';        // People API (espelho de clientes)
+const DRIVE_SCOPE    = 'https://www.googleapis.com/auth/drive.file';        // só arquivos criados pelo app (Sheets/Drive)
 
 // Pré-lançamento: só e-mails aprovados entram no app.
 // TODO: migrar p/ tabela allowlist quando abrir beta.
@@ -20,7 +22,7 @@ export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      scopes: `openid email profile ${CALENDAR_SCOPE}`,
+      scopes: `openid email profile ${CALENDAR_SCOPE} ${CONTACTS_SCOPE} ${DRIVE_SCOPE}`,
       redirectTo: `${location.origin}/`,
       queryParams: { access_type: 'offline', prompt: 'consent' },
     },

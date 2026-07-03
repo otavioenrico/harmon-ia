@@ -196,3 +196,40 @@ precisa de 4 variáveis. **Sem elas, login funciona mas a Agenda não.**
 
 Onde travar, me chame com **o print/erro daquele passo** — não precisa
 resolver sozinho.
+
+---
+
+## Integrações Google — Parte 1 (Contatos)
+
+A sincronização de clientes com o Google Contatos exige três passos manuais uma
+única vez. Sem eles, o app continua funcionando normal — só não espelha contatos.
+
+### 1. Google Cloud Console (habilitar APIs)
+No projeto OAuth do app: **APIs e serviços → Biblioteca** e ative:
+- **People API** (Contatos — usada agora)
+- **Google Drive API** e **Google Sheets API** (já deixe ativas p/ a Parte 1 de
+  Sheets/Drive das próximas features — usam o mesmo consentimento)
+
+### 2. Tela de consentimento OAuth (escopos)
+Em **APIs e serviços → Tela de permissão OAuth → Escopos**, adicione:
+- `https://www.googleapis.com/auth/contacts`
+- `https://www.googleapis.com/auth/drive.file` (apenas arquivos criados pelo app)
+
+Em modo *Testing*, esses escopos "sensíveis" funcionam para os test users sem
+verificação. Para publicar com usuários externos, o Google pede verificação —
+`drive.file` é leve; evite escopos "restritos" (Drive total/Gmail).
+
+### 3. Banco (migração idempotente)
+No SQL Editor do Supabase, rode a migração nova (ou re-rode `db/schema.sql`
+inteiro — é idempotente):
+
+    alter table public.user_settings add column if not exists sync_contacts boolean default true;
+
+### 4. Reconectar no app
+Em **Configurações → Google → Reconectar Google**: o consentimento vai pedir as
+novas permissões (Contatos/Drive). Aprovar. Depois, **"Sincronizar clientes
+agora"** empurra os clientes já cadastrados para o Google Contatos. Dali em diante,
+criar/editar/excluir cliente reflete automaticamente (se o toggle estiver ligado).
+
+**Espelho, não base:** nada do Google volta para o Supabase. O contato guarda o
+`resourceName` em `clients.google_contact_id` só para saber qual atualizar depois.
