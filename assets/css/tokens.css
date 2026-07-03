@@ -21,13 +21,13 @@
 
 :root {
   /* -------- paleta crua v2 — rosé/mauve (ref. "Coursue") -------- */
-  --color-black:    #1a1816;   /* quase-preto */
+  --color-black:    #181818;   /* quase-preto, 100% neutro (R=G=B) */
   --color-white:    #ffffff;
-  --color-gray-100: #f5f4f2;   /* fundo geral */
+  --color-gray-100: #f4f4f4;   /* fundo geral */
   --color-gray-150: #e6e6e6;   /* fundo da tela de login */
-  --color-gray-200: #ebe8e5;
-  --color-gray-400: #7d766e;   /* ~4.6:1 sobre branco (era #9e9892, abaixo de AA) */
-  --color-gray-600: #6b6760;   /* 5.62:1 sobre branco */
+  --color-gray-200: #ebebeb;
+  --color-gray-400: #767676;   /* 4.54:1 sobre branco — mínimo AA texto normal */
+  --color-gray-600: #666666;   /* 5.74:1 sobre branco */
 
   /* rosé/mauve — cor de FUNDO e GRÁFICO, nunca de texto de corpo */
   --color-mauve-100: #f3e9ea;  /* pill/badge suave */
@@ -86,10 +86,10 @@
 
   --fs-xs:   0.75rem;
   --fs-sm:   0.85rem;
-  --fs-base: 0.95rem;
+  --fs-base: 1rem;
   --fs-lg:   1.15rem;
   --fs-xl:   1.5rem;
-  --fs-2xl:  2rem;
+  --fs-2xl:  2.5rem;
 
   /* -------- espaçamento (escala de 4px) -------- */
   --sp-1: 4px;

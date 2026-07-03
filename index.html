@@ -44,7 +44,7 @@
   <header class="landing-header">
     <div class="landing-container landing-header__inner">
       <div class="landing-header__brand">
-        <span class="wordmark">Harmon&nbsp;<b>IA</b></span>
+        <a class="wordmark" href="/">Harmon&nbsp;<b>IA</b></a>
         <span class="badge badge--muted">Em breve</span>
       </div>
 
@@ -82,41 +82,56 @@
              pra voltar com foto/vídeo, destrocar a linha abaixo: -->
         <!-- <img src="assets/img/login-visual.png" alt="Painel do Harmon IA com agenda, ficha de cliente e financeiro" fetchpriority="high" /> -->
       </div>
-      <div class="lp-hero-full__overlay landing-container">
-        <h1 class="lp-hero__title">A gestão do seu negócio de beleza, num só lugar.</h1>
-        <p class="lp-hero__subtitle">Agenda, clientes, estoque e caixa sem planilha e sem enrolação —
-          feito para quem vive de atendimento: manicure, sobrancelha, tatuagem, estética e muito mais.
-          Estamos abrindo aos poucos; entre na lista de espera e seja o primeiro a saber.</p>
-        <div class="lp-hero__actions">
-          <form id="waitlist-hero" class="waitlist-form" data-waitlist data-source="hero">
-            <label class="sr-only" for="wl-hero-email">Seu e-mail</label>
-            <input class="input" id="wl-hero-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" />
-            <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
-            <button class="btn btn--primary" type="submit">Quero ser avisado</button>
-          </form>
-          <a class="btn btn--ghost btn--sm" href="/planos.html">Ver planos e preços&nbsp;→</a>
+      <div class="landing-container">
+        <div class="lp-hero-full__overlay">
+          <h1 class="lp-hero__title">A gestão do seu negócio de beleza, num só lugar.</h1>
+          <p class="lp-hero__subtitle">Agenda, clientes, estoque e caixa sem planilha e sem enrolação —
+            feito para quem vive de atendimento: manicure, sobrancelha, tatuagem, estética e muito mais.
+            Estamos abrindo aos poucos; entre na lista de espera e seja o primeiro a saber.</p>
+          <div class="lp-hero__actions">
+            <form id="waitlist-hero" class="waitlist-form" data-waitlist data-source="hero">
+              <label class="sr-only" for="wl-hero-email">Seu e-mail</label>
+              <input class="input" id="wl-hero-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" />
+              <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+              <button class="btn btn--primary" type="submit">Quero ser avisado</button>
+            </form>
+            <a class="btn btn--ghost btn--sm" href="/planos.html">Ver planos e preços&nbsp;→</a>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- -------------------------------------------------------- segmentos -- -->
-    <section class="section-band">
-      <div class="landing-container section segments">
+    <section class="section-band segments-section">
+      <div class="landing-container">
         <div class="section__head">
-          <h2 class="section__title">Feito para o seu trabalho</h2>
+          <h2 class="section__title">Feito para o seu trabalho.</h2>
           <p class="section__subtitle">Se você atende cliente e vive de agenda, o Harmon IA é pra você.</p>
         </div>
-        <ul class="segment-list">
-          <li class="segment-chip">Manicure e nail design</li>
-          <li class="segment-chip">Sobrancelha</li>
-          <li class="segment-chip">Cílios (lash)</li>
-          <li class="segment-chip">Tatuagem</li>
-          <li class="segment-chip">Estética</li>
-          <li class="segment-chip">Micropigmentação</li>
-          <li class="segment-chip">Maquiagem</li>
-          <li class="segment-chip">Barbearia</li>
-          <li class="segment-chip">Depilação</li>
-          <li class="segment-chip">e muito mais</li>
+      </div>
+      <div class="segment-marquee">
+        <ul class="segment-track">
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6M10 2v3.5L7 9v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9l-3-3.5V2"/></svg>Manicure e nail design</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15c2-5 6-8 10-8s7 2 6 5"/><path d="M14 9l1-3M17 10l2-2M19 13l3-1"/></svg>Sobrancelha</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/><path d="M6 7l-1-2M9 5.5l-.5-2M15 5.5l.5-2M18 7l1-2"/></svg>Cílios (lash)</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l11-11"/><path d="M14 6l4 4"/><circle cx="19" cy="5" r="1.5"/></svg>Tatuagem</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/></svg>Estética</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19l6-10"/><path d="M9 7l2 2"/><circle cx="17" cy="6" r="1"/><circle cx="19" cy="9" r="1"/></svg>Micropigmentação</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6l1 4-4 3-4-3 1-4Z"/><path d="M8 9h8v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9Z"/></svg>Maquiagem</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.5 15.5M20 20L8.5 8.5"/></svg>Barbearia</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M4 8l4-4h8l4 4"/></svg>Depilação</li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>e muito mais</li>
+
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6M10 2v3.5L7 9v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9l-3-3.5V2"/></svg>Manicure e nail design</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15c2-5 6-8 10-8s7 2 6 5"/><path d="M14 9l1-3M17 10l2-2M19 13l3-1"/></svg>Sobrancelha</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/><path d="M6 7l-1-2M9 5.5l-.5-2M15 5.5l.5-2M18 7l1-2"/></svg>Cílios (lash)</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l11-11"/><path d="M14 6l4 4"/><circle cx="19" cy="5" r="1.5"/></svg>Tatuagem</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/></svg>Estética</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19l6-10"/><path d="M9 7l2 2"/><circle cx="17" cy="6" r="1"/><circle cx="19" cy="9" r="1"/></svg>Micropigmentação</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l1 4-4 3-4-3 1-4Z"/><path d="M8 9h8v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9Z"/></svg>Maquiagem</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.5 15.5M20 20L8.5 8.5"/></svg>Barbearia</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M4 8l4-4h8l4 4"/></svg>Depilação</li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>e muito mais</li>
         </ul>
       </div>
     </section>
@@ -125,7 +140,7 @@
     <section class="section-band section-band--alt">
       <div class="landing-container section">
       <div class="section__head">
-        <h2 class="section__title">Tudo que a sua rotina precisa — e nada que ela não usa</h2>
+        <h2 class="section__title">Tudo que a sua rotina precisa — e nada que ela não usa.</h2>
         <p class="section__subtitle">Cada módulo já existe no app. Sem promessa vaga.</p>
       </div>
       <div class="feature-grid">
@@ -133,7 +148,7 @@
           <div class="feature__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
           </div>
-          <h3 class="feature__title">Agenda que nunca desencontra</h3>
+          <h3 class="feature__title">Agenda que nunca desencontra.</h3>
           <p class="feature__text">Agendamentos sincronizados com o Google Calendar. O que você marca
             no celular aparece na hora, sem retrabalho e sem cliente marcado em dobro.</p>
         </div>
@@ -141,7 +156,7 @@
           <div class="feature__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5M21 20c0-2.3-1.3-4-3.5-4.6"/></svg>
           </div>
-          <h3 class="feature__title">Cada cliente na palma da mão</h3>
+          <h3 class="feature__title">Cada cliente na palma da mão.</h3>
           <p class="feature__text">Ficha completa, histórico de atendimentos e lembrete de retorno.
             Você lembra de tudo — o cliente sente.</p>
         </div>
@@ -149,7 +164,7 @@
           <div class="feature__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-4 9 4v8l-9 4-9-4V8Z"/><path d="M3 8l9 4 9-4M12 12v8"/></svg>
           </div>
-          <h3 class="feature__title">Estoque que avisa antes de faltar</h3>
+          <h3 class="feature__title">Estoque que avisa antes de faltar.</h3>
           <p class="feature__text">Controle de materiais com alerta de mínimo e lista de compras
             pronta. Nunca mais descobrir que acabou na hora do atendimento.</p>
         </div>
@@ -157,7 +172,7 @@
           <div class="feature__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/></svg>
           </div>
-          <h3 class="feature__title">O caixa no azul, sem planilha</h3>
+          <h3 class="feature__title">O caixa no azul, sem planilha.</h3>
           <p class="feature__text">Fluxo de caixa, parcelas e lucro de verdade por serviço. Você vê
             quanto entra, quanto sai e o que realmente dá dinheiro.</p>
         </div>
@@ -172,12 +187,24 @@
           <h2 class="section__title">A planilha te trouxe até aqui. Ela não te leva adiante.</h2>
         </div>
         <ul class="pain-grid">
-          <li class="pain-card"><span class="pain-card__before">Cliente marcado em dobro, ou esquecido.</span><span class="pain-card__after">Agenda sincronizada.</span></li>
-          <li class="pain-card"><span class="pain-card__before">“Quanto eu lucrei esse mês?” sem resposta.</span><span class="pain-card__after">Caixa por serviço.</span></li>
-          <li class="pain-card"><span class="pain-card__before">Material que acaba no meio do atendimento.</span><span class="pain-card__after">Alerta de estoque.</span></li>
-          <li class="pain-card"><span class="pain-card__before">Histórico do cliente espalhado no WhatsApp.</span><span class="pain-card__after">Ficha completa num lugar.</span></li>
+          <li class="pain-card">
+            <span class="pain-card__before"><span class="pain-card__icon" aria-hidden="true">✕</span>Cliente marcado em dobro, ou esquecido.</span>
+            <span class="pain-card__after"><span class="pain-card__icon" aria-hidden="true">✓</span>Agenda sincronizada.</span>
+          </li>
+          <li class="pain-card">
+            <span class="pain-card__before"><span class="pain-card__icon" aria-hidden="true">✕</span>“Quanto eu lucrei esse mês?” sem resposta.</span>
+            <span class="pain-card__after"><span class="pain-card__icon" aria-hidden="true">✓</span>Caixa por serviço.</span>
+          </li>
+          <li class="pain-card">
+            <span class="pain-card__before"><span class="pain-card__icon" aria-hidden="true">✕</span>Material que acaba no meio do atendimento.</span>
+            <span class="pain-card__after"><span class="pain-card__icon" aria-hidden="true">✓</span>Alerta de estoque.</span>
+          </li>
+          <li class="pain-card">
+            <span class="pain-card__before"><span class="pain-card__icon" aria-hidden="true">✕</span>Histórico do cliente espalhado no WhatsApp.</span>
+            <span class="pain-card__after"><span class="pain-card__icon" aria-hidden="true">✓</span>Ficha completa num lugar.</span>
+          </li>
         </ul>
-        <a class="btn btn--ghost" href="#waitlist-hero">Quero sair da planilha&nbsp;→</a>
+        <div class="pain-cta"><a class="btn btn--primary" href="#waitlist-hero">Quero sair da planilha&nbsp;→</a></div>
       </div>
     </section>
 
@@ -185,22 +212,22 @@
     <section class="section-band section-band--alt">
       <div class="landing-container section">
       <div class="section__head">
-        <h2 class="section__title">Comece em três passos</h2>
+        <h2 class="section__title">Comece em três passos.</h2>
       </div>
       <div class="steps">
         <div class="step">
           <div class="step__num">1</div>
-          <h3 class="step__title">Entre na lista de espera</h3>
+          <h3 class="step__title">Entre na lista de espera.</h3>
           <p class="step__text">Deixe seu e-mail. Avisamos assim que abrir uma vaga pra você.</p>
         </div>
         <div class="step">
           <div class="step__num">2</div>
-          <h3 class="step__title">Receba seu convite</h3>
+          <h3 class="step__title">Receba seu convite.</h3>
           <p class="step__text">Conta liberada, você entra com o Google. Sem instalar nada.</p>
         </div>
         <div class="step">
           <div class="step__num">3</div>
-          <h3 class="step__title">Comece a atender organizado</h3>
+          <h3 class="step__title">Comece a atender organizado.</h3>
           <p class="step__text">Cadastre serviços, clientes e estoque e coloque sua agenda no eixo —
             em minutos, não em dias.</p>
         </div>
@@ -211,12 +238,13 @@
     <!-- ------------------------------------------------------- prova social -- -->
     <section class="section-band">
       <div class="landing-container section proof">
-        <div class="section__head">
-          <h2 class="section__title">Construído com quem está na cadeira, não só na tela</h2>
+        <div class="proof__col">
+          <h2 class="section__title">Construído com quem está na cadeira, não só na tela.</h2>
+          <blockquote class="proof__quote">Cada função nasceu de um problema real de quem atende todo dia.
+            Estamos abrindo o acesso aos poucos, ouvindo cada pessoa da lista — por isso o app tem o que a
+            sua rotina usa e não o que sobra.</blockquote>
         </div>
-        <blockquote class="proof__quote">Cada função nasceu de um problema real de quem atende todo dia.
-          Estamos abrindo o acesso aos poucos, ouvindo cada pessoa da lista — por isso o app tem o que a
-          sua rotina usa e não o que sobra.</blockquote>
+        <div class="proof__media" aria-hidden="true"><span>imagem</span></div>
       </div>
     </section>
 
@@ -224,7 +252,7 @@
     <section class="section-band section-band--alt">
       <div class="landing-container section">
         <div class="section__head">
-          <h2 class="section__title">Perguntas rápidas</h2>
+          <h2 class="section__title">Perguntas rápidas.</h2>
         </div>
         <div class="faq">
           <details class="faq__item">
