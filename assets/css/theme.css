@@ -10,6 +10,7 @@
   --bg:            #0d0d0d;
   --surface:       #1f1f1f;
   --surface-2:     #272727;
+  --segment-track: #272727;   /* trilho do toggle visível sobre --bg #0d0d0d */
   --text:          #ffffff;
   --text-muted:    #aeaeae;
   --text-faint:    #7e7e7e;

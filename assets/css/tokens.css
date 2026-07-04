@@ -48,6 +48,9 @@
   --bg:            var(--color-gray-100);
   --surface:       var(--color-white);
   --surface-2:     var(--color-gray-100);
+  /* trilho dos toggles (.segmented): 1 tom mais escuro que --bg p/ o
+     container ser sempre visível, inclusive na página cinza. */
+  --segment-track: var(--color-gray-150);
   --text:          var(--color-black);
   --text-muted:    var(--color-gray-600);
   --text-faint:    var(--color-gray-400);

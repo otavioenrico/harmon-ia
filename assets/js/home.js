@@ -135,11 +135,9 @@ export async function render(root, ctx) {
         <div class="hero__title">Olá, ${esc(name)} ${icon('sparkle')}</div>
       </div>
       <div class="hero__actions">
-        <button class="btn btn--primary" id="go-agenda">${icon('plus')} <span class="lbl">Novo agendamento</span></button>
-        <button class="btn btn--secondary" id="go-calendario">${icon('calendar')} <span class="lbl">Ver calendário</span></button>
-        <button class="btn btn--secondary" id="go-cliente"><span class="act-plus">${icon('plus')}</span>${icon('users')} <span class="lbl">Novo cliente</span></button>
-        <button class="btn btn--secondary" id="go-produto"><span class="act-plus">${icon('plus')}</span>${icon('box')} <span class="lbl">Novo produto</span></button>
-        <button class="btn btn--secondary" id="go-lancamento"><span class="act-plus">${icon('plus')}</span>${icon('wallet')} <span class="lbl">Novo lançamento</span></button>
+        <button class="btn btn--primary" id="go-agenda">${icon('plus')} Novo agendamento</button>
+        <button class="btn btn--secondary" id="go-calendario">${icon('calendar')} Ver calendário</button>
+        <button class="btn btn--secondary" id="go-lancamento">${icon('plus')} Novo lançamento</button>
       </div>
     </div>
 
@@ -209,29 +207,10 @@ export async function render(root, ctx) {
   root.querySelector('#go-calendario')?.addEventListener('click', () => {
     sessionStorage.setItem('intent:agendaCalendario', '1'); ctx.navigate('agenda');
   });
-  root.querySelector('#go-cliente')?.addEventListener('click', () => {
-    sessionStorage.setItem('intent:novoCliente', '1'); ctx.navigate('clientes');
-  });
-  root.querySelector('#go-produto')?.addEventListener('click', () => {
-    sessionStorage.setItem('intent:novoProduto', '1'); ctx.navigate('estoque');
-  });
   root.querySelector('#go-lancamento')?.addEventListener('click', () => {
     sessionStorage.setItem('intent:novoLancamento', '1'); ctx.navigate('financeiro');
   });
   aside.querySelector('#go-estoque')?.addEventListener('click', () => ctx.navigate('estoque'));
 
-  heroActionsFit(root.querySelector('.hero__actions'));
 }
 
-// Colapsa as ações do hero para só-ícone quando os rótulos completos não cabem
-// mais no card (mede com rótulos visíveis; sem scroll nem fade nas bordas).
-function heroActionsFit(el) {
-  if (!el) return;
-  const fit = () => {
-    el.classList.remove('is-icons');            // mede sempre no estado "largo"
-    if (el.scrollWidth > el.clientWidth + 1) el.classList.add('is-icons');
-  };
-  fit();
-  window.addEventListener('resize', fit);
-  if (window.ResizeObserver) new ResizeObserver(fit).observe(el);
-}

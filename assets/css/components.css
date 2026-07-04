@@ -94,7 +94,10 @@
    visual, sem precisar medir posição/contagem em JS. */
 .segmented {
   display: inline-flex; align-self: flex-start; max-width: 100%; gap: 2px; padding: 3px;
-  background: var(--surface-2); border-radius: var(--radius-pill);
+  /* trilho um tom mais escuro que o fundo da página (--bg = gray-100): assim o
+     container do toggle é sempre visível — na página e no modal branco — e dois
+     toggles lado a lado não se fundem num único bloco. */
+  background: var(--segment-track); border-radius: var(--radius-pill);
   overflow-x: auto; scrollbar-width: none;
 }
 .segmented::-webkit-scrollbar { display: none; }
@@ -392,22 +395,12 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .hero__title { font-size: var(--fs-2xl); font-weight: var(--fw-700); margin-top: var(--sp-2); color: var(--text); }
 .hero__title svg { width: 24px; height: 24px; vertical-align: -3px; }
 .hero__sub { color: var(--text-muted); margin-top: var(--sp-2); }
-/* min-width:0 quebra o "automatic minimum size" padrão do flexbox: sem ele,
-   um item flex nunca encolhe abaixo do min-content do seu filho mais largo —
- aqui, o botão "Novo agendamento" — e por isso estourava a largura do card.
-   nowrap: as 5 ações sempre numa linha só. Quando os rótulos completos não
-   cabem mais no card, home.js adiciona .is-icons e os botões colapsam para
-   só-ícone (as ações "Novo…" ganham um "+" antes do ícone; "Ver calendário"
-   fica só com o ícone de calendário). Sem scroll horizontal nem fade. */
+/* três ações do hero numa linha; quebram para a próxima linha em telas
+   estreitas (wrap) em vez de estourar o card. */
 .hero__actions {
-  display: flex; gap: var(--sp-2); flex-wrap: nowrap; min-width: 0;
-  align-self: stretch; width: 100%;
+  display: flex; gap: var(--sp-2); flex-wrap: wrap;
 }
 .hero__actions .btn { flex: 0 0 auto; }
-.hero__actions .act-plus { display: none; }
-/* modo só-ícone: esconde os rótulos e mostra o "+" das ações de criar */
-.hero__actions.is-icons .lbl { display: none; }
-.hero__actions.is-icons .act-plus { display: inline-flex; align-items: center; }
 
 /* mini stat-cards da Home (ícone em círculo pastel) */
 .mini-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
