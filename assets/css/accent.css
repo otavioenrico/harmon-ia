@@ -3,7 +3,8 @@
    Cada paleta só redefine os 4 tons crus de mauve (100/300/500/700). Como todo
    o app referencia --accent / --color-mauve-* (banner, abas ativas, chip "hoje",
    badges dos mini-cards), trocar data-accent muda tudo sem tocar componente.
-   Carregado DEPOIS de tokens.css. 'rose' é o padrão (= mauve original).
+   Carregado DEPOIS de tokens.css. 'neutral' é o padrão (tons-base de
+   tokens.css já são neutros); as paletas abaixo são opções escolhidas no painel.
    ponytail: hexes derivados na mão (suave/claro/médio/texto), afináveis por
    conta-gotas se o usuário quiser bater exato com as amostras.
    ============================================================================ */

@@ -46,7 +46,7 @@ const moduleCache = {};
 
   settings = await loadSettings();
   applyTheme(settings?.theme || 'light');
-  applyAccent(settings?.accent || 'rose');
+  applyAccent(settings?.accent || 'neutral');
   renderUserFooter();
   buildNav();
   buildTabbar();
@@ -66,7 +66,7 @@ function applyTheme(theme) {
 }
 
 function applyAccent(accent) {
-  document.documentElement.dataset.accent = accent || 'rose';
+  document.documentElement.dataset.accent = accent || 'neutral';
 }
 
 // ----------------------------------------------------------------- sidebar --

@@ -22,6 +22,10 @@
 .btn--secondary:hover:not(:disabled) { opacity: 0.85; }
 .btn--ghost     { background: transparent; color: var(--text); border-color: var(--border); }
 .btn--ghost:hover:not(:disabled)     { background: var(--surface-2); }
+/* outline: igual ghost mas com borda mais forte (stroke fino porém visível) —
+   usado nos botões "Selecionar". */
+.btn--outline   { background: transparent; color: var(--text); border-color: var(--border-strong); }
+.btn--outline:hover:not(:disabled)   { background: var(--surface-2); }
 .btn--danger    { background: transparent; color: var(--danger); border-color: var(--danger); }
 .btn--danger:hover:not(:disabled)    { background: var(--danger-soft); }
 .btn--sm { padding: var(--sp-2) var(--sp-3); font-size: var(--fs-sm); }

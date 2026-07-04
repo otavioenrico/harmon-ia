@@ -47,7 +47,7 @@ const ACCENTS = [
 export async function render(root, ctx) {
   const p = profile(ctx.session);
   const dark = ctx.settings?.theme === 'dark';
-  const accent = ctx.settings?.accent || 'rose';
+  const accent = ctx.settings?.accent || 'neutral';
 
   root.innerHTML = `
     <div style="max-width:640px; display:flex; flex-direction:column; gap:24px">
@@ -259,7 +259,7 @@ export async function render(root, ctx) {
 
   root.querySelector('#accent').onclick = async (e) => {
     const s = e.target.closest('[data-a]'); if (!s) return;
-    const prev = ctx.settings.accent || 'rose';
+    const prev = ctx.settings.accent || 'neutral';
     const accent = s.dataset.a;
     const mark = (id) => root.querySelectorAll('#accent .swatch')
       .forEach((x) => x.classList.toggle('selected', x.dataset.a === id));

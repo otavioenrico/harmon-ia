@@ -44,7 +44,7 @@ export async function render(root, ctx) {
       </div>
       <div class="spacer"></div>
       <div id="h-filters" class="filters"></div>
-      <button class="btn btn--ghost btn--sm" id="h-selmode" hidden>Selecionar</button>
+      <button class="btn btn--outline btn--sm" id="h-selmode" hidden>Selecionar</button>
     </div>
     <div class="table-wrap" id="h-table"></div>`;
 

@@ -51,7 +51,7 @@ export async function render(root, ctx) {
         <option value="created">Cadastro (recente)</option>
         <option value="last">Último procedimento</option>
       </select>
-      <button class="btn btn--ghost btn--sm" id="cli-selmode">Selecionar</button>
+      <button class="btn btn--outline btn--sm" id="cli-selmode">Selecionar</button>
     </div>
     <div class="table-wrap">
       <div id="cli-bulk"></div>

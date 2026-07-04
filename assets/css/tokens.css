@@ -30,10 +30,10 @@
   --color-gray-600: #666666;   /* 5.74:1 sobre branco */
 
   /* rosé/mauve — cor de FUNDO e GRÁFICO, nunca de texto de corpo */
-  --color-mauve-100: #f3e9ea;  /* pill/badge suave */
-  --color-mauve-300: #d9c2c6;  /* gradiente banner, ponta clara / chip */
-  --color-mauve-500: #b79ca0;  /* gradiente banner, ponta escura / barras */
-  --color-mauve-700: #8f7276;
+  --color-mauve-100: #ececec;  /* pill/badge suave */
+  --color-mauve-300: #cfcfcf;  /* gradiente banner, ponta clara / chip */
+  --color-mauve-500: #a3a3a3;  /* gradiente banner, ponta escura / barras */
+  --color-mauve-700: #6b6b6b;
 
   --color-success:  #4a7c59;
   --color-warning:  #c9923a;
