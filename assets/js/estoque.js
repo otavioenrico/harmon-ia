@@ -346,6 +346,25 @@ function renderLinks(links, el) {
     `<a class="btn btn--secondary btn--sm" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name || 'Comprar')}</a>`).join('');
 }
 
+// gera thumbnail 80x80 webp, contain + fundo branco, a partir de um File de imagem
+async function compressPhoto(file) {
+  if (!file || !file.type.startsWith('image/')) return file;
+  const bmp = await createImageBitmap(file);
+  const S = 80;
+  const canvas = document.createElement('canvas');
+  canvas.width = S; canvas.height = S;
+  const cx = canvas.getContext('2d');
+  cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, S, S);
+  const scale = Math.min(S / bmp.width, S / bmp.height); // contain
+  const w = bmp.width * scale, h = bmp.height * scale;
+  cx.drawImage(bmp, (S - w) / 2, (S - h) / 2, w, h);
+  bmp.close?.();
+  const blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', 0.8));
+  if (!blob) return file; // fallback: se o browser falhar no webp, sobe o original
+  return new File([blob], (file.name.replace(/\.[^.]+$/, '') || 'foto') + '.webp',
+    { type: 'image/webp' });
+}
+
 async function uploadFile(uid, file) {
   const safe = file.name.replace(/[^\w.\-]+/g, '_');
   const path = `${uid}/${crypto.randomUUID()}-${safe}`;
@@ -442,7 +461,8 @@ function openForm(ctx, it, onSaved) {
     const uploaded = []; // paths enviados nesta submissão — removidos se o save falhar
     try {
       const uid = ctx.session.user.id;
-      const photo = form.querySelector('[name="photo"]').files[0];
+      let photo = form.querySelector('[name="photo"]').files[0];
+      if (photo) photo = await compressPhoto(photo);
       const nf = form.querySelector('[name="nf"]').files[0];
       const payload = {
         user_id: uid,

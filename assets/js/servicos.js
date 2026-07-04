@@ -5,7 +5,15 @@
 import { supabase } from './supabase.js';
 import { money, openModal, toast, busy, esc, debounce, icon } from './utils.js';
 
-const COLORS = ['#b85450', '#c9923a', '#4a7c59', '#3f6f86', '#7b6d8d', '#6b6760', '#9e9892', '#e2dbd3'];
+// paleta inspirada no Google Calendar, com tons levemente ajustados (não idênticos)
+const PALETTE = [
+  // quentes
+  '#e06666', '#e8735c', '#ef8d3c', '#f2a93c', '#f6c945', '#f0d264', '#d9a441', '#c98a52',
+  // verdes/azuis
+  '#3fa66a', '#4cb782', '#4fb3a9', '#3aa0c9', '#4472c4', '#5b7fd1', '#6b8fc7', '#4d8fac',
+  // neutros/frios
+  '#8e7cc3', '#9662ab', '#b06ba0', '#c77ba3', '#8c8c94', '#746f8c', '#6d7e96', '#9098a3',
+];
 
 export async function render(root, ctx) {
   const state = { filter: 'active', q: '' };
@@ -83,7 +91,10 @@ export async function render(root, ctx) {
 // --------------------------------------------------------------- formulário -
 function openForm(ctx, svc, onSaved) {
   const editing = !!svc;
-  const color = svc?.color || COLORS[2];
+  const accentHex = getComputedStyle(document.documentElement)
+    .getPropertyValue('--accent').trim() || PALETTE[0];
+  const color = svc?.color || accentHex; // default = accent do app
+  const swatches = PALETTE.includes(color) ? PALETTE : [color, ...PALETTE];
   const form = document.createElement('form');
   form.innerHTML = `
     <div class="field">
@@ -107,8 +118,7 @@ function openForm(ctx, svc, onSaved) {
     <div class="field">
       <label>Cor</label>
       <div class="swatches" id="sw">
-        ${COLORS.map((c) => `<span class="swatch ${c === color ? 'selected' : ''}" data-c="${c}" style="background:${c}"></span>`).join('')}
-        <input class="input" id="sw-hex" style="width:110px" value="${esc(color)}" />
+        ${swatches.map((c) => `<span class="swatch ${c === color ? 'selected' : ''}" data-c="${c}" style="background:${c}" role="button" aria-label="${c}"></span>`).join('')}
       </div>
     </div>
     <div class="field">
@@ -120,13 +130,11 @@ function openForm(ctx, svc, onSaved) {
 
   // color picker
   let chosen = color;
-  const hex = form.querySelector('#sw-hex');
   form.querySelector('#sw').onclick = (e) => {
     const s = e.target.closest('[data-c]'); if (!s) return;
-    chosen = s.dataset.c; hex.value = chosen;
+    chosen = s.dataset.c;
     form.querySelectorAll('.swatch').forEach((x) => x.classList.toggle('selected', x === s));
   };
-  hex.addEventListener('input', () => { chosen = hex.value; });
 
   const foot = document.createElement('div');
   foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Cancelar</button>

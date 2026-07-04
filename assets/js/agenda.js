@@ -14,7 +14,7 @@ import { supabase } from './supabase.js';
 import { listEvents, createEvent, updateEvent, deleteEvent, NeedsReconnect } from './google-cal.js';
 import { signInWithGoogle } from './auth.js';
 import { quickCreate as quickCreateClient } from './clientes.js';
-import { openModal, confirmDialog, guard, toast, busy, esc, todayISO, icon, waLink, money, clientAutocomplete, emptyBox } from './utils.js';
+import { openModal, confirmDialog, guard, toast, busy, esc, todayISO, icon, waLink, money, clientAutocomplete, emptyBox, textOn } from './utils.js';
 
 const WD = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MO = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -96,10 +96,11 @@ export async function render(root, ctx) {
   // catálogos para o formulário — carregam uma vez
   const [{ data: cs }, { data: sv }, { data: st }] = await Promise.all([
     supabase.from('clients').select('id,name,phone').eq('active', true).order('name'),
-    supabase.from('services').select('id,name,duration_min,default_price').eq('active', true).order('name'),
+    supabase.from('services').select('id,name,duration_min,default_price,color').eq('active', true).order('name'),
     supabase.from('stock_items').select('id,name,quantity,unit,cost_price').eq('active', true).order('name'),
   ]);
   state.clients = cs || []; state.services = sv || []; state.stock = st || [];
+  const svcColor = new Map(state.services.map((s) => [s.id, s.color]));
 
   // "automático" = ao abrir a tela: conclui agendamentos cuja data já passou.
   await autoCompletePast();
@@ -216,7 +217,8 @@ export async function render(root, ctx) {
   function rowHTML(e) {
     const proc = state.procByEvent.get(e.id);
     const val = proc && proc.price_charged != null ? ` · ${money(proc.price_charged)}` : '';
-    return `<div class="ag-row" data-ev="${esc(e.id)}">
+    const c = proc && svcColor.get(proc.service_id);
+    return `<div class="ag-row" data-ev="${esc(e.id)}" style="border-left-color:${c || 'transparent'}">
       <span class="ag-time">${e.start?.dateTime ? hhmm(evStart(e)) : 'dia todo'}</span>
       <span class="ag-summary">${esc(e.summary || '(sem título)')}<span class="faint">${val}</span></span>
       <button class="btn btn--icon btn--ghost" data-del="${esc(e.id)}" title="Cancelar">${icon('trash')}</button>
@@ -237,7 +239,12 @@ export async function render(root, ctx) {
       const muted = d.getMonth() !== state.cursor.getMonth();
       cells += `<div class="ag-cell${muted ? ' is-muted' : ''}${sameDay(d, today) ? ' is-today' : ''}" data-day="${isoDay(d)}">
         <span class="ag-cell__n">${d.getDate()}</span>
-        ${evs.slice(0, 3).map((e) => `<span class="ag-chip" data-ev="${esc(e.id)}">${e.start?.dateTime ? hhmm(evStart(e)) + ' ' : ''}${esc(e.summary || '·')}</span>`).join('')}
+        ${evs.slice(0, 3).map((e) => {
+          const proc = state.procByEvent.get(e.id);
+          const c = proc && svcColor.get(proc.service_id);
+          const style = c ? ` style="background:${c};color:${textOn(c)}"` : '';
+          return `<span class="ag-chip" data-ev="${esc(e.id)}"${style}>${e.start?.dateTime ? hhmm(evStart(e)) + ' ' : ''}${esc(e.summary || '·')}</span>`;
+        }).join('')}
         ${evs.length > 3 ? `<span class="ag-more">+${evs.length - 3}</span>` : ''}
       </div>`;
     }

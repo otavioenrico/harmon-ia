@@ -90,7 +90,7 @@
    ponytail: pill via troca de .active (não transform literal); mesmo resultado
    visual, sem precisar medir posição/contagem em JS. */
 .segmented {
-  display: inline-flex; max-width: 100%; gap: 2px; padding: 3px;
+  display: inline-flex; align-self: flex-start; max-width: 100%; gap: 2px; padding: 3px;
   background: var(--surface-2); border-radius: var(--radius-pill);
   overflow-x: auto; scrollbar-width: none;
 }
@@ -362,8 +362,18 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
    rótulo completo (full-label) só volta em telas largas o bastante pra
    caber sem quebrar (ver media query abaixo). O primário não tem
    full-label/short-label — mantém sempre "Novo agendamento". */
-.hero__actions { display: flex; gap: var(--sp-2); flex-wrap: nowrap; min-width: 0; }
-.hero__actions .btn { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.hero__actions {
+  display: flex; gap: var(--sp-2); flex-wrap: nowrap; min-width: 0;
+  overflow-x: auto; scrollbar-width: none; cursor: grab;
+}
+.hero__actions::-webkit-scrollbar { display: none; }
+.hero__actions.is-dragging { cursor: grabbing; }
+/* fade nas bordas só quando o conteúdo realmente estoura o card (classe via home.js) */
+.hero__actions.is-overflowing {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+.hero__actions .btn { flex: 0 0 auto; }
 .hero__actions .full-label { display: none; }
 @media (min-width: 1500px) {
   .hero__actions .full-label { display: inline; }
@@ -416,7 +426,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .mb-3 { margin-bottom: var(--sp-3); }
 .ag-nav { display: flex; align-items: center; gap: var(--sp-2); margin-left: auto; }
 
-.ag-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) 0; border-top: 1px solid var(--border); }
+.ag-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) 0 var(--sp-2) var(--sp-2); border-top: 1px solid var(--border); border-left: 3px solid transparent; }
 .ag-row:first-of-type { border-top: 0; }
 .ag-time { font-variant-numeric: tabular-nums; color: var(--text-muted); min-width: 64px; }
 .ag-summary { flex: 1; }
@@ -497,16 +507,6 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   /* toolbars: busca em linha própria; navegação da agenda idem */
   .module__toolbar .search-input { max-width: none; flex: 1 1 100%; }
   .ag-nav { margin-left: 0; width: 100%; justify-content: space-between; }
-
-  /* home: 5 atalhos do hero em grade 2 colunas — Cliente/Produto/Lançamento/
-     Calendário em 2×2 (rótulos curtos, já padrão fora deste breakpoint também)
-     e "Novo agendamento" full-width abaixo */
-  .hero__actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-  .hero__actions #go-cliente { order: 1; }
-  .hero__actions #go-produto { order: 2; }
-  .hero__actions #go-lancamento { order: 3; }
-  .hero__actions #go-calendario { order: 4; }
-  .hero__actions #go-agenda { order: 5; grid-column: 1 / -1; }
 
   /* toasts na largura da tela */
   .toasts { left: var(--sp-4); right: var(--sp-4); }

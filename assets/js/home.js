@@ -219,4 +219,25 @@ export async function render(root, ctx) {
     sessionStorage.setItem('intent:novoLancamento', '1'); ctx.navigate('financeiro');
   });
   aside.querySelector('#go-estoque')?.addEventListener('click', () => ctx.navigate('estoque'));
+
+  heroActionsScroll(root.querySelector('.hero__actions'));
+}
+
+// faixa de ações da hero: fade nas bordas só quando estoura o card + scroll por clicar-e-arrastar
+function heroActionsScroll(el) {
+  if (!el) return;
+  const syncFade = () => el.classList.toggle('is-overflowing', el.scrollWidth > el.clientWidth + 1);
+  syncFade();
+  window.addEventListener('resize', syncFade);
+  let dragging = false, startX = 0, startScroll = 0;
+  el.addEventListener('pointerdown', (e) => {
+    dragging = true; startX = e.clientX; startScroll = el.scrollLeft;
+    el.setPointerCapture(e.pointerId); el.classList.add('is-dragging');
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (dragging) el.scrollLeft = startScroll - (e.clientX - startX);
+  });
+  const stopDrag = () => { dragging = false; el.classList.remove('is-dragging'); };
+  el.addEventListener('pointerup', stopDrag);
+  el.addEventListener('pointercancel', stopDrag);
 }

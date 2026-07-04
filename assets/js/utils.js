@@ -389,3 +389,13 @@ export function busy(btn, on, label = 'Salvando…') {
   if (on) { btn.dataset.label = btn.textContent; btn.textContent = label; btn.disabled = true; }
   else { btn.textContent = btn.dataset.label || btn.textContent; btn.disabled = false; }
 }
+
+// retorna '#000' ou '#fff', o que mais contrasta com a cor de fundo (hex #rgb/#rrggbb)
+export function textOn(bg) {
+  const h = (bg || '').replace('#', '');
+  const f = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(f.slice(0, 2), 16) / 255, g = parseInt(f.slice(2, 4), 16) / 255, b = parseInt(f.slice(4, 6), 16) / 255;
+  const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.5 ? '#000' : '#fff';
+}

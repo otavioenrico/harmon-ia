@@ -270,3 +270,40 @@ pode usar o app sem conta Google.
 O card Google em Configurações já foi reorganizado com linhas por app (Google /
 Google Agenda / Google Contatos) e logos. Quando a Parte 3 chegar, a linha da
 Agenda ganha o toggle real de liga/desliga (hoje é só status + refresh).
+
+---
+
+## PARTE 4 (versão futura) — Importar produto via link do Mercado Livre
+
+**Status:** planejado (decisão de 04/07/2026: adiado — exige backend novo. NÃO
+implementar agora). Estruturado aqui para depois.
+
+### Visão
+No cadastro de produto (`estoque.js` > `openForm`), permitir colar um link do
+Mercado Livre e pré-preencher automaticamente nome, valor, descrição e — quando
+disponível — unidades. A pessoa revisa e salva.
+
+### Por que não dá pra fazer só no front
+A API oficial do ML exige **OAuth 2.0** (token `Bearer`) em praticamente todos os
+endpoints de item, e o navegador não pode (1) chamar a API direto por causa de
+CORS nem (2) guardar credenciais no client. Precisa de um proxy no backend.
+
+### Arquitetura proposta
+1. **Supabase Edge Function** (`ml-import`) como proxy: recebe a URL, extrai o ID
+   do item (`MLBxx...`), chama a API do ML com o token guardado no servidor e
+   devolve o JSON já normalizado. Não quebra o "sem build" do front.
+2. **App de desenvolvedor no ML** (client id/secret) + rotina de gerar/renovar o
+   access token (guardar no Supabase, refresh automático).
+3. **Front** (`estoque.js`): campo "Colar link do Mercado Livre" no topo do form,
+   botão "Puxar dados", chama a Edge Function e preenche os campos.
+
+### Limitações do dado (avisar no UI)
+- Descrição vem de endpoint separado (`/items/{id}/description`).
+- `available_quantity` é o estoque do vendedor no ML, **não** "unidades por
+  embalagem" — esse dado costuma estar solto nos atributos/título; preencher
+  quando der, senão deixar manual.
+- Nome e preço vêm confiáveis.
+
+### Pré-requisitos
+Criar a aplicação no painel de dev do ML e configurar as credenciais como secrets
+da Edge Function. Rever ToS do ML antes de publicar.
