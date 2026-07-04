@@ -32,6 +32,9 @@
 .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
 /* rótulo de botão que colapsa para só-ícone no mobile (ver bloco mobile ≤900px) */
 .btn--icon svg { width: 20px; height: 20px; }
+/* lápis/lixeira das linhas de tabela (Clientes/Serviços/Estoque) — únicos .btn--icon.btn--sm do projeto */
+.btn--icon.btn--sm { width: 32px; height: 32px; padding: var(--sp-1); }
+.btn--icon.btn--sm svg { width: 16px; height: 16px; }
 
 .btn-google {
   width: 100%; gap: var(--sp-3);
