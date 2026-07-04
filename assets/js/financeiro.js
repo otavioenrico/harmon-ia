@@ -103,7 +103,7 @@ export async function render(root, ctx) {
     // ponytail: busca tudo e filtra em memória (igual historico/clientes); vira
     // RPC/view se uma profissional acumular milhares de lançamentos.
     const { data, error } = await supabase.from('financial_entries')
-      .select('id, type, amount, description, category, payment_method, installments, installment_of, due_date, paid, paid_at, client_id, procedure_id, created_at, clients(name), procedures(price_charged, procedure_materials(quantity_used, unit_cost_at_time))')
+      .select('id, type, amount, description, category, payment_method, installments, installment_of, due_date, paid, paid_at, client_id, procedure_id, created_at, clients(name), procedures(price_charged, google_event_id, date, status, procedure_materials(quantity_used, unit_cost_at_time))')
       .order('due_date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
     if (error) {
@@ -143,6 +143,18 @@ export async function render(root, ctx) {
         <tbody>${rows.map((e) => rowHTML(e, showLucro)).join('')}</tbody>
       </table></div>`;
     pane.querySelectorAll('[data-pay]').forEach((b) => b.onclick = () => settle(b.dataset.pay, load));
+    pane.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => {
+      const entry = state.all.find((e) => e.id === b.dataset.edit);
+      if (!entry) return;
+      if (entry.procedure_id) {
+        const proc = entry.procedures;
+        if (!proc?.google_event_id) return toast('Agendamento de origem não encontrado.', 'warning');
+        sessionStorage.setItem('intent:abrirAgendamento', JSON.stringify({ eventId: proc.google_event_id, date: proc.date }));
+        ctx.navigate('agenda');
+        return;
+      }
+      openForm(ctx.session.user.id, load, entry);
+    });
     pane.querySelectorAll('[data-sel]').forEach((cb) => cb.onchange = () => {
       cb.checked ? state.selected.add(cb.dataset.sel) : state.selected.delete(cb.dataset.sel);
       paint();
@@ -238,8 +250,10 @@ export async function render(root, ctx) {
       <td data-th="Status">${e.paid
         ? `<span class="badge badge--success">pago</span>`
         : `<span class="badge badge--warning">pendente</span>`}</td>
-      <td class="num actions">${e.paid ? '' :
-        `<button class="btn btn--secondary btn--sm" data-pay="${e.id}">Dar baixa</button>`}</td>
+      <td class="num actions">
+        ${e.paid ? '' : `<button class="btn btn--secondary btn--sm" data-pay="${e.id}">Dar baixa</button>`}
+        <button class="btn btn--icon btn--ghost" data-edit="${e.id}" title="Editar">${icon('edit')}</button>
+      </td>
     </tr>`;
   }
 
@@ -317,41 +331,41 @@ async function exportSheets(rows) {
 // --------------------------------------------------------------- formulário --
 // lançamento manual avulso (1 parcela). Parcelados estruturados nascem do
 // registro de procedimento; aqui é receita/despesa simples.
-function openForm(uid, onSaved) {
+function openForm(uid, onSaved, entry) {
   const form = document.createElement('form');
   form.id = 'fin-form';
   form.innerHTML = `
     <div class="field-row">
       <div class="field"><label>Tipo</label>
-        <input type="hidden" name="type" value="income">
+        <input type="hidden" name="type" value="${entry?.type || 'income'}">
         <div class="segmented" id="type-toggle">
-          <button type="button" data-type="income" class="active">Receita</button>
-          <button type="button" data-type="expense">Despesa</button>
+          <button type="button" data-type="income" class="${entry?.type !== 'expense' ? 'active' : ''}">Receita</button>
+          <button type="button" data-type="expense" class="${entry?.type === 'expense' ? 'active' : ''}">Despesa</button>
         </div></div>
       <div class="field"><label>Valor (R$) <span class="req">*</span></label>
-        <input class="input" name="amount" type="number" step="0.01" min="0" required /></div>
+        <input class="input" name="amount" type="number" step="0.01" min="0" required value="${entry ? Number(entry.amount) : ''}" /></div>
     </div>
     <div class="field"><label>Descrição</label>
-      <input class="input" name="description" maxlength="120" /></div>
+      <input class="input" name="description" maxlength="120" value="${esc(entry?.description || '')}" /></div>
     <div class="field-row">
       <div class="field"><label>Categoria</label>
-        <input class="input" name="category" maxlength="60" placeholder="ex.: aluguel, produtos" /></div>
+        <input class="input" name="category" maxlength="60" placeholder="ex.: aluguel, produtos" value="${esc(entry?.category || '')}" /></div>
       <div class="field"><label>Forma</label>
         <select class="select" name="payment_method">
-          <option value="">—</option>${METHODS.filter(([k]) => k !== 'parcelado').map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></div>
+          <option value="">—</option>${METHODS.filter(([k]) => k !== 'parcelado').map(([v, l]) => `<option value="${v}" ${entry?.payment_method === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     </div>
     <div class="field-row">
       <div class="field"><label>Data</label>
-        <input class="input" name="due_date" type="date" value="${todayISO()}" /></div>
+        <input class="input" name="due_date" type="date" value="${entry?.due_date || todayISO()}" /></div>
       <div class="field"><label class="flex" style="cursor:pointer; margin-top:26px">
-        <span class="switch"><input type="checkbox" name="paid" checked><span class="track"></span></span>
+        <span class="switch"><input type="checkbox" name="paid" ${entry ? (entry.paid ? 'checked' : '') : 'checked'}><span class="track"></span></span>
         Já pago / recebido</label></div>
     </div>`;
 
   const foot = document.createElement('div');
   foot.innerHTML = `<button class="btn btn--ghost" type="button" data-x>Cancelar</button>
                     <button class="btn btn--primary" type="submit" form="fin-form">Salvar</button>`;
-  const m = openModal({ title: 'Novo lançamento', body: form, footer: foot, wide: true });
+  const m = openModal({ title: entry ? 'Editar lançamento' : 'Novo lançamento', body: form, footer: foot, wide: true });
   foot.querySelector('[data-x]').onclick = () => m.close();
 
   // item 12: toggle Receita/Despesa alimenta o hidden input name="type"
@@ -369,7 +383,6 @@ function openForm(uid, onSaved) {
     const paid = fd.get('paid') != null;
     const date = fd.get('due_date') || todayISO();
     const row = {
-      user_id: uid,
       type: fd.get('type'),
       amount,
       description: (fd.get('description') || '').toString().trim() || null,
@@ -381,7 +394,9 @@ function openForm(uid, onSaved) {
     };
     const submit = foot.querySelector('[type="submit"]');
     busy(submit, true);
-    const { error } = await supabase.from('financial_entries').insert(row);
+    const { error } = entry
+      ? await supabase.from('financial_entries').update(row).eq('id', entry.id)
+      : await supabase.from('financial_entries').insert({ ...row, user_id: uid });
     busy(submit, false);
     if (error) { console.error(error); return toast('Erro ao salvar lançamento.', 'error'); }
     toast('Lançamento salvo.');

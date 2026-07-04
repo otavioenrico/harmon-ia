@@ -94,6 +94,7 @@ const ICON_PATHS = {
   download: '<path d="M12 3v12M8 11l4 4 4-4M5 21h14"/>',
   refresh:  '<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4"/>',
   table:    '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16M15 4v16"/>',
+  edit:     '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
 };
 export const icon = (name) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ''}</svg>`;
@@ -364,6 +365,22 @@ export const emptyBox = (iconHTML, msg, extraHTML = '') =>
 export const bulkBar = (count, delId) => !count ? '' :
   `<div class="bulkbar"><span>${count} selecionado${count > 1 ? 's' : ''}</span>
      <button class="btn btn--danger btn--sm" id="${delId}">${icon('trash')} Excluir</button></div>`;
+
+// modo seleção (padrão 2026-07-04): barra fixa enquanto o modo está ativo —
+// "Selecionar todos" (mobile some com o thead, então a seleção em massa
+// precisa de um botão fora da tabela), contador + ação (Excluir/Arquivar) e
+// Cancelar. O chamador liga [data-sel-all]/[data-sel-action]/[data-sel-cancel].
+export const selectModeBar = (count, actionLabel = 'Excluir') => `
+  <div class="bulkbar">
+    <div class="flex">
+      <span>${count} selecionado${count === 1 ? '' : 's'}</span>
+      <button class="btn btn--ghost btn--sm" data-sel-all>Selecionar todos</button>
+    </div>
+    <div class="flex">
+      <button class="btn btn--danger btn--sm" data-sel-action ${count ? '' : 'disabled'}>${icon('trash')} ${actionLabel} (${count})</button>
+      <button class="btn btn--ghost btn--sm" data-sel-cancel>Cancelar</button>
+    </div>
+  </div>`;
 
 // ------------------------------------------------------------- download/CSV -
 export function download(filename, content, mime = 'text/plain') {

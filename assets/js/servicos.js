@@ -1,9 +1,11 @@
 // ============================================================================
 // servicos.js — catálogo de serviços (CRUD). Padrão seguido pelos outros módulos.
-// Regra: serviços não são excluídos, apenas inativados (têm procedimentos ligados).
+// Regra: serviço não é excluído de verdade — a lixeira arquiva (archived=true),
+// some da lista/filtros mas o registro fica no banco pro Histórico continuar
+// resolvendo nome/cor de procedimentos antigos (spec 2026-07-04, Parte D).
 // ============================================================================
 import { supabase } from './supabase.js';
-import { money, openModal, toast, busy, esc, debounce, icon } from './utils.js';
+import { money, openModal, toast, busy, esc, debounce, icon, confirmDialog, guard, selectModeBar } from './utils.js';
 
 // paleta inspirada no Google Calendar, com tons levemente ajustados (não idênticos)
 const PALETTE = [
@@ -16,7 +18,7 @@ const PALETTE = [
 ];
 
 export async function render(root, ctx) {
-  const state = { filter: 'active', q: '' };
+  const state = { filter: 'active', q: '', all: [], selected: new Set(), selMode: false };
 
   const btn = document.createElement('button');
   btn.className = 'btn btn--primary';
@@ -33,10 +35,16 @@ export async function render(root, ctx) {
       </div>
       <div class="spacer"></div>
       <input class="input search-input" id="svc-q" placeholder="Buscar por nome…" />
+      <button class="btn btn--secondary btn--sm" id="svc-selmode">Selecionar</button>
     </div>
     <div class="table-wrap">
+      <div id="svc-bulk"></div>
       <table class="data">
-        <thead><tr><th>Serviço</th><th class="num">Preço</th><th class="num">Duração</th><th>Status</th></tr></thead>
+        <thead><tr>
+          <th class="chk" hidden></th>
+          <th>Serviço</th><th class="num">Preço</th><th class="num">Duração</th><th>Status</th>
+          <th class="num actions"></th>
+        </tr></thead>
         <tbody id="svc-rows"></tbody>
       </table>
     </div>`;
@@ -50,31 +58,100 @@ export async function render(root, ctx) {
   root.querySelector('#svc-q').addEventListener('input', debounce((e) => { state.q = e.target.value.trim(); load(); }));
 
   const tbody = root.querySelector('#svc-rows');
+  const bulkEl = root.querySelector('#svc-bulk');
+  const thChk = root.querySelector('thead .chk');
+  const thActions = root.querySelector('thead .actions');
+  const selModeBtn = root.querySelector('#svc-selmode');
+
+  selModeBtn.onclick = () => {
+    state.selMode = !state.selMode;
+    state.selected.clear();
+    paint();
+  };
+
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('[data-edit-row]');
+    if (editBtn) { openForm(ctx, state.all.find((s) => s.id === editBtn.dataset.editRow), () => load()); return; }
+    const delBtn = e.target.closest('[data-del-row]');
+    if (delBtn) { archiveServices([delBtn.dataset.delRow]); return; }
+    if (e.target.closest('.chk')) return;
+    const tr = e.target.closest('[data-id]'); if (!tr) return;
+    if (state.selMode) {
+      const id = tr.dataset.id;
+      state.selected.has(id) ? state.selected.delete(id) : state.selected.add(id);
+      paint();
+    }
+  };
+  tbody.addEventListener('change', (e) => {
+    const cb = e.target.closest('[data-sel]'); if (!cb) return;
+    cb.checked ? state.selected.add(cb.dataset.sel) : state.selected.delete(cb.dataset.sel);
+    paint();
+  });
+
+  // "excluir" um serviço não apaga de verdade — arquiva (archived=true). Ele some
+  // da lista/filtros mas o registro fica no banco pro Histórico continuar
+  // resolvendo nome/cor dos procedimentos já feitos com esse serviço.
+  const archiveServices = guard(async (ids) => {
+    const ok = await confirmDialog({
+      title: ids.length > 1 ? 'Excluir serviços' : 'Excluir serviço',
+      message: `${ids.length > 1 ? `Excluir ${ids.length} serviços` : 'Excluir serviço'}? Ele${ids.length > 1 ? 's saem' : ' sai'} da lista; procedimentos já feitos continuam no histórico com o serviço.`,
+      confirmLabel: 'Excluir', danger: true,
+    });
+    if (!ok) return;
+    const { error } = await supabase.from('services').update({ archived: true }).in('id', ids);
+    if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+    ids.forEach((id) => state.selected.delete(id));
+    state.selMode = false;
+    toast(ids.length > 1 ? `${ids.length} serviços excluídos.` : 'Serviço excluído.');
+    load();
+  });
 
   async function load() {
     tbody.innerHTML = Array.from({ length: 4 }, () =>
       `<tr>${'<td><div class="skeleton"></div></td>'.repeat(4)}</tr>`).join('');
-    let q = supabase.from('services').select('*').order('name');
+    let q = supabase.from('services').select('*').eq('archived', false).order('name');
     if (state.filter === 'active') q = q.eq('active', true);
     if (state.filter === 'inactive') q = q.eq('active', false);
     if (state.q) q = q.ilike('name', `%${state.q}%`);
     const { data, error } = await q;
     if (error) { tbody.innerHTML = ''; toast('Erro ao carregar serviços.', 'error'); return; }
-    if (!data.length) {
-      tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="icon">${icon('scissors')}</div>
+    state.all = data || [];
+    paint();
+  }
+
+  function paint() {
+    const rows = state.all;
+    thChk.hidden = !state.selMode;
+    thActions.hidden = state.selMode;
+    selModeBtn.hidden = state.selMode;
+    bulkEl.innerHTML = state.selMode ? selectModeBar(state.selected.size, 'Arquivar') : '';
+    if (state.selMode) {
+      bulkEl.querySelector('[data-sel-all]').onclick = () => {
+        const allSel = rows.length > 0 && rows.every((s) => state.selected.has(s.id));
+        rows.forEach((s) => allSel ? state.selected.delete(s.id) : state.selected.add(s.id));
+        paint();
+      };
+      bulkEl.querySelector('[data-sel-cancel]').onclick = () => {
+        state.selMode = false; state.selected.clear(); paint();
+      };
+      if (state.selected.size) bulkEl.querySelector('[data-sel-action]').onclick =
+        () => archiveServices([...state.selected]);
+    }
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="icon">${icon('scissors')}</div>
         <p>Nenhum serviço ${state.q ? 'encontrado' : 'cadastrado'}.</p></div></td></tr>`;
       return;
     }
-    tbody.innerHTML = data.map(row).join('');
-    tbody.querySelectorAll('[data-id]').forEach((el) =>
-      el.onclick = () => openForm(ctx, data.find((s) => s.id === el.dataset.id), () => load()));
+    tbody.innerHTML = rows.map(row).join('');
   }
 
   // item 3.1: listagem em linha (table.data), mesmo padrão de historico/clientes.
-  // Clique na linha abre o mesmo openForm de edição dos cards antigos.
+  // Spec 2026-07-04: linha não edita mais — só o lápis (a linha vira alvo do
+  // modo seleção, quando ativo).
   function row(s) {
     return `
-      <tr class="clickable" data-id="${s.id}">
+      <tr data-id="${s.id}">
+        <td class="chk" ${state.selMode ? '' : 'hidden'}><input type="checkbox" data-sel="${s.id}" ${state.selected.has(s.id) ? 'checked' : ''} aria-label="Selecionar"></td>
         <td><div class="flex" style="gap:8px">
           <span class="dot" style="background:${esc(s.color || '#9e9892')}"></span>
           <span>${esc(s.name)}${s.description ? `<div class="sub faint" style="font-size:var(--fs-xs)">${esc(s.description)}</div>` : ''}</span>
@@ -82,6 +159,10 @@ export async function render(root, ctx) {
         <td class="num" data-th="Preço">${s.default_price != null ? money(s.default_price) : '—'}</td>
         <td class="num" data-th="Duração">${s.duration_min ? s.duration_min + ' min' : '—'}</td>
         <td data-th="Status">${s.active ? '<span class="badge badge--success">ativo</span>' : '<span class="badge badge--muted">inativo</span>'}</td>
+        <td class="num actions" ${state.selMode ? 'hidden' : ''}>
+          <button class="btn btn--icon btn--ghost btn--sm" data-edit-row="${s.id}" title="Editar" aria-label="Editar">${icon('edit')}</button>
+          <button class="btn btn--icon btn--ghost btn--sm" data-del-row="${s.id}" title="Excluir" aria-label="Excluir">${icon('trash')}</button>
+        </td>
       </tr>`;
   }
 

@@ -75,3 +75,7 @@ export async function updateEvent(id, { summary, description, start, end }) {
 export async function deleteEvent(id) {
   return call(`${API}/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
+
+export async function getEvent(id) {
+  return call(`${API}/${encodeURIComponent(id)}`);
+}

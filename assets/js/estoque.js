@@ -7,7 +7,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDateTime, openModal, openDrawer, confirmDialog, toast, busy, debounce, guard,
-  esc, skeletonRows, h, toCSV, download, icon, emptyBox, clientAutocomplete, waLink, bulkBar } from './utils.js';
+  esc, skeletonRows, h, toCSV, download, icon, emptyBox, clientAutocomplete, waLink, selectModeBar } from './utils.js';
 
 const BUCKET = 'uploads';
 const isLow = (it) => it.active !== false && Number(it.quantity || 0) <= Number(it.min_quantity || 0);
@@ -16,7 +16,7 @@ const REASONS = { compra: 'Entrada (compra)', descarte: 'Saída / descarte',
   ajuste: 'Ajuste', uso_procedimento: 'Uso em procedimento' };
 
 export async function render(root, ctx) {
-  const state = { all: [], q: '', filter: 'all', thumbs: {}, selected: new Set() };
+  const state = { all: [], q: '', filter: 'all', thumbs: {}, selected: new Set(), selMode: false };
   let drawer = null;
 
   const buy = document.createElement('button');
@@ -46,14 +46,16 @@ export async function render(root, ctx) {
       </div>
       <div class="spacer"></div>
       <input class="input search-input" id="stk-q" placeholder="Buscar item…" />
+      <button class="btn btn--secondary btn--sm" id="stk-selmode">Selecionar</button>
     </div>
     <div class="table-wrap">
       <div id="stk-bulk"></div>
       <table class="data">
         <thead><tr>
-          <th class="chk"><input type="checkbox" id="stk-selall" aria-label="Selecionar todos"></th>
+          <th class="chk" hidden></th>
           <th>Item</th><th class="num">Quantidade</th><th class="num">Mínimo</th>
           <th class="num">Custo</th><th>Status</th>
+          <th class="num actions"></th>
         </tr></thead>
         <tbody id="stk-rows"></tbody>
       </table>
@@ -61,7 +63,9 @@ export async function render(root, ctx) {
 
   const tbody = root.querySelector('#stk-rows');
   const bulkEl = root.querySelector('#stk-bulk');
-  const selAll = root.querySelector('#stk-selall');
+  const thChk = root.querySelector('thead .chk');
+  const thActions = root.querySelector('thead .actions');
+  const selModeBtn = root.querySelector('#stk-selmode');
 
   root.querySelector('#stk-filter').onclick = (e) => {
     const b = e.target.closest('[data-f]'); if (!b) return;
@@ -72,9 +76,25 @@ export async function render(root, ctx) {
   root.querySelector('#stk-q').addEventListener('input',
     debounce((e) => { state.q = e.target.value.trim().toLowerCase(); paint(); }));
 
+  selModeBtn.onclick = () => {
+    state.selMode = !state.selMode;
+    state.selected.clear();
+    paint();
+  };
+
   tbody.onclick = (e) => {
+    const editBtn = e.target.closest('[data-edit-row]');
+    if (editBtn) { openForm(ctx, state.all.find((i) => i.id === editBtn.dataset.editRow), load); return; }
+    const delBtn = e.target.closest('[data-del-row]');
+    if (delBtn) { deleteItems([delBtn.dataset.delRow]); return; }
     if (e.target.closest('.chk')) return;   // checkbox de seleção não abre o item
     const tr = e.target.closest('[data-id]'); if (!tr) return;
+    if (state.selMode) {
+      const id = tr.dataset.id;
+      state.selected.has(id) ? state.selected.delete(id) : state.selected.add(id);
+      paint();
+      return;
+    }
     openItem(tr.dataset.id);
   };
 
@@ -84,10 +104,28 @@ export async function render(root, ctx) {
     cb.checked ? state.selected.add(cb.dataset.sel) : state.selected.delete(cb.dataset.sel);
     paint();
   });
-  selAll.onchange = () => {
-    filteredRows().forEach((i) => selAll.checked ? state.selected.add(i.id) : state.selected.delete(i.id));
-    paint();
-  };
+
+  // exclusão (individual ou em massa) — reusada pelo lápis+lixeira da linha, o
+  // drawer do item e o "Excluir (N)" do modo seleção. Sempre com confirmação.
+  const deleteItems = guard(async (ids) => {
+    const ok = await confirmDialog({
+      title: ids.length > 1 ? 'Excluir itens do estoque' : 'Excluir item do estoque',
+      message: `Excluir ${ids.length > 1 ? `${ids.length} itens` : 'este item'}? Movimentações e usos em procedimentos permanecem no histórico, sem o item vinculado; fotos e notas fiscais anexadas são removidas. Essa ação não tem desfazer.`,
+      confirmLabel: 'Excluir', danger: true,
+    });
+    if (!ok) return;
+    // paths dos anexos antes do delete (depois as linhas somem) — remoção do
+    // bucket é best-effort: item já foi, arquivo órfão não pode travar o fluxo
+    const paths = state.all.filter((i) => ids.includes(i.id))
+      .flatMap((i) => [i.photo_url, i.nf_attachment_url]).filter(Boolean);
+    const { error } = await supabase.from('stock_items').delete().in('id', ids);
+    if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+    if (paths.length) supabase.storage.from(BUCKET).remove(paths).catch(() => {});
+    ids.forEach((id) => state.selected.delete(id));
+    state.selMode = false;
+    toast(ids.length > 1 ? `${ids.length} itens excluídos.` : 'Item excluído.');
+    load();
+  });
 
   // ----------------------------------------------------------------- dados ---
   async function load() {
@@ -116,30 +154,24 @@ export async function render(root, ctx) {
 
   function paint() {
     const rows = filteredRows();
-    selAll.checked = rows.length > 0 && rows.every((i) => state.selected.has(i.id));
-    bulkEl.innerHTML = bulkBar(state.selected.size, 'stk-del');
-    const del = bulkEl.querySelector('#stk-del');
-    if (del) del.onclick = guard(async () => {
-      const ids = [...state.selected];
-      const ok = await confirmDialog({
-        title: 'Excluir itens do estoque',
-        message: `Excluir ${ids.length} ite${ids.length > 1 ? 'ns' : 'm'}? Movimentações e usos em procedimentos permanecem no histórico, sem o item vinculado; fotos e notas fiscais anexadas são removidas. Essa ação não tem desfazer.`,
-        confirmLabel: 'Excluir', danger: true,
-      });
-      if (!ok) return;
-      // paths dos anexos antes do delete (depois as linhas somem) — remoção do
-      // bucket é best-effort: item já foi, arquivo órfão não pode travar o fluxo
-      const paths = state.all.filter((i) => state.selected.has(i.id))
-        .flatMap((i) => [i.photo_url, i.nf_attachment_url]).filter(Boolean);
-      const { error } = await supabase.from('stock_items').delete().in('id', ids);
-      if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
-      if (paths.length) supabase.storage.from(BUCKET).remove(paths).catch(() => {});
-      state.selected.clear();
-      toast(`${ids.length} ite${ids.length > 1 ? 'ns excluídos' : 'm excluído'}.`);
-      load();
-    });
+    thChk.hidden = !state.selMode;
+    thActions.hidden = state.selMode;
+    selModeBtn.hidden = state.selMode;
+    bulkEl.innerHTML = state.selMode ? selectModeBar(state.selected.size, 'Excluir') : '';
+    if (state.selMode) {
+      bulkEl.querySelector('[data-sel-all]').onclick = () => {
+        const allSel = rows.length > 0 && rows.every((i) => state.selected.has(i.id));
+        rows.forEach((i) => allSel ? state.selected.delete(i.id) : state.selected.add(i.id));
+        paint();
+      };
+      bulkEl.querySelector('[data-sel-cancel]').onclick = () => {
+        state.selMode = false; state.selected.clear(); paint();
+      };
+      if (state.selected.size) bulkEl.querySelector('[data-sel-action]').onclick =
+        () => deleteItems([...state.selected]);
+    }
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6">${emptyBox(icon('box'),
+      tbody.innerHTML = `<tr><td colspan="7">${emptyBox(icon('box'),
         `Nenhum item ${state.q || state.filter !== 'all' ? 'encontrado' : 'cadastrado ainda'}.`)}</td></tr>`;
       return;
     }
@@ -149,8 +181,8 @@ export async function render(root, ctx) {
   function row(it) {
     const low = isLow(it);
     return `
-      <tr class="clickable" data-id="${it.id}">
-        <td class="chk"><input type="checkbox" data-sel="${it.id}" ${state.selected.has(it.id) ? 'checked' : ''} aria-label="Selecionar"></td>
+      <tr class="${state.selMode ? '' : 'clickable'}" data-id="${it.id}">
+        <td class="chk" ${state.selMode ? '' : 'hidden'}><input type="checkbox" data-sel="${it.id}" ${state.selected.has(it.id) ? 'checked' : ''} aria-label="Selecionar"></td>
         <td><div class="flex" style="gap:8px">
           ${it.photo_url && state.thumbs[it.photo_url] ? `<img class="thumb" src="${esc(state.thumbs[it.photo_url])}" alt="">` : ''}
           <span>${esc(it.name)}${it.active === false ? ' <span class="badge badge--muted">inativo</span>' : ''}</span>
@@ -159,6 +191,10 @@ export async function render(root, ctx) {
         <td class="num" data-th="Mínimo">${fmtQty(it.min_quantity)}</td>
         <td class="num" data-th="Custo">${it.cost_price != null ? money(it.cost_price) : '—'}</td>
         <td data-th="Status">${low ? '<span class="badge badge--warning">em falta</span>' : '<span class="badge badge--success">ok</span>'}</td>
+        <td class="num actions" ${state.selMode ? 'hidden' : ''}>
+          <button class="btn btn--icon btn--ghost btn--sm" data-edit-row="${it.id}" title="Editar" aria-label="Editar">${icon('edit')}</button>
+          <button class="btn btn--icon btn--ghost btn--sm" data-del-row="${it.id}" title="Excluir" aria-label="Excluir">${icon('trash')}</button>
+        </td>
       </tr>`;
   }
 

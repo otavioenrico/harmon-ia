@@ -6,7 +6,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { money, fmtDate, maskPhone, maskCPF, bindMask, openModal, openDrawer, confirmDialog,
-  toast, busy, debounce, esc, initials, skeletonRows, h, waLink, icon, emptyBox, guard, bulkBar } from './utils.js';
+  toast, busy, debounce, esc, initials, skeletonRows, h, waLink, icon, emptyBox, guard, selectModeBar } from './utils.js';
 import { upsertContact, deleteContact, NeedsScope } from './google-people.js';
 
 // Espelha a cliente no Google Contatos. BEST-EFFORT: nunca bloqueia nem desfaz o
@@ -32,7 +32,7 @@ function removeContact(ctx, client) {
 }
 
 export async function render(root, ctx) {
-  const state = { all: [], q: '', sort: 'name', selected: new Set() };
+  const state = { all: [], q: '', sort: 'name', selected: new Set(), selMode: false };
   let drawer = null;
 
   // ação primária no header
@@ -51,14 +51,16 @@ export async function render(root, ctx) {
         <option value="created">Cadastro (recente)</option>
         <option value="last">Último procedimento</option>
       </select>
+      <button class="btn btn--secondary btn--sm" id="cli-selmode">Selecionar</button>
     </div>
     <div class="table-wrap">
       <div id="cli-bulk"></div>
       <table class="data">
         <thead><tr>
-          <th class="chk"><input type="checkbox" id="cli-selall" aria-label="Selecionar todas"></th>
+          <th class="chk" hidden></th>
           <th>Nome</th><th>Telefone</th><th>E-mail</th><th>Cidade</th>
           <th class="nowrap">Último proc.</th><th class="num">Total</th>
+          <th class="num actions"></th>
         </tr></thead>
         <tbody id="cli-rows"></tbody>
       </table>
@@ -66,16 +68,34 @@ export async function render(root, ctx) {
 
   const tbody = root.querySelector('#cli-rows');
   const bulkEl = root.querySelector('#cli-bulk');
-  const selAll = root.querySelector('#cli-selall');
+  const thChk = root.querySelector('thead .chk');
+  const thActions = root.querySelector('thead .actions');
+  const selModeBtn = root.querySelector('#cli-selmode');
 
   root.querySelector('#cli-q').addEventListener('input',
     debounce((e) => { state.q = e.target.value.trim().toLowerCase(); paint(); }));
   root.querySelector('#cli-sort').onchange = (e) => { state.sort = e.target.value; paint(); };
 
+  selModeBtn.onclick = () => {
+    state.selMode = !state.selMode;
+    state.selected.clear();
+    paint();
+  };
+
   tbody.onclick = (e) => {
     if (e.target.closest('a.wa-link')) return;  // link do WhatsApp não abre o perfil
+    const editBtn = e.target.closest('[data-edit-row]');
+    if (editBtn) { openForm(ctx, state.all.find((c) => c.id === editBtn.dataset.editRow), load); return; }
+    const delBtn = e.target.closest('[data-del-row]');
+    if (delBtn) { deleteClients([delBtn.dataset.delRow]); return; }
     if (e.target.closest('.chk')) return;       // checkbox de seleção idem
     const tr = e.target.closest('[data-id]'); if (!tr) return;
+    if (state.selMode) {
+      const id = tr.dataset.id;
+      state.selected.has(id) ? state.selected.delete(id) : state.selected.add(id);
+      paint();
+      return;
+    }
     openProfile(tr.dataset.id);
   };
 
@@ -85,10 +105,28 @@ export async function render(root, ctx) {
     cb.checked ? state.selected.add(cb.dataset.sel) : state.selected.delete(cb.dataset.sel);
     paint();
   });
-  selAll.onchange = () => {
-    filteredRows().forEach((c) => selAll.checked ? state.selected.add(c.id) : state.selected.delete(c.id));
-    paint();
-  };
+
+  // exclusão (individual ou em massa) — reusada pelo lápis+lixeira da linha, o
+  // perfil e o "Excluir (N)" do modo seleção. Sempre com confirmação.
+  const deleteClients = guard(async (ids) => {
+    const single = ids.length === 1 ? state.all.find((c) => c.id === ids[0]) : null;
+    const ok = await confirmDialog({
+      title: ids.length > 1 ? 'Excluir clientes' : 'Excluir cliente',
+      message: ids.length > 1
+        ? `Excluir ${ids.length} clientes? Os procedimentos e lançamentos delas permanecem no histórico, sem cliente vinculado — para removê-los também, use a seleção em Histórico e Fluxo de Caixa. Essa ação não tem desfazer.`
+        : `Excluir ${single?.name || 'esta cliente'}? Os procedimentos e lançamentos dela permanecem no histórico, sem cliente vinculado. Essa ação não tem desfazer.`,
+      confirmLabel: 'Excluir', danger: true,
+    });
+    if (!ok) return;
+    const { error } = await supabase.from('clients').delete().in('id', ids);
+    if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+    ids.forEach((id) => removeContact(ctx, state.all.find((c) => c.id === id)));
+    ids.forEach((id) => state.selected.delete(id));
+    if (drawer && single) drawer.close();
+    state.selMode = false;
+    toast(ids.length > 1 ? `${ids.length} clientes excluídas.` : 'Cliente excluída.');
+    load();
+  });
 
   // ----------------------------------------------------------------- dados ---
   async function load() {
@@ -115,26 +153,24 @@ export async function render(root, ctx) {
 
   function paint() {
     const rows = filteredRows();
-    selAll.checked = rows.length > 0 && rows.every((c) => state.selected.has(c.id));
-    bulkEl.innerHTML = bulkBar(state.selected.size, 'cli-del');
-    const del = bulkEl.querySelector('#cli-del');
-    if (del) del.onclick = guard(async () => {
-      const ids = [...state.selected];
-      const ok = await confirmDialog({
-        title: 'Excluir clientes',
-        message: `Excluir ${ids.length} cliente${ids.length > 1 ? 's' : ''}? Os procedimentos e lançamentos delas permanecem no histórico, sem cliente vinculado — para removê-los também, use a seleção em Histórico e Fluxo de Caixa. Essa ação não tem desfazer.`,
-        confirmLabel: 'Excluir', danger: true,
-      });
-      if (!ok) return;
-      const { error } = await supabase.from('clients').delete().in('id', ids);
-      if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
-      ids.forEach((id) => removeContact(ctx, state.all.find((c) => c.id === id)));
-      state.selected.clear();
-      toast(`${ids.length} cliente${ids.length > 1 ? 's excluídas' : ' excluída'}.`);
-      load();
-    });
+    thChk.hidden = !state.selMode;
+    thActions.hidden = state.selMode;
+    selModeBtn.hidden = state.selMode;
+    bulkEl.innerHTML = state.selMode ? selectModeBar(state.selected.size, 'Excluir') : '';
+    if (state.selMode) {
+      bulkEl.querySelector('[data-sel-all]').onclick = () => {
+        const allSel = rows.length > 0 && rows.every((c) => state.selected.has(c.id));
+        rows.forEach((c) => allSel ? state.selected.delete(c.id) : state.selected.add(c.id));
+        paint();
+      };
+      bulkEl.querySelector('[data-sel-cancel]').onclick = () => {
+        state.selMode = false; state.selected.clear(); paint();
+      };
+      if (state.selected.size) bulkEl.querySelector('[data-sel-action]').onclick =
+        () => deleteClients([...state.selected]);
+    }
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="7">${emptyBox(icon('users'),
+      tbody.innerHTML = `<tr><td colspan="8">${emptyBox(icon('users'),
         `Nenhuma cliente ${state.q ? 'encontrada' : 'cadastrada ainda'}.`)}</td></tr>`;
       return;
     }
@@ -143,14 +179,18 @@ export async function render(root, ctx) {
 
   function row(c) {
     return `
-      <tr class="clickable" data-id="${c.id}">
-        <td class="chk"><input type="checkbox" data-sel="${c.id}" ${state.selected.has(c.id) ? 'checked' : ''} aria-label="Selecionar"></td>
+      <tr class="${state.selMode ? '' : 'clickable'}" data-id="${c.id}">
+        <td class="chk" ${state.selMode ? '' : 'hidden'}><input type="checkbox" data-sel="${c.id}" ${state.selected.has(c.id) ? 'checked' : ''} aria-label="Selecionar"></td>
         <td>${esc(c.name)}${c.active === false ? ' <span class="badge badge--muted">inativa</span>' : ''}</td>
         <td class="nowrap" data-th="Telefone">${c.phone ? `<a class="wa-link" href="${waLink(c.phone)}" target="_blank" rel="noopener" title="WhatsApp">${icon('whatsapp')}${esc(c.phone)}</a>` : '—'}</td>
         <td data-th="E-mail">${esc(c.email || '—')}</td>
         <td data-th="Cidade">${esc(c.address_city || '—')}</td>
         <td class="nowrap" data-th="Último proc.">${c._last ? fmtDate(c._last) : '—'}</td>
         <td class="num" data-th="Total">${c._total}</td>
+        <td class="num actions" ${state.selMode ? 'hidden' : ''}>
+          <button class="btn btn--icon btn--ghost btn--sm" data-edit-row="${c.id}" title="Editar" aria-label="Editar">${icon('edit')}</button>
+          <button class="btn btn--icon btn--ghost btn--sm" data-del-row="${c.id}" title="Excluir" aria-label="Excluir">${icon('trash')}</button>
+        </td>
       </tr>`;
   }
 
@@ -213,21 +253,7 @@ export async function render(root, ctx) {
     body.querySelector('[data-close]').onclick = () => drawer.close();
     body.querySelector('[data-edit]').onclick = () =>
       openForm(ctx, c, async () => { await load(); openProfile(id); });
-    body.querySelector('[data-del]').onclick = guard(async () => {
-      const ok = await confirmDialog({
-        title: 'Excluir cliente',
-        message: `Excluir ${c.name}? Os procedimentos e lançamentos dela permanecem no histórico, sem cliente vinculado. Essa ação não tem desfazer.`,
-        confirmLabel: 'Excluir', danger: true,
-      });
-      if (!ok) return;
-      const { error } = await supabase.from('clients').delete().eq('id', c.id);
-      if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
-      removeContact(ctx, c);
-      state.selected.delete(c.id);
-      drawer.close();
-      toast('Cliente excluída.');
-      load();
-    });
+    body.querySelector('[data-del]').onclick = () => deleteClients([c.id]);
     body.querySelector('[data-agendar]').onclick = () => {
       sessionStorage.setItem('intent:agendar', id); ctx.navigate('agenda');
     };

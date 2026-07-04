@@ -11,7 +11,7 @@
 // Lê intent:agendar deixado por Clientes. RLS isola por usuário.
 // ============================================================================
 import { supabase } from './supabase.js';
-import { listEvents, createEvent, updateEvent, deleteEvent, NeedsReconnect } from './google-cal.js';
+import { listEvents, createEvent, updateEvent, deleteEvent, getEvent, NeedsReconnect } from './google-cal.js';
 import { signInWithGoogle } from './auth.js';
 import { quickCreate as quickCreateClient } from './clientes.js';
 import { openModal, confirmDialog, guard, toast, busy, esc, todayISO, icon, waLink, money, clientAutocomplete, emptyBox, textOn } from './utils.js';
@@ -99,7 +99,7 @@ export async function render(root, ctx) {
   // catálogos para o formulário — carregam uma vez
   const [{ data: cs }, { data: sv }, { data: st }] = await Promise.all([
     supabase.from('clients').select('id,name,phone').eq('active', true).order('name'),
-    supabase.from('services').select('id,name,duration_min,default_price,color').eq('active', true).order('name'),
+    supabase.from('services').select('id,name,duration_min,default_price,color').eq('active', true).eq('archived', false).order('name'),
     supabase.from('stock_items').select('id,name,quantity,unit,cost_price').eq('active', true).order('name'),
   ]);
   state.clients = cs || []; state.services = sv || []; state.stock = st || [];
@@ -713,7 +713,26 @@ export async function render(root, ctx) {
     periodEl.hidden = true;
   }
 
+  // veio do lápis de um lançamento de agendamento no Fluxo de Caixa: posiciona
+  // o cursor na data do procedimento p/ a janela carregar o evento certo.
+  let openEventId = null;
+  const abrirIntent = sessionStorage.getItem('intent:abrirAgendamento');
+  if (abrirIntent) {
+    sessionStorage.removeItem('intent:abrirAgendamento');
+    try {
+      const { eventId, date } = JSON.parse(abrirIntent);
+      const [y, mo, da] = date.split('-').map(Number);
+      state.cursor = new Date(y, mo - 1, da);
+      openEventId = eventId;
+    } catch (_) { /* ignore */ }
+  }
+
   await load();
+
+  if (openEventId) {
+    try { openDetail(await getEvent(openEventId)); }
+    catch (_) { toast('Não foi possível abrir o agendamento — ele pode ter sido removido.', 'warning'); }
+  }
 
   // Gap 2 — atualização automática leve: reflete eventos criados/alterados direto
   // no Google Calendar sem recarregar a página. Só roda com a aba visível e sem

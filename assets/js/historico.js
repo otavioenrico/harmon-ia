@@ -109,7 +109,7 @@ export async function render(root, ctx) {
         .select('id, date, price_charged, status, client_id, service_id, clients(name, phone), services(name), procedure_materials(quantity_used, unit_cost_at_time)')
         .order('date', { ascending: false }),
       supabase.from('clients').select('id, name, phone, active').eq('active', true).order('name'),
-      supabase.from('services').select('id, name, default_price, active').eq('active', true).order('name'),
+      supabase.from('services').select('id, name, default_price, active').eq('active', true).eq('archived', false).order('name'),
       supabase.from('stock_items').select('id, name, quantity, unit, cost_price').eq('active', true).order('name'),
       supabase.from('return_dismissals').select('client_id, service_id, months, dismissed_at'),
     ]);

@@ -238,6 +238,11 @@ do $$ begin
 exception when duplicate_object then null; when duplicate_table then null;
 end $$;
 
+-- Spec 2026-07-04 (Parte D): "excluir" serviço vira arquivar, não apagar — o
+-- registro fica no banco pro Histórico resolver nome/cor de procedimentos
+-- antigos (JOIN procedures→services não filtra archived).
+alter table public.services add column if not exists archived boolean not null default false;
+
 -- =================================================== updated_at triggers ======
 do $$
 declare t text;
