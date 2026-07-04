@@ -306,7 +306,7 @@
 .solution-card:hover { box-shadow: var(--shadow); }
 
 @media (min-width: 900px) {
-  .solution-card { grid-template-columns: 1fr 1fr; gap: var(--sp-8); padding: var(--sp-8); }
+  .solution-card { grid-template-columns: 1fr 1.2fr; gap: var(--sp-6); padding: var(--sp-6); }
   /* alterna: imagem à esquerda nos cards marcados --reverse */
   .solution-card--reverse .solution-card__media { order: -1; }
 }
@@ -336,7 +336,7 @@
     radial-gradient(120% 120% at 15% 10%, var(--surface-2) 0%, transparent 55%),
     linear-gradient(150deg, var(--surface-2) 0%, var(--surface) 52%, var(--surface-2) 100%);
   box-shadow: inset 0 0 0 1px var(--border);
-  padding: var(--sp-5);
+  padding: var(--sp-3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -350,9 +350,9 @@
   box-shadow: var(--shadow);
 }
 @media (min-width: 900px) {
-  .solution-card__media { padding: var(--sp-5); }
-  .solution-card:not(.solution-card--reverse) .solution-card__media img { transform: translateX(5%) scale(1.09); transform-origin: left center; }
-  .solution-card--reverse .solution-card__media img { transform: translateX(-5%) scale(1.09); transform-origin: right center; }
+  .solution-card__media { padding: var(--sp-3); }
+  .solution-card:not(.solution-card--reverse) .solution-card__media img { transform: translateX(6%) scale(1.14); transform-origin: left center; }
+  .solution-card--reverse .solution-card__media img { transform: translateX(-6%) scale(1.14); transform-origin: right center; }
 }
 
 /* -------------------------------------------------------- como funciona -- */
@@ -481,3 +481,16 @@ summary.faq__q::after {
   box-shadow: var(--shadow);
 }
 .skip-link:focus { top: var(--sp-4); }
+
+
+/* line-height dos títulos = 1.2 (corpos seguem 1.5 herdado do body).
+   Bloco único e no fim do arquivo pra vencer o 1.5 herdado e o 1.1 do hero. */
+.lp-hero__title,
+.section__title,
+.solution-card__title,
+.feature__title,
+.about-module__title,
+.cta-band__title,
+.plan-card__name,
+.step__title,
+.faq__q { line-height: 1.2; }
