@@ -307,3 +307,22 @@ CORS nem (2) guardar credenciais no client. Precisa de um proxy no backend.
 ### Pré-requisitos
 Criar a aplicação no painel de dev do ML e configurar as credenciais como secrets
 da Edge Function. Rever ToS do ML antes de publicar.
+
+---
+
+## PARTE 5 (versão futura) — Taxa do cartão / valor líquido recebido
+
+**Status:** planejado (decisão de 04/07/2026: adiado para manter o escopo do lote
+de pagamentos enxuto). Estruturado aqui para depois.
+
+### Visão
+Ao pagar por cartão (débito/crédito/parcelado), capturar a taxa (%) da adquirente
+e refletir o **valor líquido recebido** no fluxo de caixa — para o lucro real.
+
+### Esboço
+- Campo de taxa (%) por forma de cartão (config default + ajuste no lançamento).
+- `financial_entries` ganha o líquido (ou uma coluna de taxa aplicada).
+- Fluxo de caixa passa a distinguir bruto x líquido.
+
+Mexe em form de pagamento, cálculo do caixa e schema. Fazer junto de um estudo das
+taxas reais que a profissional paga.

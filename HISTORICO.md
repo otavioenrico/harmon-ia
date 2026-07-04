@@ -4,7 +4,7 @@ Registro do que foi feito em cada janela de contexto. **Cada etapa = uma sessão
 Para registrar uma nova etapa, peça "registre o que foi feito até aqui" e eu
 adiciono uma seção `## Etapa N` no fim deste arquivo.
 
-**Versão atual:** v2.2.0
+**Versão atual:** v2.5.0
 
 ## Tabela de versões (semântico)
 
@@ -36,6 +36,9 @@ nova. PATCH = correção, ajuste visual ou polish sem feature nova.
 | v2.1.1 | Rodada 12 | 13 ajustes visuais da landing + revisão do item 5 (módulos da Sobre) |
 | v2.1.2 | Rodada 13 | Motion sutil (scroll-reveal, hover, accordion do FAQ) na landing pública |
 | v2.2.0 | Etapa 8 | Integrações Google (Parte 1): Contatos, Exportar Sheets, Backup+Restaurar no Drive; melhorias na Agenda |
+| v2.3.0 | Rodada 14 | Nova página pública Soluções (nav integrada, motion, mockups SVG dos módulos) |
+| v2.4.0 | Lote 2 | Thumbnail de foto no Estoque, paleta de cores em Serviços (refletida na Agenda), faixa com scroll no hero da Home |
+| v2.5.0 | Etapa 9 | Pagamentos: parcelamento só no crédito, "recebido" só na conclusão, redesign do modal de detalhe do agendamento (editável mesmo concluído) |
 
 ---
 
@@ -1303,3 +1306,80 @@ por ele: sincronização de Contatos e Exportar Sheets confirmados OK em produç
 - **Parte 2 — WhatsApp/Leads** e **Parte 3 — Google opcional (login próprio)**:
   planejadas em `APRIMORAMENTOS-PENDENTES.md`.
 - Rotação (opcional) da service_role do Supabase, já que passou pelo chat.
+
+## Rodada 14 — Nova página Soluções (2026-07-03)
+
+Página pública `solucoes.html` com um card por módulo (agenda, clientes,
+financeiro, estoque, serviços, segurança), cada um com mockup SVG emoldurado em
+gradiente da marca. Reveal direcional por coluna + cascata nos bullets + hover
+na mídia (`motion.css`). Link "Soluções" no header/rodapé/menu mobile de
+Início, Planos e Sobre.
+
+## Lote 2 — Foto, cores e hero (2026-07-04)
+
+- **Estoque:** foto do produto é comprimida no browser para thumbnail 80×80
+  WebP antes do upload (menos peso no bucket); nota fiscal (PDF) não é afetada.
+- **Serviços:** paleta de cores estilo Google Calendar, com o accent do app
+  como default; **Agenda** passa a colorir eventos (mês e lista) pela cor do
+  serviço do procedimento vinculado.
+- **Home:** `hero__actions` vira faixa com scroll/drag horizontal e fade nas
+  bordas quando os atalhos não cabem na largura.
+- Allowlist de pré-lançamento: `douglas.hille@gmail.com` e
+  `dratayanadomiciano@gmail.com` adicionados.
+- Import de produto via Mercado Livre (item 6 do lote) fica adiado —
+  precisaria de proxy backend (CORS + credenciais); registrado no
+  `APRIMORAMENTOS-PENDENTES.md`.
+
+## Etapa 9 — Pagamentos + redesign do modal de agendamento (2026-07-04)
+
+### Contexto
+Três problemas na prática: (A) "Parcelado" era uma forma de pagamento separada
+com mínimo de 2 parcelas, travando 1x; (B) crédito/parcelado concluídos
+ficavam pendentes no caixa para sempre; (C) o modal de detalhe do agendamento
+era raso e travava edição/exclusão de procedimentos concluídos. Spec completa
+em `docs/specs/2026-07-04-pagamentos-e-overview-agendamento-design.md`.
+
+### Feito
+- **(A) Pagamento:** "Parcelado" sai do dropdown de forma de pagamento.
+  Parcelas vira um campo que só aparece com **Cartão de crédito** (mínimo 1,
+  padrão 1); `installments >= 2` = parcelado. O rótulo antigo "Parcelado"
+  continua no mapa (`methodLabel`) só para não quebrar lançamentos antigos.
+  Aplicado em `agenda.js` e `historico.js`.
+- **(B) "Recebido" na conclusão:** `complete_procedure` agora marca **todos**
+  os lançamentos do procedimento como `paid=true` ao concluir (antes só à
+  vista 1x confirmava; crédito/parcelado ficavam pendentes mesmo concluídos).
+  Migração avulsa em `db/migration-pagamentos-overview.sql` (idempotente, já
+  refletida em `db/schema.sql`).
+- **(C) Modal de detalhe (`openDetail`, agenda.js):** +40px de largura
+  (`.modal--detail`); chip do serviço na cor do procedimento; nome do cliente
+  em destaque (18px); bloco financeiro em linhas rótulo/valor (Status,
+  Pagamento com "· Nx", Faturamento, Custo, Lucro); rodapé de ações por
+  estado — agendado (Concluir/WhatsApp/Editar/Cancelar), concluído (selo
+  "Procedimento concluído" + WhatsApp/Editar/**Excluir agendamento**), sem
+  procedimento vinculado (Registrar/WhatsApp/Editar/Cancelar); botão "Fechar"
+  removido (o × do cabeçalho já fecha).
+- **Editar procedimento concluído:** nova RPC `update_completed_procedure`
+  (schema.sql) — reescreve `procedures`, estorna o consumo antigo de estoque
+  e debita o novo, e reescreve `financial_entries` mantendo `paid=true` e o
+  `paid_at` original (data em que virou recebido, não a da edição). O form de
+  edição chama essa RPC em vez de `update_scheduled_procedure` quando o
+  procedimento já está `completed`.
+- **Excluir agendamento concluído:** `delete_procedures` + remove o evento do
+  Google; estoque já debitado **não** volta (é histórico real) — avisado no
+  diálogo de confirmação.
+
+### Verificação
+`node --check` em `agenda.js`/`historico.js`/`utils.js`. Script manual
+`db/test-update-completed-procedure.sql` (roda dentro de uma transação com
+`ROLLBACK`, valida reserva→conclusão→edição de estoque e caixa via `ASSERT`,
+não deixa dado para trás).
+
+### Decisões / pegadinhas
+- Card "parcelas a receber" na home foi descartado (não fazia sentido com a
+  regra B: nada fica pendente pós-conclusão).
+- Taxa do cartão / valor líquido recebido fica para depois — PARTE 5 no
+  `APRIMORAMENTOS-PENDENTES.md`.
+
+### Pendente / próximo
+- PARTE 5 (`APRIMORAMENTOS-PENDENTES.md`): taxa da adquirente refletida como
+  valor líquido no caixa.

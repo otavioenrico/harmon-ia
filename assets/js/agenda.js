@@ -23,11 +23,14 @@ const hhmm = (d) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-
 const sameDay = (a, b) => a.toDateString() === b.toDateString();
 const isoDay = (d) => d.toLocaleDateString('en-CA');
 
-const PAID_METHODS = new Set(['pix', 'dinheiro', 'cartao_debito']);
+// "Parcelado" saiu do dropdown — parcelamento agora é um campo (Parcelas) que só
+// aparece com Cartão de crédito. O rótulo fica só no mapa p/ lançamentos antigos.
 const METHODS = [
   ['pix', 'Pix'], ['dinheiro', 'Dinheiro'], ['cartao_debito', 'Cartão de débito'],
-  ['cartao_credito', 'Cartão de crédito'], ['parcelado', 'Parcelado'],
+  ['cartao_credito', 'Cartão de crédito'],
 ];
+const METHOD_LABELS = [...METHODS, ['parcelado', 'Parcelado']];
+const methodLabel = (v) => (METHOD_LABELS.find(([k]) => k === v) || [, '—'])[1];
 
 export async function render(root, ctx) {
   // view: 'list' | 'cal' (Calendário = grade do mês). period só vale na Lista.
@@ -290,45 +293,98 @@ export async function render(root, ctx) {
     load();
   });
 
+  const deleteCompletedProc = guard(async (evId, procId) => {
+    const ok = await confirmDialog({
+      title: 'Excluir agendamento',
+      message: 'O procedimento e os lançamentos no caixa somem, e o evento sai do Google Calendar. O estoque já debitado NÃO volta (é histórico real) — ajuste manualmente se precisar.',
+      confirmLabel: 'Excluir', cancelLabel: 'Voltar', danger: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteEvent(evId);
+      const { error } = await supabase.rpc('delete_procedures', { p_ids: [procId] });
+      if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
+      toast('Agendamento excluído.');
+      load();
+    } catch (err) { toast(err.message, 'error'); }
+  });
+
+  // status/pagamento/faturamento/custo/lucro em linhas rótulo-valor.
+  function finBlockHTML(proc, payment) {
+    const STATUS = {
+      scheduled: '<span class="badge badge--warning">Pendente</span>',
+      completed: '<span class="badge badge--success">Concluído · recebido</span>',
+      cancelled: '<span class="badge badge--muted">Cancelado</span>',
+    };
+    const payLabel = payment?.payment_method
+      ? methodLabel(payment.payment_method) + (payment.installments > 1 ? ` · ${payment.installments}x` : '')
+      : null;
+    const cost = (proc.procedure_materials || []).reduce((s, m) => s + Number(m.quantity_used || 0) * Number(m.unit_cost_at_time || 0), 0);
+    const has = proc.price_charged != null;
+    return `<div class="detail-fin">
+      <div class="detail-row"><span class="label">Status</span>${STATUS[proc.status] || ''}</div>
+      ${payLabel ? `<div class="detail-row"><span class="label">Pagamento</span><span>${esc(payLabel)}</span></div>` : ''}
+      ${has ? `
+        <div class="detail-row"><span class="label">Faturamento</span><span>${money(proc.price_charged)}</span></div>
+        <div class="detail-row"><span class="label">Custo materiais</span><span>${money(cost)}</span></div>
+        <div class="detail-row detail-row--total"><span class="label">Lucro</span><span class="value">${money(Number(proc.price_charged) - cost)}</span></div>` : ''}
+    </div>`;
+  }
+
+  // rodapé de ações varia por estado: agendado / concluído / sem procedimento.
+  function footHTML(ev, proc, client, start) {
+    const wa = client?.phone ? `<a class="btn btn--secondary" target="_blank" rel="noopener"
+      href="${waLink(client.phone, `Olá ${esc(client.name.split(' ')[0])}! Confirmando seu horário em ${start.toLocaleDateString('pt-BR')} às ${hhmm(start)}. 💛`)}">${icon('whatsapp')} WhatsApp</a>` : '';
+    if (!proc) return `
+      <button class="btn btn--primary btn--block" data-register>Registrar procedimento</button>
+      <div class="row2">${wa}<button class="btn btn--secondary" data-edit>Editar</button></div>
+      <button class="btn btn--danger btn--sm" data-del-d>Cancelar agendamento</button>`;
+    if (proc.status === 'completed') return `
+      <div class="detail-done">${icon('check')} Procedimento concluído</div>
+      <div class="row2">${wa}<button class="btn btn--secondary" data-edit>Editar</button></div>
+      <button class="btn btn--danger btn--sm" data-del-proc>Excluir agendamento</button>`;
+    return `
+      <button class="btn btn--primary btn--block" data-done>${icon('check')} Concluir procedimento</button>
+      <div class="row2">${wa}<button class="btn btn--secondary" data-edit>Editar</button></div>
+      <button class="btn btn--danger btn--sm" data-del-d>Cancelar agendamento</button>`;
+  }
+
   // ------------------------------------------------------------- detalhe -----
-  function openDetail(ev) {
+  async function openDetail(ev) {
     const start = evStart(ev);
     const proc = state.procByEvent.get(ev.id);
     const client = proc ? state.clients.find((c) => c.id === proc.client_id) : null;
-    let extra = '';
+    const service = proc ? state.services.find((s) => s.id === proc.service_id) : null;
+
+    // forma/parcelas vêm do lançamento financeiro do procedimento (mesma
+    // consulta do form de edição) — só busca quando há procedimento vinculado.
+    let payment = null;
     if (proc) {
-      const cost = (proc.procedure_materials || []).reduce((s, m) => s + Number(m.quantity_used || 0) * Number(m.unit_cost_at_time || 0), 0);
-      const has = proc.price_charged != null;
-      extra = `<div class="mt-4" style="display:flex;flex-direction:column;gap:4px">
-        <div><span class="muted">Status:</span> ${esc(proc.status)}</div>
-        ${has ? `<div><span class="muted">Faturamento:</span> ${money(proc.price_charged)}</div>
-                 <div><span class="muted">Custo materiais:</span> ${money(cost)}</div>
-                 <div><span class="muted">Lucro:</span> <strong>${money(Number(proc.price_charged) - cost)}</strong></div>` : ''}</div>`;
+      const { data: feRow } = await supabase.from('financial_entries')
+        .select('payment_method, installments').eq('procedure_id', proc.id).limit(1).maybeSingle();
+      payment = feRow || null;
     }
+
+    const chip = service?.color
+      ? `<span class="detail-chip" style="background:${service.color};color:${textOn(service.color)}">${esc(service.name)}</span>`
+      : '';
     const bodyEl = document.createElement('div');
     bodyEl.innerHTML = `
-      <p><strong>${esc(ev.summary || '(sem título)')}</strong></p>
+      ${chip}
+      <p class="detail-name">${esc(client?.name || ev.summary || '(sem título)')}</p>
       <p class="muted">${start.toLocaleString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-      ${ev.description ? `<p style="white-space:pre-wrap">${esc(ev.description)}</p>` : ''}
-      ${extra}`;
+      ${ev.description ? `<div class="detail-note">${esc(ev.description)}</div>` : ''}
+      ${proc ? finBlockHTML(proc, payment) : ''}`;
 
-    const canComplete = proc && proc.status === 'scheduled';
     const foot = document.createElement('div');
-    foot.innerHTML = `
-      <button class="btn btn--danger" data-del-d>Cancelar agend.</button>
-      ${client?.phone ? `<a class="btn btn--secondary" target="_blank" rel="noopener"
-        href="${waLink(client.phone, `Olá ${esc(client.name.split(' ')[0])}! Confirmando seu horário em ${start.toLocaleDateString('pt-BR')} às ${hhmm(start)}. 💛`)}">${icon('whatsapp')} WhatsApp</a>` : ''}
-      ${canComplete ? `<button class="btn btn--secondary" data-done>${icon('check')} Concluir</button>` : ''}
-      ${!proc ? `<button class="btn btn--secondary" data-register>Registrar procedimento</button>` : ''}
-      <button class="btn btn--secondary" data-edit>Editar</button>
-      <button class="btn btn--ghost" data-x>Fechar</button>`;
-    const m = openModal({ title: 'Agendamento', body: bodyEl, footer: foot });
-    foot.querySelector('[data-x]').onclick = () => m.close();
-    foot.querySelector('[data-edit]').onclick = () => { m.close(); openForm(null, ev); };
+    foot.className = 'detail-foot';
+    foot.innerHTML = footHTML(ev, proc, client, start);
+    const m = openModal({ title: 'Agendamento', body: bodyEl, footer: foot, className: 'modal--detail' });
+    foot.querySelector('[data-edit]')?.addEventListener('click', () => { m.close(); openForm(null, ev); });
     foot.querySelector('[data-register]')?.addEventListener('click', () => { m.close(); openForm(null, null, null, ev); });
-    foot.querySelector('[data-del-d]').onclick = async () => { m.close(); await cancelEvent(ev.id); };
-    const done = foot.querySelector('[data-done]');
-    if (done) done.onclick = async () => { m.close(); await completeProc(proc.id); };
+    foot.querySelector('[data-del-d]')?.addEventListener('click', async () => { m.close(); await cancelEvent(ev.id); });
+    foot.querySelector('[data-done]')?.addEventListener('click', async () => { m.close(); await completeProc(proc.id); });
+    foot.querySelector('[data-del-proc]')?.addEventListener('click', async () => { m.close(); await deleteCompletedProc(ev.id, proc.id); });
   }
 
   // --------------------------------------------------------------- form ------
@@ -367,10 +423,11 @@ export async function render(root, ctx) {
       titleVal = linkEvent.summary || '';
     }
 
-    // edição completa (cliente/serviço/materiais/pagamento) só é segura enquanto
-    // 'scheduled' — nada foi debitado/pago ainda (ver update_scheduled_procedure).
-    // completed/cancelled continuam com a edição restrita (título/hora/notas/valor).
-    const fullEdit = isEdit && editProc && editProc.status === 'scheduled';
+    // edição completa (cliente/serviço/materiais/pagamento): scheduled usa
+    // update_scheduled_procedure; completed usa update_completed_procedure (que
+    // reconcilia estoque e caixa). cancelled continua com a edição restrita.
+    const fullEdit = isEdit && editProc && (editProc.status === 'scheduled' || editProc.status === 'completed');
+    const completedEdit = isEdit && editProc && editProc.status === 'completed';
     let editMaterials = [];
     let editPayment = { method: null, installments: 1 };
     if (fullEdit) {
@@ -423,7 +480,7 @@ export async function render(root, ctx) {
         <div class="field"><label>Pagamento</label>
           <select class="select" name="method">${METHODS.map(([v, l]) => `<option value="${v}" ${v === (fullEdit ? editPayment.method : p.method) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="field" id="inst-wrap" hidden><label>Parcelas</label>
-          <input class="input" name="installments" type="number" min="2" value="${fullEdit ? (editPayment.installments || 2) : (p.installments || 2)}"></div>
+          <input class="input" name="installments" type="number" min="1" value="${fullEdit ? (editPayment.installments || 1) : (p.installments || 1)}"></div>
       </div>` : ''}
       <div class="field"><label>Observações</label>
         <textarea class="textarea" name="notes">${esc(notesVal)}</textarea></div>`;
@@ -484,10 +541,10 @@ export async function render(root, ctx) {
       priceEl.oninput = recalc;
       recalc();
 
-      // parcelas só quando "parcelado"
+      // parcelas só existem no crédito
       const methodEl = form.querySelector('[name="method"]');
       const instWrap = form.querySelector('#inst-wrap');
-      methodEl.onchange = () => { instWrap.hidden = methodEl.value !== 'parcelado'; };
+      methodEl.onchange = () => { instWrap.hidden = methodEl.value !== 'cartao_credito'; };
       methodEl.onchange();
     }
 
@@ -512,7 +569,7 @@ export async function render(root, ctx) {
         date: form.date.value, time: form.time.value, dur: Number(form.dur.value) || 60,
         price: form.price?.value ? Number(form.price.value) : null,
         method: form.method?.value || null,
-        installments: form.method?.value === 'parcelado' ? Math.max(2, Number(form.installments.value) || 2) : 1,
+        installments: form.method?.value === 'cartao_credito' ? Math.max(1, Number(form.installments.value) || 1) : 1,
         notes: form.notes.value.trim(), materials,
       };
     };
@@ -548,7 +605,7 @@ export async function render(root, ctx) {
         } else if (fullEdit) {
           await updateEvent(editEvent.id, { summary: form.title.value.trim() || '(sem título)', description: form.notes.value.trim(), start, end });
           const d = collect();
-          const { error } = await supabase.rpc('update_scheduled_procedure', {
+          const { error } = await supabase.rpc(completedEdit ? 'update_completed_procedure' : 'update_scheduled_procedure', {
             p_procedure_id: editProc.id,
             p_client_id: d.client_id, p_service_id: d.service_id, p_date: d.date,
             p_price_charged: d.price, p_notes: d.notes || null,

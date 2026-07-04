@@ -149,10 +149,10 @@ function wireFocus(container, preferred) {
 // openModal({title, body(HTMLElement|string), footer, wide, onClose}) ->
 // {overlay, close, body}. ESC e clique fora fecham; Tab fica preso no modal e
 // o foco volta ao elemento de origem ao fechar.
-export function openModal({ title = '', body = '', footer = '', wide = false, onClose } = {}) {
+export function openModal({ title = '', body = '', footer = '', wide = false, className = '', onClose } = {}) {
   const overlay = h(`<div class="modal-overlay"></div>`);
   const modal = h(`
-    <div class="modal ${wide ? 'modal--wide' : ''}" role="dialog" aria-modal="true" tabindex="-1">
+    <div class="modal ${wide ? 'modal--wide' : ''}${className ? ' ' + className : ''}" role="dialog" aria-modal="true" tabindex="-1">
       <div class="modal__head">
         <div class="modal__title">${esc(title)}</div>
         <button class="modal__close" aria-label="Fechar">×</button>

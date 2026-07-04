@@ -16,11 +16,12 @@ const STATUS_BADGE = {
   cancelled: '<span class="badge badge--muted">cancelado</span>',
 };
 
-// métodos à vista entram já pagos; crédito/parcelado entram pendentes (decisão fechada)
+// métodos à vista entram já pagos; crédito entra pendente (decisão fechada)
 const PAID_METHODS = new Set(['pix', 'dinheiro', 'cartao_debito']);
+// "Parcelado" saiu do dropdown — parcelamento é só o campo Parcelas no crédito.
 const METHODS = [
   ['pix', 'Pix'], ['dinheiro', 'Dinheiro'], ['cartao_debito', 'Cartão de débito'],
-  ['cartao_credito', 'Cartão de crédito'], ['parcelado', 'Parcelado'],
+  ['cartao_credito', 'Cartão de crédito'],
 ];
 
 export async function render(root, ctx) {
@@ -343,7 +344,7 @@ function openForm(ctx, state, clientId, onSaved) {
       <div class="field"><label>Pagamento</label>
         <select class="select" name="method">${METHODS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></div>
       <div class="field" id="inst-wrap" hidden><label>Parcelas</label>
-        <input class="input" name="installments" type="number" min="2" value="2" /></div>
+        <input class="input" name="installments" type="number" min="1" value="1" /></div>
       <div class="field" id="due-wrap" hidden><label>1º vencimento</label>
         <input class="input" name="first_due" type="date" value="${todayISO()}" /></div>
     </div>
@@ -389,13 +390,13 @@ function openForm(ctx, state, clientId, onSaved) {
   };
   form.querySelector('#mat-add').onclick = addMat;
 
-  // pagamento: parcelado mostra parcelas; crédito/parcelado mostram vencimento
+  // pagamento: crédito mostra parcelas; crédito mostra vencimento (é o único não à vista)
   const methodEl = form.querySelector('[name="method"]');
   const instWrap = form.querySelector('#inst-wrap');
   const dueWrap = form.querySelector('#due-wrap');
   methodEl.onchange = () => {
     const m = methodEl.value;
-    instWrap.hidden = m !== 'parcelado';
+    instWrap.hidden = m !== 'cartao_credito';
     dueWrap.hidden = PAID_METHODS.has(m);   // à vista não precisa de vencimento
   };
 
@@ -425,8 +426,7 @@ function openForm(ctx, state, clientId, onSaved) {
     }
 
     const method = fd.get('method');
-    const parcelado = method === 'parcelado';
-    const installments = parcelado ? Math.max(2, Number(fd.get('installments')) || 2) : 1;
+    const installments = method === 'cartao_credito' ? Math.max(1, Number(fd.get('installments')) || 1) : 1;
     const price = fd.get('price') ? Number(fd.get('price')) : null;
 
     const args = {

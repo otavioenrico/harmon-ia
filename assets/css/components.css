@@ -218,6 +218,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   animation: slideUp var(--dur-base) var(--ease-out);
 }
 .modal--wide { max-width: 720px; }
+.modal--detail { max-width: 560px; } /* +40px sobre o modal padrão (openDetail) */
 .modal__head {
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--sp-5); border-bottom: 1px solid var(--border);
@@ -236,6 +237,39 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
   padding: var(--sp-5); border-top: 1px solid var(--border);
   flex-shrink: 0; background: var(--surface);
 }
+
+/* detalhe do agendamento (openDetail em agenda.js) --------------------------- */
+.detail-chip {
+  display: inline-flex; align-items: center;
+  padding: 3px var(--sp-3); border-radius: var(--radius-pill);
+  font-size: var(--fs-xs); font-weight: var(--fw-500);
+  margin-bottom: var(--sp-3);
+}
+.detail-name { font-size: 18px; font-weight: var(--fw-500); margin: 0; }
+.detail-note {
+  background: var(--surface-2); border-radius: var(--radius-sm);
+  padding: var(--sp-3); font-size: var(--fs-sm); color: var(--text-muted);
+  white-space: pre-wrap; margin-top: var(--sp-3);
+}
+.detail-fin { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-4); }
+.detail-row { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--fs-sm); }
+.detail-row .label { color: var(--text-muted); }
+.detail-row--total {
+  border-top: 1px solid var(--border); margin-top: var(--sp-2);
+  padding-top: var(--sp-3); font-size: var(--fs-base);
+}
+.detail-row--total .value { font-weight: var(--fw-600); }
+/* selo de estado fechado — não é botão, não reage a hover/click */
+.detail-done {
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  width: 100%; padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-2); color: var(--text-faint);
+  border-radius: var(--radius-sm); font-size: var(--fs-base);
+}
+.detail-foot { display: flex; flex-direction: column; gap: var(--sp-3); width: 100%; }
+.detail-foot .row2 { display: flex; gap: var(--sp-3); }
+.detail-foot .row2 > * { flex: 1; }
+.detail-foot .btn--danger.btn--sm { align-self: center; border-color: transparent; }
 /* drawer lateral (perfil da cliente) — mesma receita do modal: o container não
    rola; quem rola é a região .drawer__body montada pelo módulo. */
 .drawer { position: fixed; top: 0; right: 0; height: 100dvh; width: 460px; max-width: 92vw;
@@ -364,6 +398,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
    full-label/short-label — mantém sempre "Novo agendamento". */
 .hero__actions {
   display: flex; gap: var(--sp-2); flex-wrap: nowrap; min-width: 0;
+  align-self: stretch; width: 100%;
   overflow-x: auto; scrollbar-width: none; cursor: grab;
 }
 .hero__actions::-webkit-scrollbar { display: none; }
