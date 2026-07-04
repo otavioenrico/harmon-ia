@@ -35,7 +35,7 @@ export async function render(root, ctx) {
       </div>
       <div class="spacer"></div>
       <input class="input search-input" id="svc-q" placeholder="Buscar por nome…" />
-      <button class="btn btn--secondary btn--sm" id="svc-selmode">Selecionar</button>
+      <button class="btn btn--ghost btn--sm" id="svc-selmode">Selecionar</button>
     </div>
     <div class="table-wrap">
       <div id="svc-bulk"></div>

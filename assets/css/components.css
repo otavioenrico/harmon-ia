@@ -568,6 +568,11 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .setting-row { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-4); margin: 0; }
 .setting-divider { border-top: 1px solid var(--border); margin: var(--sp-5) 0; }
 
+/* linha do número de WhatsApp: campo travado (legível) + lápis/✓ ao final. */
+.wa-row { display: flex; align-items: center; gap: var(--sp-2); }
+.wa-row .input { flex: 1; min-width: 0; }
+.wa-row .input:disabled { opacity: 1; -webkit-text-fill-color: var(--text); color: var(--text); cursor: default; background: var(--surface-2); }
+
 /* botão-ícone em processamento: gira o ícone e bloqueia clique */
 @keyframes spin-icon { to { transform: rotate(360deg); } }
 .btn--icon.is-busy { pointer-events: none; opacity: .65; }

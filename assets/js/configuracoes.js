@@ -24,6 +24,11 @@ const CONTACTS_LOGO = `<span class="g-logo"><svg viewBox="0 0 48 48" width="20" 
   <circle cx="24" cy="21" r="5" fill="#4285F4"/>
   <path d="M14 34c0-5 4.5-8 10-8s10 3 10 8z" fill="#4285F4"/>
 </svg></span>`;
+const WHATSAPP_LOGO = `<span class="g-logo"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+  <rect width="48" height="48" rx="11" fill="var(--whatsapp)"/>
+  <path fill="#fff" d="M24 12c-6.6 0-12 5.4-12 12 0 2.1.6 4.2 1.6 6L12 36l6.2-1.6c1.7 1 3.7 1.5 5.8 1.5 6.6 0 12-5.4 12-12S30.6 12 24 12z"/>
+  <path fill="var(--whatsapp)" d="M20.1 18.3c-.3-.7-.6-.6-.8-.6h-.7c-.3 0-.7.1-1 .5s-1.3 1.3-1.3 3.1 1.3 3.6 1.5 3.8c.2.3 2.6 4.1 6.4 5.6 3.2 1.2 3.8 1 4.5.9s2.1-.9 2.4-1.7c.3-.8.3-1.5.2-1.6-.1-.2-.4-.3-.8-.5s-2.1-1-2.4-1.2c-.3-.1-.6-.2-.8.2s-.9 1.2-1.1 1.4c-.2.2-.4.2-.7.1s-1.5-.6-2.9-1.8c-1.1-1-1.8-2.1-2-2.5-.2-.4 0-.6.1-.7.2-.2.4-.4.5-.6.2-.2.2-.4.4-.6.1-.2 0-.5 0-.7-.1-.2-.8-2.1-1.1-2.9z"/>
+</svg></span>`;
 import { toast, esc, initials, download, todayISO, icon, confirmDialog, maskPhone, bindMask, busy, openModal } from './utils.js';
 
 const TABLES = ['user_settings', 'services', 'clients', 'stock_items',
@@ -56,13 +61,19 @@ export async function render(root, ctx) {
           </div>
         </div>
         <p class="hint mt-4">O acesso é exclusivamente via Google — não há senha para alterar.</p>
-        <div class="field mt-4">
-          <label>WhatsApp do administrador</label>
-          <input class="input" id="wa-number" placeholder="(11) 91234-5678" value="${esc(ctx.settings?.whatsapp_number || '')}">
-          <span class="hint">Usado nos botões de enviar resumo por WhatsApp (ex.: lista de compras).</span>
-        </div>
-        <button class="btn btn--secondary mt-4" id="wa-save"></button>
         <button class="btn btn--ghost mt-4" id="logout">Sair da conta</button>
+      </section>
+
+      <section class="card">
+        <div class="setting-row">
+          <div class="flex">${WHATSAPP_LOGO}<h3 style="margin:0">WhatsApp</h3></div>
+        </div>
+        <p class="hint" style="margin-top:8px">Número usado nos botões de enviar resumo por WhatsApp (ex.: lista de compras).</p>
+        <div class="setting-divider"></div>
+        <div class="wa-row">
+          <input class="input" id="wa-number" placeholder="(11) 91234-5678" value="${esc(ctx.settings?.whatsapp_number || '')}" disabled>
+          <button class="btn btn--icon btn--ghost" id="wa-edit"></button>
+        </div>
       </section>
 
       <section class="card">
@@ -139,28 +150,30 @@ export async function render(root, ctx) {
 
   root.querySelector('#logout').onclick = () => signOut();
 
-  // trava o campo quando já há um número salvo — "Alterar" libera a edição;
-  // ao salvar, trava de novo (evita edição acidental do número em uso).
-  let waLocked = !!ctx.settings?.whatsapp_number;
+  // WhatsApp: número trava por padrão; o lápis libera a edição e o ✓ salva e
+  // trava de novo (evita edição acidental do número em uso).
+  let waLocked = true;
   const waInput = root.querySelector('#wa-number');
-  const waBtn = root.querySelector('#wa-save');
+  const waEdit = root.querySelector('#wa-edit');
   const syncWaMode = () => {
     waInput.disabled = waLocked;
-    waBtn.textContent = waLocked ? 'Alterar' : 'Salvar WhatsApp';
+    waEdit.innerHTML = waLocked ? icon('edit') : icon('check');
+    waEdit.title = waLocked ? 'Editar número' : 'Salvar número';
+    waEdit.setAttribute('aria-label', waEdit.title);
   };
   syncWaMode();
 
   bindMask(waInput, maskPhone);
-  waBtn.onclick = async () => {
+  waEdit.onclick = async () => {
     if (waLocked) { waLocked = false; syncWaMode(); waInput.focus(); return; }
     const whatsapp_number = waInput.value.trim() || null;
-    busy(waBtn, true);
+    waEdit.classList.add('is-busy'); waEdit.disabled = true;
     const { error } = await supabase.from('user_settings')
       .upsert({ user_id: ctx.session.user.id, whatsapp_number }, { onConflict: 'user_id' });
-    busy(waBtn, false);
+    waEdit.classList.remove('is-busy'); waEdit.disabled = false;
     if (error) { console.error(error); return toast('Não foi possível salvar o WhatsApp.', 'error'); }
     ctx.settings.whatsapp_number = whatsapp_number;
-    waLocked = !!whatsapp_number;
+    waLocked = true;
     syncWaMode();
     toast('WhatsApp salvo.');
   };

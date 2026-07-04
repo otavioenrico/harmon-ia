@@ -46,7 +46,7 @@ export async function render(root, ctx) {
       </div>
       <div class="spacer"></div>
       <input class="input search-input" id="stk-q" placeholder="Buscar item…" />
-      <button class="btn btn--secondary btn--sm" id="stk-selmode">Selecionar</button>
+      <button class="btn btn--ghost btn--sm" id="stk-selmode">Selecionar</button>
     </div>
     <div class="table-wrap">
       <div id="stk-bulk"></div>

@@ -8,7 +8,7 @@
 import { supabase } from './supabase.js';
 import { quickCreate as quickCreateClient } from './clientes.js';
 import { money, fmtDate, todayISO, daysSince, openModal, confirmDialog, toast, busy, esc,
-  debounce, waLink, icon, clientAutocomplete, emptyBox, guard, bulkBar, periodFilter } from './utils.js';
+  debounce, waLink, icon, clientAutocomplete, emptyBox, guard, selectModeBar, periodFilter } from './utils.js';
 
 const STATUS_BADGE = {
   scheduled: '<span class="badge badge--warning">agendado</span>',
@@ -27,7 +27,7 @@ const METHODS = [
 export async function render(root, ctx) {
   const state = { all: [], clients: [], services: [], stock: [], dismissals: new Map(),
     view: 'proc', qCliente: '', fServico: '', fStatus: '', fDe: '', fAte: '',
-    reDays: 60, retMonths: 1, selected: new Set() };
+    reDays: 60, retMonths: 1, selected: new Set(), selMode: false };
 
   const btn = document.createElement('button');
   btn.className = 'btn btn--primary';
@@ -44,6 +44,7 @@ export async function render(root, ctx) {
       </div>
       <div class="spacer"></div>
       <div id="h-filters" class="filters"></div>
+      <button class="btn btn--ghost btn--sm" id="h-selmode" hidden>Selecionar</button>
     </div>
     <div class="table-wrap" id="h-table"></div>`;
 
@@ -60,6 +61,8 @@ export async function render(root, ctx) {
     root.querySelectorAll('#h-view button').forEach((x) => x.classList.toggle('active', x === b));
     paintFilters(); paint();
   };
+
+  root.querySelector('#h-selmode').onclick = () => { state.selMode = true; paint(); };
 
   function paintFilters() {
     if (state.view === 'reat') {
@@ -131,8 +134,13 @@ export async function render(root, ctx) {
   }
 
   function paint() {
-    if (state.view === 'reat') return paintReat();
-    if (state.view === 'ret') return paintRetornos();
+    const selBtn = root.querySelector('#h-selmode');
+    if (state.view !== 'proc') {
+      state.selMode = false; state.selected.clear();
+      if (selBtn) selBtn.hidden = true;
+      return state.view === 'reat' ? paintReat() : paintRetornos();
+    }
+    if (selBtn) selBtn.hidden = state.selMode;   // some enquanto o modo seleção está ativo
     let rows = state.all;
     // busca ampla: cliente, serviço, status e valor (mesmo espírito do #f-q do Fluxo de Caixa)
     const STATUS_TXT = { scheduled: 'agendado', completed: 'realizado', cancelled: 'cancelado' };
@@ -149,12 +157,11 @@ export async function render(root, ctx) {
     }
     // item 9: agendados e realizados listados juntos, com coluna de status.
     // Rodada 7: coluna de seleção p/ limpeza em massa (RPC delete_procedures).
-    const allSel = rows.every((p) => state.selected.has(p.id));
     tableWrap.innerHTML = `
-      ${bulkBar(state.selected.size, 'h-del')}
+      ${state.selMode ? selectModeBar(state.selected.size, 'Excluir') : ''}
       <table class="data">
         <thead><tr>
-          <th class="chk"><input type="checkbox" id="h-selall" ${allSel ? 'checked' : ''} aria-label="Selecionar todos"></th>
+          <th class="chk" ${state.selMode ? '' : 'hidden'}></th>
           <th>Data</th><th>Cliente</th><th>Serviço</th><th>Status</th>
           <th class="num">Valor</th><th class="num">Lucro</th>
         </tr></thead>
@@ -162,7 +169,7 @@ export async function render(root, ctx) {
           const has = p.price_charged != null;
           const lucro = has ? Number(p.price_charged) - p._cost : null;
           return `<tr>
-            <td class="chk"><input type="checkbox" data-sel="${p.id}" ${state.selected.has(p.id) ? 'checked' : ''} aria-label="Selecionar"></td>
+            <td class="chk" ${state.selMode ? '' : 'hidden'}><input type="checkbox" data-sel="${p.id}" ${state.selected.has(p.id) ? 'checked' : ''} aria-label="Selecionar"></td>
             <td class="nowrap" data-th="Data">${fmtDate(p.date)}</td>
             <td>${esc(p.clients?.name || '—')}</td>
             <td data-th="Serviço">${esc(p.services?.name || '—')}</td>
@@ -175,19 +182,26 @@ export async function render(root, ctx) {
     wireSelection(rows);
   }
 
-  // checkboxes + selecionar-todos + excluir em massa (só na view Procedimentos)
+  // modo seleção (só na view Procedimentos): checkboxes por linha + barra fixa
+  // com Selecionar todos / Excluir / Cancelar.
   function wireSelection(rows) {
+    if (!state.selMode) return;
     tableWrap.querySelectorAll('[data-sel]').forEach((cb) => cb.onchange = () => {
       cb.checked ? state.selected.add(cb.dataset.sel) : state.selected.delete(cb.dataset.sel);
       paint();
     });
-    const all = tableWrap.querySelector('#h-selall');
-    if (all) all.onchange = () => {
-      rows.forEach((p) => all.checked ? state.selected.add(p.id) : state.selected.delete(p.id));
+    const bar = tableWrap.querySelector('.bulkbar');
+    if (!bar) return;
+    bar.querySelector('[data-sel-all]').onclick = () => {
+      const allSel = rows.length > 0 && rows.every((p) => state.selected.has(p.id));
+      rows.forEach((p) => allSel ? state.selected.delete(p.id) : state.selected.add(p.id));
       paint();
     };
-    const del = tableWrap.querySelector('#h-del');
-    if (del) del.onclick = guard(async () => {
+    bar.querySelector('[data-sel-cancel]').onclick = () => {
+      state.selMode = false; state.selected.clear(); paint();
+    };
+    const act = bar.querySelector('[data-sel-action]');
+    if (act && state.selected.size) act.onclick = guard(async () => {
       const ids = [...state.selected];
       const ok = await confirmDialog({
         title: 'Excluir procedimentos',
@@ -197,7 +211,7 @@ export async function render(root, ctx) {
       if (!ok) return;
       const { error } = await supabase.rpc('delete_procedures', { p_ids: ids });
       if (error) { console.error(error); return toast('Erro ao excluir.', 'error'); }
-      state.selected.clear();
+      state.selMode = false; state.selected.clear();
       toast(`${ids.length} procedimento${ids.length > 1 ? 's excluídos' : ' excluído'}.`);
       load();
     });
