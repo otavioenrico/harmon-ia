@@ -135,11 +135,11 @@ export async function render(root, ctx) {
         <div class="hero__title">Olá, ${esc(name)} ${icon('sparkle')}</div>
       </div>
       <div class="hero__actions">
-        <button class="btn btn--primary" id="go-agenda">${icon('plus')} Novo agendamento</button>
-        <button class="btn btn--secondary" id="go-calendario">${icon('calendar')} <span class="full-label">Ver calendário</span><span class="short-label">Calendário</span></button>
-        <button class="btn btn--secondary" id="go-cliente">${icon('users')} <span class="full-label">Novo cliente</span><span class="short-label">+ Cliente</span></button>
-        <button class="btn btn--secondary" id="go-produto">${icon('box')} <span class="full-label">Novo produto</span><span class="short-label">+ Produto</span></button>
-        <button class="btn btn--secondary" id="go-lancamento">${icon('wallet')} <span class="full-label">Novo lançamento</span><span class="short-label">+ Lançamento</span></button>
+        <button class="btn btn--primary" id="go-agenda">${icon('plus')} <span class="lbl">Novo agendamento</span></button>
+        <button class="btn btn--secondary" id="go-calendario">${icon('calendar')} <span class="lbl">Ver calendário</span></button>
+        <button class="btn btn--secondary" id="go-cliente"><span class="act-plus">${icon('plus')}</span>${icon('users')} <span class="lbl">Novo cliente</span></button>
+        <button class="btn btn--secondary" id="go-produto"><span class="act-plus">${icon('plus')}</span>${icon('box')} <span class="lbl">Novo produto</span></button>
+        <button class="btn btn--secondary" id="go-lancamento"><span class="act-plus">${icon('plus')}</span>${icon('wallet')} <span class="lbl">Novo lançamento</span></button>
       </div>
     </div>
 
@@ -220,24 +220,18 @@ export async function render(root, ctx) {
   });
   aside.querySelector('#go-estoque')?.addEventListener('click', () => ctx.navigate('estoque'));
 
-  heroActionsScroll(root.querySelector('.hero__actions'));
+  heroActionsFit(root.querySelector('.hero__actions'));
 }
 
-// faixa de ações da hero: fade nas bordas só quando estoura o card + scroll por clicar-e-arrastar
-function heroActionsScroll(el) {
+// Colapsa as ações do hero para só-ícone quando os rótulos completos não cabem
+// mais no card (mede com rótulos visíveis; sem scroll nem fade nas bordas).
+function heroActionsFit(el) {
   if (!el) return;
-  const syncFade = () => el.classList.toggle('is-overflowing', el.scrollWidth > el.clientWidth + 1);
-  syncFade();
-  window.addEventListener('resize', syncFade);
-  let dragging = false, startX = 0, startScroll = 0;
-  el.addEventListener('pointerdown', (e) => {
-    dragging = true; startX = e.clientX; startScroll = el.scrollLeft;
-    el.setPointerCapture(e.pointerId); el.classList.add('is-dragging');
-  });
-  el.addEventListener('pointermove', (e) => {
-    if (dragging) el.scrollLeft = startScroll - (e.clientX - startX);
-  });
-  const stopDrag = () => { dragging = false; el.classList.remove('is-dragging'); };
-  el.addEventListener('pointerup', stopDrag);
-  el.addEventListener('pointercancel', stopDrag);
+  const fit = () => {
+    el.classList.remove('is-icons');            // mede sempre no estado "largo"
+    if (el.scrollWidth > el.clientWidth + 1) el.classList.add('is-icons');
+  };
+  fit();
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(el);
 }

@@ -394,29 +394,20 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .hero__sub { color: var(--text-muted); margin-top: var(--sp-2); }
 /* min-width:0 quebra o "automatic minimum size" padrão do flexbox: sem ele,
    um item flex nunca encolhe abaixo do min-content do seu filho mais largo —
-   aqui, o botão "Novo agendamento" — e por isso estourava a largura do card.
-   nowrap + rótulo curto por padrão: as 5 ações sempre numa linha só; o
-   rótulo completo (full-label) só volta em telas largas o bastante pra
-   caber sem quebrar (ver media query abaixo). O primário não tem
-   full-label/short-label — mantém sempre "Novo agendamento". */
+ aqui, o botão "Novo agendamento" — e por isso estourava a largura do card.
+   nowrap: as 5 ações sempre numa linha só. Quando os rótulos completos não
+   cabem mais no card, home.js adiciona .is-icons e os botões colapsam para
+   só-ícone (as ações "Novo…" ganham um "+" antes do ícone; "Ver calendário"
+   fica só com o ícone de calendário). Sem scroll horizontal nem fade. */
 .hero__actions {
   display: flex; gap: var(--sp-2); flex-wrap: nowrap; min-width: 0;
   align-self: stretch; width: 100%;
-  overflow-x: auto; scrollbar-width: none; cursor: grab;
-}
-.hero__actions::-webkit-scrollbar { display: none; }
-.hero__actions.is-dragging { cursor: grabbing; }
-/* fade nas bordas só quando o conteúdo realmente estoura o card (classe via home.js) */
-.hero__actions.is-overflowing {
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
 }
 .hero__actions .btn { flex: 0 0 auto; }
-.hero__actions .full-label { display: none; }
-@media (min-width: 1500px) {
-  .hero__actions .full-label { display: inline; }
-  .hero__actions .short-label { display: none; }
-}
+.hero__actions .act-plus { display: none; }
+/* modo só-ícone: esconde os rótulos e mostra o "+" das ações de criar */
+.hero__actions.is-icons .lbl { display: none; }
+.hero__actions.is-icons .act-plus { display: inline-flex; align-items: center; }
 
 /* mini stat-cards da Home (ícone em círculo pastel) */
 .mini-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
@@ -451,6 +442,23 @@ table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .bar__fill.pos { background: var(--color-mauve-500); }
 .bar__fill.neg { background: var(--danger); }
 .bar__val { position: relative; margin-left: auto; padding: 0 var(--sp-2); font-size: var(--fs-xs); }
+
+/* Comparativo: duas tabelas lado a lado (metade da tela cada) */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); align-items: start; }
+.compare-col { min-width: 0; }
+.compare-col .panel__title { margin-bottom: var(--sp-3); }
+@media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
+
+/* seletor menor dentro de Gráficos (não estica a largura toda) */
+.segmented--sm { display: inline-flex; width: auto; }
+
+/* pizza (donut) Entradas × Saídas */
+.pie-wrap { display: flex; align-items: center; gap: var(--sp-5); flex-wrap: wrap; }
+.pie { width: 180px; height: 180px; flex: 0 0 auto; }
+.pie-legend { display: flex; flex-direction: column; gap: var(--sp-3); }
+.pie-legend .dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: var(--sp-2); vertical-align: -1px; }
+.pie-legend .dot.pos { background: var(--color-mauve-500); opacity: 0.6; }
+.pie-legend .dot.neg { background: var(--danger); opacity: 0.5; }
 
 /* link de WhatsApp (listagem de clientes / agenda) */
 .wa-link { display: inline-flex; align-items: center; gap: 4px; color: var(--whatsapp); text-decoration: none; }
