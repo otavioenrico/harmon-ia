@@ -14,12 +14,21 @@
   <meta name="description" content="Planos para quem atende sozinho e para estúdios, salões e clínicas. Em pré-lançamento — entre na lista de espera e seja avisado primeiro." />
   <meta property="og:title" content="Planos — Harmon IA" />
   <meta property="og:description" content="Planos para quem atende sozinho e para estúdios, salões e clínicas." />
-  <meta property="og:image" content="/assets/img/login-visual.png" />
+  <meta property="og:image" content="https://harmon-ia-rouge.vercel.app/assets/img/og-image.png" />
+  <meta property="og:url" content="https://harmon-ia-rouge.vercel.app/planos.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Harmon IA" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Planos — Harmon IA" />
+  <meta name="twitter:description" content="Planos para quem atende sozinho e para estúdios, salões e clínicas." />
+  <meta name="twitter:image" content="https://harmon-ia-rouge.vercel.app/assets/img/og-image.png" />
   <link rel="stylesheet" href="assets/css/tokens.css" />
   <link rel="stylesheet" href="assets/css/layout.css" />
   <link rel="stylesheet" href="assets/css/components.css" />
   <link rel="stylesheet" href="assets/css/theme.css" />
   <link rel="stylesheet" href="assets/css/landing.css" />
+  <link rel="stylesheet" href="assets/css/cookie-banner.css" />
   <link rel="stylesheet" href="assets/css/motion.css" />
   <script>document.documentElement.classList.add('js');</script>
   <script type="application/ld+json">
@@ -177,15 +186,29 @@
         <a href="/solucoes.html">Soluções</a>
         <a href="/planos.html">Planos</a>
         <a href="/entrar.html">Entrar</a>
+        <a href="/privacidade.html">Privacidade</a>
+        <a href="/termos.html">Termos</a>
+        <a href="/cookies.html">Cookies</a>
       </nav>
-      <span><!-- TROCAR nome -->© 2026 Harmon IA · Todos os direitos reservados</span>
+      <span><!-- TROCAR: nome/razão social definitiva no rebrand -->© 2026 Harmon IA · Todos os direitos reservados</span>
     </div>
   </footer>
+
+  <div id="cookie-banner" class="cookie-banner" role="region" aria-label="Aviso de cookies">
+    <div class="cookie-banner__inner">
+      <p>Usamos cookies essenciais para login e sessão. Leia nossa <a href="/cookies.html">Política de Cookies</a>.</p>
+      <div class="cookie-banner__actions">
+        <button class="btn btn--ghost btn--sm" type="button" data-cookie-reject>Rejeitar não-essenciais</button>
+        <button class="btn btn--primary btn--sm" type="button" data-cookie-accept>Aceitar</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { initWaitlistForms } from './assets/js/waitlist.js';
     initWaitlistForms();
   </script>
   <script type="module" src="assets/js/landing.js"></script>
+  <script type="module" src="assets/js/cookie-consent.js"></script>
 </body>
 </html>

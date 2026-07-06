@@ -480,6 +480,18 @@ summary.faq__q::after {
 .landing-footer__links a { color: var(--text-muted); text-decoration: none; }
 .landing-footer__links a:hover { color: var(--text); text-decoration: none; }
 
+/* --------------------------------------------------------- páginas legais --- */
+.legal-content { max-width: 760px; margin-inline: auto; padding-block: var(--sp-8); }
+.legal-content h1 { font-size: var(--fs-2xl); font-weight: var(--fw-700); letter-spacing: -0.02em; margin-bottom: var(--sp-2); }
+.legal-content h2 { font-size: var(--fs-xl); font-weight: var(--fw-700); margin: var(--sp-7) 0 var(--sp-3); }
+.legal-content p, .legal-content li { color: var(--text); line-height: 1.7; }
+.legal-content ul { padding-left: var(--sp-5); margin-bottom: var(--sp-4); }
+.legal-content__updated { color: var(--text-muted); font-size: var(--fs-sm); margin-bottom: var(--sp-6); }
+.legal-content__notice {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: var(--sp-4); font-size: var(--fs-sm); color: var(--text-muted); margin-bottom: var(--sp-6);
+}
+
 /* --------------------------------------------------------- utilitário ---- */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
