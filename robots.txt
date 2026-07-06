@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /app.html
+Disallow: /entrar.html
+Disallow: /api/
+
+Sitemap: https://harmon-ia-rouge.vercel.app/sitemap.xml

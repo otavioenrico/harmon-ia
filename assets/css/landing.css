@@ -270,6 +270,11 @@
 .section__title { font-size: var(--fs-2xl); font-weight: var(--fw-700); margin-bottom: var(--sp-2); text-wrap: balance; }
 .section__subtitle { color: var(--text-muted); font-size: var(--fs-base); }
 
+/* ------------------------------------------------------------- erro 404/500 --- */
+.error-page { max-width: 480px; text-align: center; padding-block: var(--sp-8); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+.error-page__code { font-size: var(--fs-2xl); font-weight: var(--fw-700); color: var(--text-muted); margin: 0; }
+.error-page .btn { margin-top: var(--sp-3); }
+
 .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-5); }
 .feature {
   display: flex; flex-direction: column; gap: var(--sp-3);
@@ -325,6 +330,14 @@
 .solution-card__list { display: flex; flex-direction: column; gap: var(--sp-2); font-size: var(--fs-sm); }
 .solution-card__list li { display: flex; gap: var(--sp-2); align-items: flex-start; color: var(--text); }
 .solution-card__list svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: var(--text-muted); }
+
+/* no desktop o card estica na altura da imagem e o texto+lista descem pra base,
+   deixando o título fixo no topo (respiro entre título e corpo). */
+@media (min-width: 900px) {
+  .solution-card { align-items: stretch; }
+  .solution-card__body { display: flex; flex-direction: column; }
+  .solution-card__body .solution-card__title { margin-bottom: auto; }
+}
 
 /* moldura estilo "janela flutuante sobre gradiente suave": a screenshot fica
    emoldurada num painel com tint da marca, cantos arredondados e sombra —
