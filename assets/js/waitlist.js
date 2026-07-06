@@ -13,6 +13,8 @@ export function initWaitlistForms(root = document) {
   root.querySelectorAll('form[data-waitlist]').forEach(wireForm);
 }
 
+initWaitlistForms();
+
 function wireForm(form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
