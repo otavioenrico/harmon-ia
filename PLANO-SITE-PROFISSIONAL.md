@@ -4,6 +4,12 @@ _Base: `docs/DIAGNOSTICO-SITE.md` (04/07/2026). Arquitetura mantida: HTML/CSS/JS
 
 **Deploy real:** `harmon-ia-rouge.vercel.app` · **Repo:** `github.com/otavioenrico/harmon-ia`
 
+> **⚠️ STANDBY — marca, logotipo e domínio vão mudar.** Não hardcodear nome final,
+> razão social nem domínio em nenhuma fase. Onde for inevitável, usar o nome atual
+> ("Harmon IA") como valor temporário OU placeholder `[PREENCHER]`, e listar todos
+> os pontos tocados para o rename/rebrand global depois. Canonical/sitemap/OG seguem
+> com `harmon-ia-rouge.vercel.app` provisório.
+
 ## Como executar
 Trabalhar **uma fase por vez, na ordem**. Ao fim de cada fase: rodar os testes de aceite da fase, fazer `git add -A && git commit` com mensagem clara, e **parar para reportar** (não emendar na próxima sem sinal verde). Não commitar segredos. Manter tudo em PT-BR.
 
@@ -98,7 +104,7 @@ Trabalhar **uma fase por vez, na ordem**. Ao fim de cada fase: rodar os testes d
 ## Registro de progresso
 _(o agente do terminal atualiza aqui ao fim de cada fase; Otávio cola no chat para acompanhamento)_
 
-- [x] Fase 1 — commit: `fd3fb87`
-- [ ] Fase 2 — commit: `______`
+- [x] Fase 1 — commit: `fd3fb87` (doc `b6acbe4`). Hero corrigido (removido data-reveal do conteúdo above-the-fold); 404/500 da marca; favicon/ícones gerados (monograma "H" — provisório, some no rebrand); robots.txt; sitemap.xml; canonical + theme-color nas páginas. Domínio provisório `harmon-ia-rouge.vercel.app`.
+- [x] Fase 2 — commit: `78e2194`. privacidade/termos/cookies.html (rascunho, placeholders `[PREENCHER]`, revisão jurídica pendente); links legais no rodapé de todas as páginas; banner de cookies (localStorage, gancho no-op p/ Fase 4); meta tags (description/OG/Twitter) completas em todas as páginas públicas + og-image.png dedicada (1200x630, 32KB).
 - [ ] Fase 3 — commit: `______`
 - [ ] Fase 4 — commit: `______`
