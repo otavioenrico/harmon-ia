@@ -98,7 +98,7 @@ Trabalhar **uma fase por vez, na ordem**. Ao fim de cada fase: rodar os testes d
 ## Registro de progresso
 _(o agente do terminal atualiza aqui ao fim de cada fase; Otávio cola no chat para acompanhamento)_
 
-- [ ] Fase 1 — commit: `______`
+- [x] Fase 1 — commit: `fd3fb87`
 - [ ] Fase 2 — commit: `______`
 - [ ] Fase 3 — commit: `______`
 - [ ] Fase 4 — commit: `______`
