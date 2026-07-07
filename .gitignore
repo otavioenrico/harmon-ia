@@ -19,6 +19,3 @@ credenciais/
 # tooling local (Cowork/Claude/Codex)
 .claude/
 .codex/
-
-# imagem-fonte pesada do hero (usamos o .webp gerado; PNG fica só local)
-assets/img/hero-banner.png

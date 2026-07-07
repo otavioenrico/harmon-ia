@@ -1,6 +1,6 @@
 # Plano — Deixar o site profissional (SEO, legal, segurança, PWA)
 
-_Base: `docs/DIAGNOSTICO-SITE.md` (04/07/2026). Arquitetura mantida: HTML/CSS/JS vanilla, sem build, Vercel. Nenhuma tarefa muda a arquitetura — só adiciona arquivos estáticos, meta tags e headers._
+_Base: `DIAGNOSTICO-SITE.md` (04/07/2026). Arquitetura mantida: HTML/CSS/JS vanilla, sem build, Vercel. Nenhuma tarefa muda a arquitetura — só adiciona arquivos estáticos, meta tags e headers._
 
 **Deploy real:** `harmon-ia-rouge.vercel.app` · **Repo:** `github.com/otavioenrico/harmon-ia`
 
