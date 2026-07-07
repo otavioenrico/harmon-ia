@@ -145,7 +145,8 @@
 .badge--success { background: var(--success-soft); color: var(--success); }
 .badge--warning { background: var(--warning-soft); color: var(--warning); }
 .badge--danger  { background: var(--danger-soft);  color: var(--danger); }
-.badge--muted   { background: var(--surface-2);    color: var(--text-faint); }
+/* text-faint aqui reprovava contraste AA (4.12:1) sobre --surface-2; text-muted passa (5.7:1) */
+.badge--muted   { background: var(--surface-2);    color: var(--text-muted); }
 
 /* -------------------------------------------------------------- tabelas --- */
 /* overflow-x: tabela larga rola pro lado em vez de esmagar as colunas */

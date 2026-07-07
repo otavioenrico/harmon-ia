@@ -32,13 +32,19 @@ if (landingHeader) {
   window.addEventListener('scroll', updateHeaderScrolled, { passive: true });
 }
 
-// menu mobile: fecha ao clicar num link ou ao rolar/redimensionar
+// menu mobile: fecha ao clicar num link, ao rolar/redimensionar ou com Esc
+// (Esc devolve o foco ao gatilho — senão ele fica "solto" atrás do menu fechado)
 const mobileNav = document.querySelector('.landing-nav-mobile');
 if (mobileNav) {
   const close = () => { mobileNav.open = false; };
   mobileNav.querySelectorAll('a').forEach((a) => a.addEventListener('click', close));
   window.addEventListener('scroll', close, { passive: true });
   window.addEventListener('resize', close);
+  mobileNav.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !mobileNav.open) return;
+    close();
+    mobileNav.querySelector('summary').focus();
+  });
 }
 
 // FAQ accordion animado: .is-open controla o grid-template-rows (motion.css).

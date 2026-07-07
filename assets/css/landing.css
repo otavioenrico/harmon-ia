@@ -87,7 +87,8 @@
 .wordmark { font-size: var(--fs-lg); font-weight: var(--fw-700); color: var(--text); text-decoration: none; }
 
 .landing-nav { display: flex; align-items: center; gap: var(--sp-5); }
-.landing-nav a { color: var(--text-muted); font-weight: var(--fw-500); text-decoration: none; }
+/* padding-block garante alvo de toque >=24px (WCAG 2.5.8) sem alterar o gap visual do texto */
+.landing-nav a { color: var(--text-muted); font-weight: var(--fw-500); text-decoration: none; padding-block: var(--sp-2); }
 .landing-nav a:hover, .landing-nav a[aria-current="page"] { color: var(--text); text-decoration: none; }
 
 .landing-header__actions { display: flex; align-items: center; gap: var(--sp-3); }
@@ -477,7 +478,8 @@ summary.faq__q::after {
   color: var(--text-muted); font-size: var(--fs-sm);
 }
 .landing-footer__links { display: flex; gap: var(--sp-4); flex-wrap: wrap; }
-.landing-footer__links a { color: var(--text-muted); text-decoration: none; }
+/* padding-block garante alvo de toque >=24px (WCAG 2.5.8) sem alterar o gap visual do texto */
+.landing-footer__links a { color: var(--text-muted); text-decoration: none; padding-block: var(--sp-2); }
 .landing-footer__links a:hover { color: var(--text); text-decoration: none; }
 
 /* --------------------------------------------------------- páginas legais --- */
