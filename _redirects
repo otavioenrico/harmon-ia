@@ -1,2 +1,4 @@
-/app /app.html 200
+# /app NÃO precisa de regra: o Cloudflare já serve /app.html quando se pede /app
+# (clean URLs). Uma regra explícita /app -> /app.html cria loop com esse comportamento.
+# Só /auth/callback precisa de rewrite (não existe arquivo auth/callback.html).
 /auth/callback /entrar.html 200
