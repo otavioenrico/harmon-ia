@@ -57,7 +57,11 @@ const moduleCache = {};
 })();
 
 async function loadSettings() {
-  const { data } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).maybeSingle();
+  // Segurança: NÃO trazer google_refresh_token para o browser — colunas explícitas
+  // (o token vive só no servidor, via /api/google-refresh sob RLS).
+  const { data } = await supabase.from('user_settings')
+    .select('id, user_id, theme, accent, whatsapp_number, sync_contacts, backup_enabled, created_at, updated_at')
+    .eq('user_id', session.user.id).maybeSingle();
   return data || { theme: 'light' };
 }
 
