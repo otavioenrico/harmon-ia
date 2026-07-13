@@ -119,10 +119,17 @@ funcionarem. É a parte mais cheia de telas — vá com calma.
 1. Menu **Authentication → Providers → Google** → ative → cole o
    `GOOGLE_CLIENT_ID` e o `GOOGLE_CLIENT_SECRET` → Salvar.
 2. Menu **Authentication → URL Configuration**:
-   - **Site URL** = seu `DOMINIO_VERCEL` (ex.: `https://harmon-ia.vercel.app`).
-   - **Redirect URLs** → **Add URL** duas vezes:
+   - **Site URL** = seu domínio de produção.
+   - **Redirect URLs** → **Add URL**:
      - `http://localhost:8000/`
-     - `https://SEU-DOMINIO-VERCEL/`  ← **com** a barra no final.
+     - `https://SEU-DOMINIO/`  ← **com** a barra no final.
+     - `https://SEU-DOMINIO/**`  ← curinga, cobre `/app`, `/entrar.html` etc.
+
+> ⚠️ **Ao trocar de domínio de hosting, refaça este passo.** Se o domínio de
+> produção não estiver nas Redirect URLs, o Supabase ignora o `redirectTo` e o
+> login com Google volta pra tela de entrar sem criar sessão.
+> **Produção atual (13/07/2026):** `https://harmon-ia.otavio-projects.workers.dev`
+> (Cloudflare Workers — migrado da Vercel).
 
 **5b. No código (o arquivo de configuração do site):**
 1. Duplique `assets/js/config.example.js` com o nome `assets/js/config.js`.

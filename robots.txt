@@ -4,4 +4,4 @@ Disallow: /app.html
 Disallow: /entrar.html
 Disallow: /api/
 
-Sitemap: https://harmon-ia-rouge.vercel.app/sitemap.xml
+Sitemap: https://harmon-ia.otavio-projects.workers.dev/sitemap.xml

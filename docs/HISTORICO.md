@@ -1383,3 +1383,36 @@ não deixa dado para trás).
 ### Pendente / próximo
 - PARTE 5 (`APRIMORAMENTOS-PENDENTES.md`): taxa da adquirente refletida como
   valor líquido no caixa.
+
+---
+
+## 2026-07-13 — Migração de hosting (Vercel → Cloudflare Workers) + fix do login
+
+**Domínio de produção mudou:** de `https://harmon-ia-rouge.vercel.app` (Vercel)
+para **`https://harmon-ia.otavio-projects.workers.dev`** (Cloudflare Workers).
+Commits: `93a018f` (migração), `35b31e6` (cron/lock), `9442d61` (fix `_redirects`).
+
+### Bug: login com Google voltava pra tela de entrar
+- **Sintoma:** após autorizar no Google, o usuário voltava pra `entrar.html` sem
+  sessão criada.
+- **Causa raiz:** a migração trocou o domínio, mas a config de OAuth do Supabase
+  continuava apontando só pro domínio antigo da Vercel. O `auth.js` pede
+  `redirectTo: ${location.origin}/` (= workers.dev). Como esse domínio **não
+  estava nas Redirect URLs do Supabase**, o Supabase caía no fallback (Site URL
+  antigo) e o `code` do PKCE voltava num domínio diferente de onde o
+  `code_verifier` foi guardado → a troca por sessão falhava em silêncio.
+- **Correção (painel Supabase → Authentication → URL Configuration):**
+  - Site URL = `https://harmon-ia.otavio-projects.workers.dev`
+  - Redirect URLs += `https://harmon-ia.otavio-projects.workers.dev/` e
+    `https://harmon-ia.otavio-projects.workers.dev/**`
+  - Google Cloud OAuth: o redirect real é o callback do Supabase (inalterado);
+    só mexer nas *Authorized JS origins* se o Google reclamar de origem.
+- **Sem mudança de código:** `redirectTo` usa `location.origin` dinâmico — o app
+  já é agnóstico de domínio. O que estava fora de sincronia era a config externa.
+
+### Também atualizado nesta rodada
+- Meta tags (`canonical`, `og:url`, `og:image`, `twitter:image`) de todas as
+  páginas HTML → novo domínio.
+- `sitemap.xml` e `robots.txt` → novo domínio.
+- `docs/SETUP.md` e `credenciais/CREDENCIAIS.md` → domínio de produção e nota de
+  "refazer o Passo 5 ao trocar de domínio".

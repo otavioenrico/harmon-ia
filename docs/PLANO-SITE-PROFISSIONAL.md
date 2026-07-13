@@ -2,7 +2,7 @@
 
 _Base: `DIAGNOSTICO-SITE.md` (04/07/2026). Arquitetura mantida: HTML/CSS/JS vanilla, sem build, Vercel. Nenhuma tarefa muda a arquitetura — só adiciona arquivos estáticos, meta tags e headers._
 
-**Deploy real:** `harmon-ia-rouge.vercel.app` · **Repo:** `github.com/otavioenrico/harmon-ia`
+**Deploy real:** `harmon-ia.otavio-projects.workers.dev` (Cloudflare Workers, desde 13/07/2026 — antes `harmon-ia-rouge.vercel.app`) · **Repo:** `github.com/otavioenrico/harmon-ia`
 
 > **⚠️ STANDBY — marca, logotipo e domínio vão mudar.** Não hardcodear nome final,
 > razão social nem domínio em nenhuma fase. Onde for inevitável, usar o nome atual
