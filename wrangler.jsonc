@@ -16,7 +16,7 @@
 
   // Backup semanal (domingo 06:00 UTC) — roda o handler scheduled() do worker.
   "triggers": {
-    "crons": ["0 6 * * 0"]
+    "crons": ["0 6 * * SUN"]
   },
 
   // Variável pública (a anon key já é pública; o resto vai como SECRET no painel).
