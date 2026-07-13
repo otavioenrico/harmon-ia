@@ -1,0 +1,7 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://esm.sh 'sha256-/x7W7R75k8Roq0WaVRQX9blP4OufE5xbAdzklGxsgpw='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://cheglxwbposkrwwxdeam.supabase.co; connect-src 'self' https://cheglxwbposkrwwxdeam.supabase.co https://www.googleapis.com https://sheets.googleapis.com https://people.googleapis.com https://esm.sh; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'

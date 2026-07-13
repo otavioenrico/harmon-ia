@@ -1,0 +1,26 @@
+{
+  // Config do Cloudflare Worker do Harmon IA (site estático + API + cron).
+  // Deploy automático via Git integration (Workers Builds) a partir do GitHub.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "harmon-ia",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-04-01",
+
+  // Serve os arquivos estáticos do repositório. O que NÃO deve ser servido
+  // (código-fonte, db/, docs/, api/ antigo do Vercel) está no .assetsignore.
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page"
+  },
+
+  // Backup semanal (domingo 06:00 UTC) — roda o handler scheduled() do worker.
+  "triggers": {
+    "crons": ["0 6 * * 0"]
+  },
+
+  // Variável pública (a anon key já é pública; o resto vai como SECRET no painel).
+  "vars": {
+    "SUPABASE_URL": "https://cheglxwbposkrwwxdeam.supabase.co"
+  }
+}
