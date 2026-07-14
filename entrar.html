@@ -2,6 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function () {
+      var saved = localStorage.getItem('harmon:lang');
+      var lang = (saved === 'pt' || saved === 'en') ? saved : ((navigator.language || '').startsWith('pt') ? 'pt' : 'en');
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="light dark" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
@@ -33,6 +40,7 @@
   <link rel="stylesheet" href="assets/css/theme.css" />
   <link rel="stylesheet" href="assets/css/cookie-banner.css" />
   <link rel="stylesheet" href="assets/css/motion.css" />
+  <link rel="stylesheet" href="assets/css/i18n.css" />
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -40,51 +48,57 @@
     <div class="login-card">
       <!-- coluna esquerda: formulário -->
       <section class="login-form">
-        <h1 class="sr-only">Entrar — Harmon IA</h1>
+        <h1 class="sr-only" data-i18n="entrar.title">Entrar — Harmon IA</h1>
+        <div class="login-form__topbar">
+          <div class="lang-switch" role="group" aria-label="Idioma / Language">
+            <button type="button" class="lang-switch__btn" data-lang-btn="pt" aria-pressed="true">PT</button>
+            <button type="button" class="lang-switch__btn" data-lang-btn="en" aria-pressed="false">EN</button>
+          </div>
+        </div>
         <div class="login__logo">Harmon&nbsp;<b>IA</b></div>
-        <p class="login-form__sub">Gestão inteligente para saúde estética.</p>
+        <p class="login-form__sub" data-i18n="entrar.subtitle">Gestão inteligente para saúde estética.</p>
 
         <!-- Rodada 6: e-mail/senha são só visuais — a auth real é 100% Google.
              Submeter mostra um toast "Em breve"; nada de validação/fluxo aqui. -->
         <form id="login-form" novalidate>
           <div class="field">
-            <label for="lf-email">E-mail</label>
-            <input class="input" id="lf-email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com" spellcheck="false" />
+            <label for="lf-email" data-i18n="entrar.emailLabel">E-mail</label>
+            <input class="input" id="lf-email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com" spellcheck="false" data-i18n-attr="placeholder:entrar.emailPlaceholder" />
           </div>
           <div class="field">
             <div class="login-form__labelrow">
-              <label for="lf-pass">Senha</label>
-              <a href="#" id="lf-forgot">Esqueceu a senha?</a>
+              <label for="lf-pass" data-i18n="entrar.passLabel">Senha</label>
+              <a href="#" id="lf-forgot" data-i18n="entrar.forgotLink">Esqueceu a senha?</a>
             </div>
             <div class="login-form__pass">
               <input class="input" id="lf-pass" name="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-              <button type="button" id="lf-eye" aria-label="Mostrar senha">
+              <button type="button" id="lf-eye" aria-label="Mostrar senha" data-i18n-attr="aria-label:entrar.eyeAria">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
           </div>
-          <button class="btn btn--primary btn--block" type="submit">Entrar&nbsp;→</button>
+          <button class="btn btn--primary btn--block" type="submit" data-i18n="entrar.submitBtn">Entrar&nbsp;→</button>
         </form>
 
-        <div class="login-form__divider"><span>ou</span></div>
+        <div class="login-form__divider"><span data-i18n="entrar.divider">ou</span></div>
 
         <button id="google" class="btn btn-google">
           <svg viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
-          Entrar com Google
+          <span data-i18n="entrar.googleBtn">Entrar com Google</span>
         </button>
 
-        <p class="login-form__signup">Ainda não tem conta? <a href="#" id="lf-signup">Criar conta</a></p>
-        <p class="login-form__signup"><a href="/privacidade.html">Privacidade</a> · <a href="/termos.html">Termos</a> · <a href="/cookies.html">Cookies</a></p>
+        <p class="login-form__signup"><span data-i18n="entrar.signupText">Ainda não tem conta?</span> <a href="#" id="lf-signup" data-i18n="entrar.signupLink">Criar conta</a></p>
+        <p class="login-form__signup"><a href="/privacidade.html" data-i18n="common.footerPrivacy">Privacidade</a> · <a href="/termos.html" data-i18n="common.footerTerms">Termos</a> · <a href="/cookies.html" data-i18n="common.footerCookies">Cookies</a></p>
       </section>
     </div>
   </main>
 
-  <div id="cookie-banner" class="cookie-banner" role="region" aria-label="Aviso de cookies">
+  <div id="cookie-banner" class="cookie-banner" role="region" aria-label="Aviso de cookies" data-i18n-attr="aria-label:common.cookieAriaLabel">
     <div class="cookie-banner__inner">
-      <p>Usamos cookies essenciais para login e sessão. Leia nossa <a href="/cookies.html">Política de Cookies</a>.</p>
+      <p><span data-i18n="common.cookieText">Usamos cookies essenciais para login e sessão. Leia nossa</span> <a href="/cookies.html" data-i18n="common.cookieLink">Política de Cookies</a>.</p>
       <div class="cookie-banner__actions">
-        <button class="btn btn--ghost btn--sm" type="button" data-cookie-reject>Rejeitar não-essenciais</button>
-        <button class="btn btn--primary btn--sm" type="button" data-cookie-accept>Aceitar</button>
+        <button class="btn btn--ghost btn--sm" type="button" data-cookie-reject data-i18n="common.cookieReject">Rejeitar não-essenciais</button>
+        <button class="btn btn--primary btn--sm" type="button" data-cookie-accept data-i18n="common.cookieAccept">Aceitar</button>
       </div>
     </div>
   </div>
@@ -92,5 +106,11 @@
   <script type="module" src="assets/js/entrar.js"></script>
   <script type="module" src="assets/js/landing.js"></script>
   <script type="module" src="assets/js/cookie-consent.js"></script>
+  <script type="module">
+    import common from '/assets/js/i18n/common.js';
+    import page from '/assets/js/i18n/entrar.js';
+    import { initI18n } from '/assets/js/i18n.js';
+    initI18n({ ...common, ...page });
+  </script>
 </body>
 </html>

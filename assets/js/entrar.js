@@ -5,6 +5,7 @@
 import { supabase } from './supabase.js';
 import { ensureSettings, signInWithGoogle, isAllowed } from './auth.js';
 import { toast } from './utils.js';
+import { t } from './i18n.js';
 
 const btn = document.getElementById('google');
 btn.addEventListener('click', async () => {
@@ -14,7 +15,7 @@ btn.addEventListener('click', async () => {
 });
 
 // e-mail/senha e "esqueci": só visuais nesta rodada
-const soon = (e) => { e.preventDefault(); toast('Em breve — por enquanto, entre com o Google.', 'warning'); };
+const soon = (e) => { e.preventDefault(); toast(t('entrar.toastSoon'), 'warning', 'entrar.toastSoon'); };
 document.getElementById('login-form').addEventListener('submit', soon);
 document.getElementById('lf-forgot').addEventListener('click', soon);
 // "criar conta": pré-lançamento, cadastro público bloqueado -> lista de espera
@@ -29,7 +30,7 @@ const eye = document.getElementById('lf-eye');
 eye.addEventListener('click', () => {
   const show = pass.type === 'password';
   pass.type = show ? 'text' : 'password';
-  eye.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+  eye.setAttribute('aria-label', show ? t('entrar.togglePasswordHide') : t('entrar.togglePasswordShow'));
   eye.classList.toggle('is-on', show);
 });
 
@@ -40,7 +41,7 @@ supabase.auth.onAuthStateChange(async (_event, session) => {
     done = true;
     if (!isAllowed(session.user.email)) {
       await supabase.auth.signOut();
-      toast('Estamos em desenvolvimento — entre na lista de espera.', 'warning');
+      toast(t('entrar.toastPrelaunch'), 'warning', 'entrar.toastPrelaunch');
       location.replace('/');
       return;
     }

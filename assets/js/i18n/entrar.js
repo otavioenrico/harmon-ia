@@ -1,0 +1,18 @@
+export default {
+  'entrar.title':           { pt: 'Entrar — Harmon IA', en: 'Log in — Harmon IA' },
+  'entrar.subtitle':        { pt: 'Gestão inteligente para saúde estética.', en: 'Smart management for beauty and aesthetics.' },
+  'entrar.emailLabel':      { pt: 'E-mail', en: 'Email' },
+  'entrar.emailPlaceholder':{ pt: 'voce@exemplo.com', en: 'you@example.com' },
+  'entrar.passLabel':       { pt: 'Senha', en: 'Password' },
+  'entrar.forgotLink':      { pt: 'Esqueceu a senha?', en: 'Forgot your password?' },
+  'entrar.eyeAria':         { pt: 'Mostrar senha', en: 'Show password' },
+  'entrar.submitBtn':       { pt: 'Entrar →', en: 'Log in →' },
+  'entrar.divider':         { pt: 'ou', en: 'or' },
+  'entrar.googleBtn':       { pt: 'Entrar com Google', en: 'Sign in with Google' },
+  'entrar.signupText':      { pt: 'Ainda não tem conta?', en: "Don't have an account?" },
+  'entrar.signupLink':      { pt: 'Criar conta', en: 'Create account' },
+  'entrar.toastSoon':       { pt: 'Em breve — por enquanto, entre com o Google.', en: 'Coming soon — for now, sign in with Google.' },
+  'entrar.togglePasswordShow': { pt: 'Mostrar senha', en: 'Show password' },
+  'entrar.togglePasswordHide': { pt: 'Ocultar senha', en: 'Hide password' },
+  'entrar.toastPrelaunch':  { pt: 'Estamos em desenvolvimento — entre na lista de espera.', en: "We're still in development — join the waitlist." },
+};

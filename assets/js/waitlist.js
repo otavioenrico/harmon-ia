@@ -6,6 +6,7 @@
 // ============================================================================
 import { supabase } from './supabase.js';
 import { toast } from './utils.js';
+import { t } from './i18n.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -22,7 +23,7 @@ function wireForm(form) {
 
     const emailInput = form.querySelector('input[type="email"]');
     const email = emailInput?.value.trim().toLowerCase();
-    if (!email || !EMAIL_RE.test(email)) { toast('Não consegui salvar seu e-mail. Confere e tenta de novo?', 'error'); return; }
+    if (!email || !EMAIL_RE.test(email)) { toast(t('common.waitlistError'), 'error', 'common.waitlistError'); return; }
 
     const btn = form.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
@@ -33,10 +34,10 @@ function wireForm(form) {
 
     if (error) {
       console.error('[waitlist]', error);
-      toast('Não consegui salvar seu e-mail. Confere e tenta de novo?', 'error');
+      toast(t('common.waitlistError'), 'error', 'common.waitlistError');
       if (btn) btn.disabled = false;
       return;
     }
-    form.innerHTML = '<p class="waitlist__done">Pronto! Você está na lista. Avisamos assim que abrir uma vaga.</p>';
+    form.innerHTML = `<p class="waitlist__done" data-i18n="common.waitlistSuccess">${t('common.waitlistSuccess')}</p>`;
   });
 }

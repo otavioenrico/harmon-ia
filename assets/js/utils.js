@@ -121,11 +121,12 @@ function animateOut(el, done) {
 }
 
 // ----------------------------------------------------------------- toast ----
-export function toast(message, type = 'success') {
+export function toast(message, type = 'success', i18nKey) {
   let box = document.querySelector('.toasts');
   if (!box) { box = h('<div class="toasts"></div>'); document.body.appendChild(box); }
   while (box.children.length >= 3) box.firstElementChild.remove();
   const t = h(`<div class="toast toast--${type}">${esc(message)}</div>`);
+  if (i18nKey) t.setAttribute('data-i18n', i18nKey);
   box.appendChild(t);
   setTimeout(() => animateOut(t, () => t.remove()), 4000);
 }

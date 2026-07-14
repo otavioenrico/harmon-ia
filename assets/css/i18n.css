@@ -1,0 +1,31 @@
+/* ============================================================================
+   i18n.css — toggle de idioma PT/EN (header desktop + painel mobile)
+   ============================================================================ */
+
+.lang-switch { display: inline-flex; align-self: flex-start; gap: 2px; border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 2px; }
+.lang-switch__btn {
+  font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-600);
+  padding: 4px 10px; border: 0; background: transparent; color: var(--text-muted);
+  border-radius: var(--radius-pill); cursor: pointer; min-height: 32px;
+}
+.lang-switch__btn[aria-pressed="true"] { background: var(--surface); color: var(--text); }
+.lang-switch__btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+
+@media (max-width: 900px) {
+  /* alvo de toque >= 44px no painel mobile (WCAG 2.2) */
+  .lang-switch__btn { min-height: 44px; padding: 8px 14px; }
+}
+
+/* header transparente sobre o hero (home, antes de rolar): mesmo tratamento
+   visual do .btn--ghost nesse estado — texto/borda claros sobre a imagem.
+   Só o toggle do header desktop (__actions); o do painel mobile fica sempre
+   sobre fundo branco (.landing-nav-mobile__panel), não pode herdar essa cor. */
+.page-home .landing-header:not(.is-scrolled) .landing-header__actions .lang-switch { border-color: var(--hero-border); }
+.page-home .landing-header:not(.is-scrolled) .landing-header__actions .lang-switch__btn { color: var(--color-white); }
+.page-home .landing-header:not(.is-scrolled) .landing-header__actions .lang-switch__btn[aria-pressed="true"] {
+  background: rgb(from var(--color-white) r g b / 0.16); color: var(--color-white);
+}
+
+/* entrar.html não tem header — toggle fica dentro do card (fluxo normal,
+   sem position:absolute — evita sobrepor o card em telas estreitas). */
+.login-form__topbar { display: flex; justify-content: flex-end; margin-bottom: var(--sp-3); }

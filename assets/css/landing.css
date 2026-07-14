@@ -173,6 +173,28 @@
   .lp-hero-full__overlay { padding-block: var(--sp-6); }
 }
 
+/* celular: solta a altura fixa, da respiro vertical e empilha os CTAs
+   pra o hero nao ficar amontoado em telas estreitas */
+@media (max-width: 600px) {
+  .lp-hero-full {
+    min-height: auto;
+    padding-block: var(--sp-8);
+  }
+  .lp-hero-full__overlay { padding-block: 0; }
+  .lp-hero__title {
+    font-size: clamp(1.75rem, 7.5vw, 2.25rem);
+    margin-bottom: var(--sp-3);
+  }
+  .lp-hero__subtitle {
+    font-size: var(--fs-base);
+    margin-bottom: var(--sp-5);
+  }
+  .lp-hero__actions .waitlist-form { max-width: 100%; }
+  /* botoes um sobre o outro, largura cheia - nada de espremer lado a lado */
+  .lp-hero__actions .waitlist-form__actions { flex-direction: column; align-items: stretch; }
+  .lp-hero__actions .waitlist-form__actions .btn { width: 100%; }
+}
+
 /* ------------------------------------------------------- waitlist form --- */
 .waitlist-form { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 .waitlist-form .input { width: auto; flex: 1 1 240px; }
