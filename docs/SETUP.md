@@ -13,7 +13,7 @@ SUPABASE_REF      = __________            (a parte antes de .supabase.co)
 SUPABASE_ANON_KEY = eyJ...
 GOOGLE_CLIENT_ID  = __________.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET = GOCSPX-__________
-DOMINIO_VERCEL    = https://__________.vercel.app   (você descobre no Passo 3)
+DOMINIO_PROD      = https://__________.workers.dev   (você descobre no Passo 3)
 ```
 
 ---
@@ -57,22 +57,25 @@ DOMINIO_VERCEL    = https://__________.vercel.app   (você descobre no Passo 3)
 
 ---
 
-## Passo 3 — Vercel (publicar o site)
+## Passo 3 — Cloudflare Workers (publicar o site)
 
-1. Crie conta em https://vercel.com → **Continue with GitHub** (use a mesma
-   conta do Passo 2). Autorize.
-2. **Add New… → Project** → escolha o repositório `harmon-ia` (ele aparece
-   depois que eu subir no Passo 2).
-3. Não mexa em nada das configurações de build (é site estático, sem build).
-   Clique **Deploy** e espere.
-4. Quando terminar, a Vercel mostra o endereço público, algo como
-   `harmon-ia.vercel.app`. **Anote ele como `DOMINIO_VERCEL`** — você vai usar
-   nos próximos passos. ⚠️ Se o nome `harmon-ia` já estiver em uso, a Vercel
-   coloca um sufixo aleatório (ex.: `harmon-ia-xk2p.vercel.app`). Use **o que
-   ela te deu**, não o que você imaginou.
+O site + a API + o backup rodam num único **Cloudflare Worker**, com deploy
+automático a partir do GitHub (Workers Builds). Não há etapa de build: o
+`wrangler.jsonc` já diz o que servir.
+
+1. Crie conta em https://dash.cloudflare.com → confirme o e-mail.
+2. Menu lateral **Workers & Pages → Create → Workers → Import a repository**
+   (Connect to Git) → autorize o GitHub e escolha o repositório `harmon-ia`
+   (aparece depois que eu subir no Passo 2).
+3. A Cloudflare lê o `wrangler.jsonc` sozinha (nome `harmon-ia`, `main`
+   `worker/index.js`, assets estáticos, cron). Não precisa mexer em build
+   command. Clique **Deploy** e espere.
+4. Quando terminar, a Cloudflare mostra o endereço público, algo como
+   `harmon-ia.SEU-SUBDOMINIO.workers.dev`. **Anote ele como `DOMINIO_PROD`** —
+   você vai usar nos próximos passos. Use **o que ela te deu**, exatamente.
 
 > O site vai abrir **quebrado/sem login** por enquanto — normal. Falta ligar o
-> Google (Passos 4 e 5).
+> Google (Passos 4 e 5) e setar os Secrets (Passo 6).
 
 ---
 
@@ -99,8 +102,8 @@ funcionarem. É a parte mais cheia de telas — vá com calma.
    - Tipo de aplicativo: **Aplicativo da Web**.
    - **Origens JavaScript autorizadas** → Adicionar URI, uma por linha:
      - `http://localhost:8000`
-     - o seu `DOMINIO_VERCEL` (ex.: `https://harmon-ia.vercel.app`) — **sem**
-       barra no final.
+     - o seu `DOMINIO_PROD` (ex.: `https://harmon-ia.SEU-SUBDOMINIO.workers.dev`)
+       — **sem** barra no final.
    - **URIs de redirecionamento autorizados** → Adicionar:
      - `https://SUPABASE_REF.supabase.co/auth/v1/callback`
        (troque `SUPABASE_REF` pelo seu — ex.:
@@ -147,30 +150,35 @@ funcionarem. É a parte mais cheia de telas — vá com calma.
 
 ---
 
-## Passo 6 — Variáveis secretas na Vercel (a agenda depende disso)
+## Passo 6 — Secrets no Cloudflare Worker (a agenda depende disso)
 
-A função que renova o acesso à agenda do Google roda no servidor da Vercel e
-precisa de 4 variáveis. **Sem elas, login funciona mas a Agenda não.**
+O Worker renova o acesso à agenda do Google e roda o backup — precisa das
+credenciais como **Secrets**. **Sem elas, login funciona mas a Agenda não.**
 
-1. Na Vercel: seu projeto → **Settings → Environment Variables**.
-2. Adicione as 4 (Name → Value), deixando os 3 ambientes marcados:
+1. No painel: **Workers & Pages → harmon-ia → Settings → Variables and Secrets**.
+2. O `SUPABASE_URL` já vai como **variável pública** (definida no `wrangler.jsonc`).
+   Adicione os demais como **Secret** (Encrypt / Add secret):
 
-   | Name                   | Value                          |
-   |------------------------|--------------------------------|
-   | `GOOGLE_CLIENT_ID`     | seu Client ID                  |
-   | `GOOGLE_CLIENT_SECRET` | seu Client Secret              |
-   | `SUPABASE_URL`         | seu Project URL                |
-   | `SUPABASE_ANON_KEY`    | sua anon key                   |
+   | Nome                        | Valor                                   |
+   |-----------------------------|-----------------------------------------|
+   | `SUPABASE_ANON_KEY`         | sua anon key                            |
+   | `SUPABASE_SERVICE_ROLE_KEY` | service_role (Supabase → API) — secreta |
+   | `GOOGLE_CLIENT_ID`          | seu Client ID                           |
+   | `GOOGLE_CLIENT_SECRET`      | seu Client Secret                       |
 
-3. **Importante:** variáveis novas só valem depois de um novo deploy. Vá em
-   **Deployments → ⋯ no último → Redeploy**. (Ou, como você já vai me pedir pra
-   subir o `config.js`, o envio novo já redeploya sozinho.)
+   > `SUPABASE_SERVICE_ROLE_KEY` é a chave "secret" (NÃO a anon). O backup usa
+   > para ler os dados de cada usuária contornando a RLS. Fica só no servidor,
+   > nunca no frontend.
+
+3. **Importante:** Secrets novos valem no próximo deploy. Como você já vai me
+   pedir pra subir o `config.js`, o push novo redeploya sozinho (Workers Builds).
+   Se precisar forçar: **Deployments → Retry/Redeploy**.
 
 ---
 
 ## Passo 7 — Testar
 
-1. Abra seu `DOMINIO_VERCEL` no navegador.
+1. Abra seu `DOMINIO_PROD` no navegador.
 2. **Entrar com Google** → use o e-mail que você pôs em "Usuários de teste".
    O Google vai pedir permissão pra acessar o Calendar — aceite.
 3. Você cai no painel. Teste rápido nesta ordem:
@@ -194,11 +202,11 @@ precisa de 4 variáveis. **Sem elas, login funciona mas a Agenda não.**
 ```
 1. Supabase: criar projeto → copiar URL/anon → rodar schema.sql
 2. (GitHub: eu subo pra você — depois do passo 5)
-3. Vercel: importar repo → anotar o domínio .vercel.app
+3. Cloudflare: Workers & Pages → conectar repo → anotar o domínio .workers.dev
 4. Google Cloud: ativar Calendar API → tela de consentimento → criar credencial OAuth
 5. Supabase: colar credenciais Google + URL Config  |  criar config.js
-6. Vercel: 4 env vars + redeploy
-7. Testar no domínio .vercel.app
+6. Cloudflare: Secrets (anon, service_role, client id/secret) + redeploy
+7. Testar no domínio .workers.dev
 ```
 
 Onde travar, me chame com **o print/erro daquele passo** — não precisa
@@ -246,24 +254,22 @@ criar/editar/excluir cliente reflete automaticamente (se o toggle estiver ligado
 ## Integrações Google — Feature 4 (Backup automático semanal no Drive)
 
 Cada usuária liga/desliga em **Configurações → Dados → "Backup automático semanal"**
-(padrão desligado). Um cron semanal na Vercel varre só quem ligou e salva um JSON
-dos dados dela numa pasta "Harmon IA Backups" no Drive dela (mantém os 12 mais
-recentes). O botão **"Fazer backup no Drive agora"** roda na hora, sem esperar.
+(padrão desligado). Um **cron semanal do Cloudflare Worker** (handler `scheduled()`,
+domingos 06:00 UTC — definido em `wrangler.jsonc`) varre só quem ligou e salva um
+JSON dos dados dela numa pasta "Harmon IA Backups" no Drive dela (mantém os 12
+mais recentes). O botão **"Fazer backup no Drive agora"** roda na hora, sem esperar.
 
 ### Migração (Supabase SQL Editor)
     alter table public.user_settings add column if not exists backup_enabled boolean default false;
 
-### Duas variáveis novas na Vercel (Project → Settings → Environment Variables)
+### Secret necessário no Cloudflare (Worker → Settings → Variables and Secrets)
 - **SUPABASE_SERVICE_ROLE_KEY** — Supabase → Project Settings → API → `service_role`
-  (a chave "secret", NÃO a anon). O cron usa para ler os dados de cada usuária
+  (a chave "secret", NÃO a anon). O backup usa para ler os dados de cada usuária
   contornando a RLS. É secreta: fica só no servidor, nunca no frontend.
-- **CRON_SECRET** — um valor aleatório longo (ex.: gere com um gerenciador de
-  senhas). A Vercel envia como `Authorization: Bearer <valor>` nas chamadas do
-  cron; sem ele, o endpoint recusa tudo (evita disparo público).
 
-Depois de setar as duas, faça um novo deploy. O agendamento já está no
-`vercel.json` (`/api/backup`, domingos 06:00 UTC). No plano Hobby o cron roda no
-máximo 1×/dia — semanal cabe folgado.
+> O backup roda pelo próprio agendador do Cloudflare (handler interno), **não**
+> fica exposto por HTTP — por isso **não precisa** mais de `CRON_SECRET` (era
+> exigido na versão Vercel, onde o cron chamava um endpoint público).
 
 ### Testar sem esperar
 Ligue o toggle e clique em "Fazer backup no Drive agora" — deve aparecer a pasta

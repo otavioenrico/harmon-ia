@@ -1,14 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-i18n-page="sobre">
 <head>
   <meta charset="UTF-8" />
-  <script>
-    (function () {
-      var saved = localStorage.getItem('harmon:lang');
-      var lang = (saved === 'pt' || saved === 'en') ? saved : ((navigator.language || '').startsWith('pt') ? 'pt' : 'en');
-      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
-    })();
-  </script>
+  <script src="/assets/js/i18n-head.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="light dark" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
@@ -158,11 +152,6 @@
 
   <script type="module" src="assets/js/landing.js"></script>
   <script type="module" src="assets/js/cookie-consent.js"></script>
-  <script type="module">
-    import common from '/assets/js/i18n/common.js';
-    import page from '/assets/js/i18n/sobre.js';
-    import { initI18n } from '/assets/js/i18n.js';
-    initI18n({ ...common, ...page });
-  </script>
+  <script type="module" src="/assets/js/i18n/boot.js"></script>
 </body>
 </html>

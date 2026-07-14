@@ -3,7 +3,7 @@
 // Usado no backup manual ("Fazer backup no Drive agora"). ESPELHO/cofre: cria
 // arquivos do app; nada volta pro Supabase. Escopo drive.file (só arquivos do
 // app), token compartilhado do google-cal.js. O backup automático semanal roda
-// no servidor (api/backup.js), não aqui.
+// no servidor (worker/index.js), não aqui.
 // ============================================================================
 import { accessToken, NeedsReconnect } from './google-cal.js';
 

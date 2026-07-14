@@ -7,7 +7,7 @@
   "compatibility_date": "2026-04-01",
 
   // Serve os arquivos estáticos do repositório. O que NÃO deve ser servido
-  // (código-fonte, db/, docs/, api/ antigo do Vercel) está no .assetsignore.
+  // (código-fonte, db/, docs/, worker/) está no .assetsignore.
   "assets": {
     "directory": ".",
     "binding": "ASSETS",

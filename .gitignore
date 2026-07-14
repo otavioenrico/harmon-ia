@@ -1,13 +1,13 @@
 # config.js VAI pro git de propósito: a anon key é pública (RLS protege os dados),
-# e assim o deploy Vercel/GitHub funciona sem build. NÃO coloque segredos aqui —
-# o client_secret do Google fica só nas env vars da Vercel.
+# e assim o deploy no Cloudflare/GitHub funciona sem build. NÃO coloque segredos
+# aqui — o client_secret do Google fica só nos Secrets do Cloudflare Worker.
 
-# variáveis da função serverless
+# variáveis de ambiente locais
 .env
 .env*.local
 
-# vercel
-.vercel
+# cloudflare wrangler (cache/estado local, regenerável)
+.wrangler/
 
 # sistema
 .DS_Store
@@ -16,6 +16,9 @@ node_modules/
 # credenciais locais (NÃO versionar)
 credenciais/
 
-# tooling local (Cowork/Claude/Codex)
+# tooling local (Cowork/Claude/Codex e skills de design)
 .claude/
 .codex/
+.agents/
+.impeccable/
+graphify-out/
