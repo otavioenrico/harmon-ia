@@ -127,7 +127,7 @@ Depende das ondas 2–5. `worker/index.js` (rotas públicas), `booking/` novo, s
 
 ## 7. Estado (o orquestrador atualiza aqui)
 
-- [ ] Onda 1 — Site & posicionamento · branch `onda-1` · relatório: —
+- [x] Onda 1 — Site & posicionamento · branch `onda-1` · relatório: `docs/relatorios/onda-1.md` (2026-07-18, aguardando Gate 1)
 - [ ] Onda 2 — Fundação do app · branch `onda-2` · relatório: —
 - [ ] Onda 3 — Núcleo vertical · branch `onda-3` · relatório: —
 - [ ] Onda 4 — Financeiro · branch `onda-4` · relatório: —
