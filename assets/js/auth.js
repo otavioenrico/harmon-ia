@@ -8,22 +8,20 @@ const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar';
 const CONTACTS_SCOPE = 'https://www.googleapis.com/auth/contacts';        // People API (espelho de clientes)
 const DRIVE_SCOPE    = 'https://www.googleapis.com/auth/drive.file';        // só arquivos criados pelo app (Sheets/Drive)
 
-// Pré-lançamento: só e-mails aprovados entram no app.
-// TODO: migrar p/ tabela allowlist quando abrir beta.
-const ALLOWLIST = ['otavio.enrico@gmail.com', 'dratayanadomiciano@gmail.com', 'douglas.hille@gmail.com'];
-
-export function isAllowed(email) {
-  return !!email && ALLOWLIST.includes(email.toLowerCase());
-}
+// Pré-lançamento: o beta fechado é imposto no SERVIDOR (Supabase Auth →
+// "Allow new user signups" desligado). Conta nova volta do OAuth com
+// error_code=signup_disabled no hash — entrar.js mostra o aviso.
 
 // Inicia o OAuth. access_type=offline + prompt=consent são OBRIGATÓRIOS para
 // o Google devolver provider_refresh_token (sem eles, só vem token de ~1h).
+// redirectTo SEMPRE /entrar.html: é a única página que processa o retorno
+// (sessão OU erro) — precisa estar nas Redirect URLs do Supabase Auth.
 export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       scopes: `openid email profile ${CALENDAR_SCOPE} ${CONTACTS_SCOPE} ${DRIVE_SCOPE}`,
-      redirectTo: `${location.origin}/`,
+      redirectTo: `${location.origin}/entrar.html`,
       queryParams: { access_type: 'offline', prompt: 'consent' },
     },
   });

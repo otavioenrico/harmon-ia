@@ -10,7 +10,6 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="preconnect" href="https://cheglxwbposkrwwxdeam.supabase.co" />
-  <link rel="preconnect" href="https://esm.sh" />
   <link rel="preconnect" href="https://accounts.google.com" />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)" />
@@ -52,30 +51,8 @@
         <div class="login__logo">Harmon&nbsp;<b>IA</b></div>
         <p class="login-form__sub" data-i18n="entrar.subtitle">Gestão inteligente para saúde estética.</p>
 
-        <!-- Rodada 6: e-mail/senha são só visuais — a auth real é 100% Google.
-             Submeter mostra um toast "Em breve"; nada de validação/fluxo aqui. -->
-        <form id="login-form" novalidate>
-          <div class="field">
-            <label for="lf-email" data-i18n="entrar.emailLabel">E-mail</label>
-            <input class="input" id="lf-email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com" spellcheck="false" data-i18n-attr="placeholder:entrar.emailPlaceholder" />
-          </div>
-          <div class="field">
-            <div class="login-form__labelrow">
-              <label for="lf-pass" data-i18n="entrar.passLabel">Senha</label>
-              <a href="#" id="lf-forgot" data-i18n="entrar.forgotLink">Esqueceu a senha?</a>
-            </div>
-            <div class="login-form__pass">
-              <input class="input" id="lf-pass" name="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-              <button type="button" id="lf-eye" aria-label="Mostrar senha" data-i18n-attr="aria-label:entrar.eyeAria">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </div>
-          </div>
-          <button class="btn btn--primary btn--block" type="submit" data-i18n="entrar.submitBtn">Entrar&nbsp;→</button>
-        </form>
-
-        <div class="login-form__divider"><span data-i18n="entrar.divider">ou</span></div>
-
+        <!-- P0: campos e-mail/senha removidos até existir login por senha —
+             eram só visuais e induziam a digitar senha real num campo morto. -->
         <button id="google" class="btn btn-google">
           <svg viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
           <span data-i18n="entrar.googleBtn">Entrar com Google</span>

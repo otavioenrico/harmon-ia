@@ -10,7 +10,6 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="preconnect" href="https://cheglxwbposkrwwxdeam.supabase.co" />
-  <link rel="preconnect" href="https://esm.sh" />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)" />
   <link rel="canonical" href="https://harmon-ia.otavio-projects.workers.dev/" />
@@ -109,6 +108,9 @@
               <label class="sr-only" for="wl-hero-email" data-i18n="home.emailSrLabel">Seu e-mail</label>
               <input class="input" id="wl-hero-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" data-i18n-attr="placeholder:home.emailPlaceholder" />
               <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+              <!-- P0: anti-bot. Chave de TESTE (sempre passa, invisível) — trocar pela
+                   sitekey real do Turnstile junto com o secret no Worker. -->
+              <div class="cf-turnstile" data-sitekey="1x00000000000000000000BB"></div>
               <div class="waitlist-form__actions">
                 <button class="btn btn--primary" type="submit" data-i18n="home.ctaNotify">Quero ser avisado</button>
                 <a class="btn btn--ghost" href="/planos.html" data-i18n="home.plansLink">Planos e preços&nbsp;→</a>
@@ -329,6 +331,11 @@
     </div>
   </div>
 
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <!-- P0: Cloudflare Web Analytics — descomente e cole o token (dashboard →
+       Web Analytics → Add site). CSP já libera os domínios necessários.
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "COLE_O_TOKEN_AQUI"}'></script>
+  -->
   <script type="module" src="assets/js/waitlist.js"></script>
   <script type="module" src="assets/js/landing.js"></script>
   <script type="module" src="assets/js/cookie-consent.js"></script>

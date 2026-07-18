@@ -146,6 +146,9 @@
           <label class="sr-only" for="wl-planos-email" data-i18n="planos.emailSrLabel">Seu e-mail</label>
           <input class="input" id="wl-planos-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" data-i18n-attr="placeholder:planos.emailPlaceholder" />
           <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <!-- P0: anti-bot. Chave de TESTE (sempre passa, invisível) — trocar pela
+               sitekey real do Turnstile junto com o secret no Worker. -->
+          <div class="cf-turnstile" data-sitekey="1x00000000000000000000BB"></div>
           <button class="btn btn--primary" type="submit" data-i18n="planos.waitlistBtn">Quero ser avisado</button>
         </form>
       </div>
@@ -215,6 +218,11 @@
     </div>
   </div>
 
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <!-- P0: Cloudflare Web Analytics — descomente e cole o token (dashboard →
+       Web Analytics → Add site). CSP já libera os domínios necessários.
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "COLE_O_TOKEN_AQUI"}'></script>
+  -->
   <script type="module" src="assets/js/waitlist.js"></script>
   <script type="module" src="assets/js/landing.js"></script>
   <script type="module" src="assets/js/cookie-consent.js"></script>

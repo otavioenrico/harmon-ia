@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harmon IA — Simulador de Custos & Pricing</title>
+<style>
+  :root {
+    --bg: #faf8f6; --surface: #ffffff; --border: #e9e2de; --border-soft: #f1ece8;
+    --ink: #2b2226; --ink-2: #6b5c62; --ink-3: #9a8a90;
+    --accent: #a86b78; --accent-soft: #f6ecee;
+    --c1: #4f7fd6; --c2: #2f9d68; --c3: #9a5fc0; --c4: #b07a1f; --neg: #c23a52;
+    --shadow: 0 1px 2px rgba(43,34,38,.05), 0 8px 24px rgba(43,34,38,.06);
+  }
+  [data-theme="dark"] {
+    --bg: #201c1e; --surface: #2a2528; --border: #3d3539; --border-soft: #342e31;
+    --ink: #f0e9eb; --ink-2: #b8a9ae; --ink-3: #857a7e;
+    --accent: #c9939e; --accent-soft: #3a3034;
+    --c1: #6089de; --c2: #2fa76c; --c3: #a074d6; --c4: #c08a20; --neg: #e05a75;
+    --shadow: 0 1px 2px rgba(0,0,0,.25), 0 8px 24px rgba(0,0,0,.3);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; padding: 0 24px 70px; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  header { padding: 36px 0 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  h1 { font-size: 24px; letter-spacing: -.02em; } h1 span { color: var(--accent); }
+  header p { color: var(--ink-2); margin-top: 6px; max-width: 660px; font-size: 13.5px; }
+  .theme-btn { background: var(--surface); border: 1px solid var(--border); color: var(--ink-2);
+    border-radius: 10px; padding: 8px 14px; cursor: pointer; font: inherit; font-size: 13px; flex-shrink: 0; }
+
+  .cols { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; box-shadow: var(--shadow); }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin-bottom: 14px; }
+
+  .ctl { margin-bottom: 14px; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); margin-bottom: 4px; }
+  .ctl label b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .row2 .ctl label { flex-direction: column; gap: 2px; }
+  input[type="number"] { width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--ink); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 14px; }
+  .switch { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-2);
+    margin-bottom: 10px; cursor: pointer; }
+  .switch input { accent-color: var(--accent); width: 16px; height: 16px; }
+  hr { border: 0; border-top: 1px solid var(--border-soft); margin: 16px 0; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; box-shadow: var(--shadow); }
+  .tile .k { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  .tile .v { font-size: 21px; font-weight: 700; letter-spacing: -.02em; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 11.5px; color: var(--ink-2); margin-top: 2px; }
+  .tile .v.good { color: var(--c2); } .tile .v.bad { color: var(--neg); }
+
+  .bar { display: flex; gap: 2px; height: 24px; border-radius: 6px; overflow: hidden; margin: 8px 0 10px; }
+  .bar div { min-width: 3px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px 18px; font-size: 12.5px; color: var(--ink-2); }
+  .legend b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+  th { text-align: left; color: var(--ink-3); font-size: 11px; text-transform: uppercase;
+    letter-spacing: .05em; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--border-soft); font-variant-numeric: tabular-nums; }
+  td:first-child { color: var(--ink); } td:not(:first-child), th:not(:first-child) { text-align: right; }
+  .m-ok { color: var(--c2); font-weight: 600; } .m-low { color: var(--c4); font-weight: 600; } .m-neg { color: var(--neg); font-weight: 600; }
+
+  footer { color: var(--ink-3); font-size: 12px; margin-top: 22px; border-top: 1px solid var(--border-soft); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Harmon <span>IA</span> — Simulador de Custos & Pricing</h1>
+      <p>Mexa no mix de assinantes, nos preços e nas políticas — custo, margem e break-even recalculam na hora.
+      Consumo por segmento vem da simulação de 30 personas; preços de infra verificados em 18/07/2026
+      (detalhes em <code>ANALISE-CUSTOS-PRICING.md</code>).</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button">◐ Tema</button>
+  </header>
+
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h2>Assinantes por perfil</h2>
+        <div class="ctl"><label>Iniciante solo (~12 atend/mês) <b id="v-n0"></b></label><input type="range" id="n0" min="0" max="500" value="40"></div>
+        <div class="ctl"><label>Autônoma estabelecida (~49) <b id="v-n1"></b></label><input type="range" id="n1" min="0" max="500" value="40"></div>
+        <div class="ctl"><label>Intensa solo (~144) <b id="v-n2"></b></label><input type="range" id="n2" min="0" max="300" value="15"></div>
+        <div class="ctl"><label>Estúdio 2-3 (~311) <b id="v-n3"></b></label><input type="range" id="n3" min="0" max="200" value="4"></div>
+        <div class="ctl"><label>Clínica 4-6 (~528) <b id="v-n4"></b></label><input type="range" id="n4" min="0" max="100" value="1"></div>
+        <hr>
+        <h2>Preço dos planos (R$/mês)</h2>
+        <div class="row2">
+          <div class="ctl"><label>Começo</label><input type="number" id="p0" value="24.90" step="1" min="0"></div>
+          <div class="ctl"><label>Profissional</label><input type="number" id="p1" value="54.90" step="1" min="0"></div>
+          <div class="ctl"><label>Estúdio</label><input type="number" id="p2" value="99.90" step="1" min="0"></div>
+        </div>
+        <p style="font-size:11.5px;color:var(--ink-3)">Mapeamento: Iniciante → Começo · Estabelecida/Intensa → Profissional · Estúdio/Clínica → Estúdio</p>
+        <hr>
+        <h2>Políticas & câmbio</h2>
+        <label class="switch"><input type="checkbox" id="wa" checked> WhatsApp automático ativo (pós-P1)</label>
+        <label class="switch"><input type="checkbox" id="mktWa"> Aniversário/reativação via WhatsApp (senão: e-mail ≈ R$ 0)</label>
+        <div class="ctl"><label>Utility fora da janela grátis de 24h <b id="v-fj"></b></label><input type="range" id="fj" min="0" max="100" value="55"></div>
+        <div class="ctl"><label>Dólar (R$) <b id="v-usd"></b></label><input type="range" id="usd" min="4" max="7" value="5.4" step="0.1"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="tiles" id="tiles"></div>
+
+      <div class="card" style="margin-bottom:18px">
+        <h2>Composição do custo mensal</h2>
+        <div class="bar" id="bar" role="img" aria-label="Composição do custo mensal"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="card">
+        <h2>Por segmento (custo e margem unitários)</h2>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Segmento</th><th>Assin.</th><th>Plano</th><th>WhatsApp</th><th>Storage</th><th>Billing</th><th>Custo un.</th><th>Margem</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table></div>
+      </div>
+
+      <footer>
+        Premissas: utility R$ (0,0068 × dólar)/msg · marketing R$ (0,0625 × dólar)/msg · storage US$ 0,0213/GB
+        (fotos antes/depois ano-1 acumulado) · billing Asaas cartão recorrente 2,99% + R$ 0,49 ·
+        fixo = Supabase Pro US$ 25 (+Small &gt; 800 assin.) + Workers US$ 5 (&gt; 300) + Resend US$ 20 (&gt; ~1.000) + domínio R$ 40/ano.
+        Sem WhatsApp (pré-P1), o variável vira ≈ só storage. Modelo completo e fontes: ANALISE-CUSTOS-PRICING.md.
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script>
+// medianas por segmento (simulação 30 personas, conta de 12 meses)
+const SEG = [
+  { nome: 'Iniciante solo',        u: 26,   m: 7.5, gb: 0.03, plano: 0 },
+  { nome: 'Autônoma estabelecida', u: 156,  m: 17.5, gb: 0.17, plano: 1 },
+  { nome: 'Intensa solo',          u: 429,  m: 33,  gb: 0.52, plano: 1 },
+  { nome: 'Estúdio 2-3',           u: 961,  m: 50,  gb: 1.13, plano: 2 },
+  { nome: 'Clínica 4-6',           u: 1494, m: 108, gb: 1.83, plano: 2 },
+];
+const PLANOS = ['Começo', 'Profissional', 'Estúdio'];
+const UTIL_USD = 0.0068, MKT_USD = 0.0625, STOR_USD_GB = 0.0213;
+const BILL_PCT = 0.0299, BILL_FIX = 0.49;
+
+const $ = (id) => document.getElementById(id);
+const brl = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: v < 100 ? 2 : 0, maximumFractionDigits: v < 100 ? 2 : 0 });
+
+function fixo(n, usd) {
+  let f = 25 * usd + 40 / 12;
+  if (n > 800) f += 5 * usd;          // compute Small
+  if (n > 300) f += 5 * usd;          // Workers Paid
+  if (n * 3 > 3000) f += 20 * usd;    // Resend Pro (~3 e-mails/cliente)
+  return f;
+}
+
+function calc() {
+  const usd = +$('usd').value, fj = +$('fj').value / 100;
+  const waOn = $('wa').checked, mktWa = $('mktWa').checked;
+  const ns = [0,1,2,3,4].map(i => +$('n' + i).value);
+  const ps = [0,1,2].map(i => +$('p' + i).value || 0);
+
+  $('v-usd').textContent = usd.toFixed(2).replace('.', ',');
+  $('v-fj').textContent = Math.round(fj * 100) + '%';
+  ns.forEach((n, i) => $('v-n' + i).textContent = n);
+
+  const N = ns.reduce((a, b) => a + b, 0);
+  let mrr = 0, varWa = 0, varStor = 0, bill = 0;
+  const rows = [];
+
+  SEG.forEach((s, i) => {
+    const n = ns[i], preco = ps[s.plano];
+    const wa = waOn ? s.u * fj * UTIL_USD * usd + (mktWa ? s.m * MKT_USD * usd : 0) : 0;
+    const stor = s.gb * STOR_USD_GB * usd;
+    const b = preco * BILL_PCT + BILL_FIX;
+    const custoUn = wa + stor + b;
+    const margem = preco > 0 ? (preco - custoUn) / preco : 0;
+    mrr += n * preco; varWa += n * wa; varStor += n * stor; bill += n * b;
+    rows.push({ s, n, preco, wa, stor, b, custoUn, margem });
+  });
+
+  const F = fixo(N, usd);
+  const total = F + varWa + varStor + bill;
+  const margemTotal = mrr > 0 ? (mrr - total) / mrr : 0;
+
+  // break-even: contribuição média ponderada pelo mix atual
+  let be = '—';
+  if (N > 0) {
+    const contrib = (mrr - varWa - varStor - bill) / N;
+    if (contrib > 0) be = Math.ceil(fixo(1, usd) / contrib) + ' assinantes';
+  }
+
+  $('tiles').innerHTML = [
+    ['Assinantes', N.toLocaleString('pt-BR'), 'mix dos 5 perfis'],
+    ['MRR', brl(mrr), 'receita recorrente'],
+    ['Custo total/mês', brl(total), 'fixo + variável + billing'],
+    ['Custo / cliente', N ? brl(total / N) : '—', 'média do mix'],
+    ['Margem bruta', Math.round(margemTotal * 100) + '%', margemTotal >= 0.7 ? 'saudável (SaaS: 70-85%)' : margemTotal >= 0.5 ? 'ok, dá pra melhorar' : 'apertada', margemTotal >= 0.7 ? 'good' : margemTotal < 0.5 ? 'bad' : ''],
+    ['Break-even do fixo', be, 'cobre a infra base'],
+  ].map(([k, v, sub, cls]) => `<div class="tile"><div class="k">${k}</div><div class="v ${cls || ''}">${v}</div><div class="s">${sub}</div></div>`).join('');
+
+  const parts = [
+    ['Fixo (infra)', F, 'var(--c1)'],
+    ['WhatsApp', varWa, 'var(--c2)'],
+    ['Storage fotos', varStor, 'var(--c3)'],
+    ['Billing (gateway)', bill, 'var(--c4)'],
+  ];
+  $('bar').innerHTML = parts.map(([t, v, c]) =>
+    `<div style="flex:${Math.max(v, 0.011)};background:${c}" title="${t}: ${brl(v)}"></div>`).join('');
+  $('legend').innerHTML = parts.map(([t, v, c]) =>
+    `<span><span class="dot" style="background:${c}"></span>${t} <b>${brl(v)}</b>${total ? ' · ' + Math.round(100 * v / total) + '%' : ''}</span>`).join('');
+
+  $('tbody').innerHTML = rows.map(r => {
+    const mc = r.margem >= 0.7 ? 'm-ok' : r.margem >= 0.4 ? 'm-low' : 'm-neg';
+    return `<tr><td>${r.s.nome}</td><td>${r.n}</td><td>${PLANOS[r.s.plano]} · ${brl(r.preco)}</td>
+      <td>${brl(r.wa)}</td><td>${brl(r.stor)}</td><td>${brl(r.b)}</td>
+      <td>${brl(r.custoUn)}</td><td class="${mc}">${Math.round(r.margem * 100)}%</td></tr>`;
+  }).join('');
+}
+
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', calc));
+
+const setTheme = (t) => { document.documentElement.dataset.theme = t; localStorage.setItem('sim-theme', t); };
+setTheme(localStorage.getItem('sim-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+$('themeBtn').addEventListener('click', () =>
+  setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+calc();
+</script>
+</body>
+</html>

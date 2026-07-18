@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plano Unificado — Esteira de Execução</title>
+<style>
+  :root {
+    --bg: #faf8f6; --surface: #ffffff; --surface-2: #f5f1ee; --border: #e9e2de; --border-soft: #f1ece8;
+    --ink: #2b2226; --ink-2: #6b5c62; --ink-3: #9a8a90;
+    --accent: #a86b78; --accent-soft: #f6ecee; --accent-ink: #8d5563;
+    --free: #2f9d68; --free-bg: #e6f4ec;
+    --paid: #b07a1f; --paid-bg: #f7efdf;
+    --gate: #6089de; --gate-bg: #e9f0fb;
+    --done: #9a8a90; --done-bg: #f1ece8;
+    --shadow: 0 1px 2px rgba(43,34,38,.05), 0 10px 30px rgba(43,34,38,.06);
+  }
+  [data-theme="dark"] {
+    --bg: #201c1e; --surface: #2a2528; --surface-2: #322c2f; --border: #3d3539; --border-soft: #342e31;
+    --ink: #f0e9eb; --ink-2: #b8a9ae; --ink-3: #857a7e;
+    --accent: #c9939e; --accent-soft: #3a3034; --accent-ink: #d8aab4;
+    --free: #3db07a; --free-bg: #223a2d;
+    --paid: #c99a35; --paid-bg: #3d3220;
+    --gate: #7a9ce4; --gate-bg: #263043;
+    --done: #857a7e; --done-bg: #342e31;
+    --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 30px rgba(0,0,0,.3);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; padding-bottom: 100px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- header ---------- */
+  header.top { padding: 52px 0 12px; }
+  .top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .top h1 { font-size: 28px; font-weight: 750; letter-spacing: -.02em; line-height: 1.25; }
+  .top h1 span { color: var(--accent); }
+  .top .sub { color: var(--ink-2); margin-top: 14px; max-width: 700px; font-size: 15.5px; }
+  .top .sub b { color: var(--ink); font-weight: 650; }
+  .top .meta-note { color: var(--ink-3); font-size: 13px; margin-top: 14px; }
+  .theme-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--ink-2);
+    border-radius: 10px; padding: 8px 14px; cursor: pointer; font: inherit; font-size: 13px; flex-shrink: 0;
+  }
+  .theme-btn:hover { color: var(--ink); }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 30px 0 8px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; box-shadow: var(--shadow); }
+  .tile .k { font-size: 11.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; font-weight: 650; }
+  .tile .v { font-size: 23px; font-weight: 750; letter-spacing: -.02em; margin-top: 6px; }
+  .tile .v.free { color: var(--free); } .tile .v.paid { color: var(--paid); }
+  .tile .s { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+
+  /* ---------- controls ---------- */
+  .controls {
+    position: sticky; top: 0; z-index: 10; background: var(--bg);
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 14px 0; margin: 18px 0 30px; border-bottom: 1px solid var(--border-soft);
+  }
+  .controls input[type="search"] {
+    flex: 1; min-width: 200px; background: var(--surface); border: 1px solid var(--border); color: var(--ink);
+    border-radius: 10px; padding: 9px 14px; font: inherit; font-size: 14px;
+  }
+  .controls input::placeholder { color: var(--ink-3); }
+  .controls button {
+    background: var(--surface); border: 1px solid var(--border); color: var(--ink-2);
+    border-radius: 10px; padding: 8px 14px; cursor: pointer; font: inherit; font-size: 13px;
+  }
+  .controls button:hover { color: var(--ink); border-color: var(--ink-3); }
+  .count-note { font-size: 12.5px; color: var(--ink-3); width: 100%; }
+
+  /* ---------- esteira ---------- */
+  .belt { position: relative; }
+  .belt::before {
+    content: ""; position: absolute; left: 27px; top: 10px; bottom: 10px;
+    width: 2px; background: var(--border); border-radius: 2px;
+  }
+  details.stage { position: relative; margin-bottom: 26px; }
+  details.stage > summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; gap: 18px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px 24px; box-shadow: var(--shadow); position: relative;
+    transition: border-color .12s ease;
+  }
+  details.stage > summary::-webkit-details-marker { display: none; }
+  details.stage > summary:hover { border-color: var(--ink-3); }
+  details.stage > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .stage-num {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 750; color: #fff; background: var(--accent);
+    position: relative; z-index: 1;
+  }
+  details.stage[data-tipo="pago"] .stage-num { background: var(--paid); }
+  details.stage[data-tipo="marca"] .stage-num { background: var(--gate); }
+  .stage-head { flex: 1; min-width: 0; }
+  .stage-head h2 { font-size: 17.5px; font-weight: 700; letter-spacing: -.01em; line-height: 1.35; }
+  .stage-head .tagline { color: var(--ink-2); font-size: 13.5px; margin-top: 4px; }
+  .stage-side { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; flex-shrink: 0; }
+  .stage-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .chip {
+    font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .chip.free { background: var(--free-bg); color: var(--free); }
+  .chip.paid { background: var(--paid-bg); color: var(--paid); }
+  .chip.gate { background: var(--gate-bg); color: var(--gate); }
+  .stage-info { font-size: 12px; color: var(--ink-3); }
+  .stage-caret { color: var(--ink-3); font-size: 13px; transition: transform .15s ease; margin-left: 4px; }
+  details.stage[open] > summary .stage-caret { transform: rotate(90deg); }
+
+  .stage-body { padding: 24px 0 8px 70px; }
+  .stage-desc { color: var(--ink-2); font-size: 14px; margin-bottom: 22px; max-width: 720px; }
+
+  /* ---------- itens ---------- */
+  details.item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    margin-bottom: 14px; overflow: hidden; transition: border-color .12s ease;
+  }
+  details.item:hover { border-color: var(--ink-3); }
+  details.item[open] { border-color: var(--accent); }
+  details.item > summary {
+    list-style: none; cursor: pointer; padding: 16px 20px;
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  details.item > summary::-webkit-details-marker { display: none; }
+  details.item > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .item-num { font-size: 12px; font-weight: 700; color: var(--ink-3); flex-shrink: 0; min-width: 34px; }
+  .item-title { font-size: 15px; font-weight: 650; letter-spacing: -.01em; flex: 1; line-height: 1.4; }
+  .item-badges { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .b {
+    font-size: 11px; font-weight: 650; padding: 2.5px 9px; border-radius: 999px;
+    background: var(--surface-2); color: var(--ink-2); white-space: nowrap;
+  }
+  .b.cost-free { background: var(--free-bg); color: var(--free); }
+  .b.cost-paid { background: var(--paid-bg); color: var(--paid); }
+  .b.origem { background: var(--accent-soft); color: var(--accent-ink); }
+  .item-body { padding: 6px 22px 24px; border-top: 1px solid var(--border-soft); }
+  .item-body h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--ink-3); font-weight: 700; margin: 22px 0 8px;
+  }
+  .item-body p { font-size: 14px; color: var(--ink-2); max-width: 700px; }
+  .item-body p.oque { color: var(--ink); }
+  .item-body ol { margin: 4px 0 0 4px; padding-left: 20px; max-width: 700px; }
+  .item-body ol li { font-size: 14px; color: var(--ink-2); margin-bottom: 11px; padding-left: 6px; }
+  .item-body ol li::marker { color: var(--accent); font-weight: 700; }
+  .item-body ol li b, .item-body p b { color: var(--ink); font-weight: 650; }
+  .item-body code {
+    background: var(--surface-2); border-radius: 6px; padding: 1.5px 7px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: var(--accent-ink);
+  }
+  .dep-note {
+    margin-top: 20px; font-size: 12.5px; color: var(--ink-3);
+    background: var(--surface-2); border-radius: 10px; padding: 10px 14px; max-width: 700px;
+  }
+  .dep-note b { color: var(--ink-2); }
+
+  footer { margin-top: 56px; color: var(--ink-3); font-size: 12.5px; border-top: 1px solid var(--border-soft); padding-top: 20px; line-height: 1.7; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 700px) {
+    .wrap { padding: 0 16px; }
+    .belt::before { left: 19px; }
+    .stage-num { width: 34px; height: 34px; font-size: 14px; }
+    .stage-body { padding-left: 0; }
+    details.stage > summary { padding: 16px; gap: 12px; flex-wrap: wrap; }
+    .stage-side { align-items: flex-start; }
+    details.item > summary { flex-wrap: wrap; }
+    .item-badges { justify-content: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="top-row">
+      <h1>Plano Unificado — <span>Esteira de Execução</span></h1>
+      <button class="theme-btn" id="themeBtn" type="button">◐ Tema</button>
+    </div>
+    <p class="sub">
+      Todos os planos do projeto unificados num só fluxo, em <b>ordem de execução</b>:
+      primeiro tudo que é <b>grátis</b> (etapas 1–6, só código e cliques), depois a etapa da
+      <b>marca</b> (destravada quando o nome for definido) e por fim os itens <b>pagos</b> (etapas 8–11).
+      Posicionamento novo embutido: <b>horizontal no produto, vertical na comunicação</b> —
+      o sistema elegante de quem atende com hora marcada, tudo incluso, preço na página, sem multa.
+    </p>
+    <p class="meta-note">
+      Fonte canônica em texto: <code>docs/PLANO.md</code> (mesmos 68 itens + estratégia condensada).
+      Base: 4 auditorias + benchmark de 26+ concorrentes (jul/2026) com 12 itens novos.
+      Clique numa etapa para abrir; clique num item para ver o que é, o que faz e o passo a passo.
+    </p>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="controls">
+    <input type="search" id="search" placeholder="Buscar item… (ex.: DRE, booking, WhatsApp)" aria-label="Buscar item">
+    <button type="button" id="expandAll">Expandir tudo</button>
+    <button type="button" id="collapseAll">Recolher tudo</button>
+    <span class="count-note" id="countNote"></span>
+  </div>
+
+  <main class="belt" id="belt"></main>
+
+  <footer>
+    <b>Como usar:</b> execute as etapas na ordem. Dentro de cada etapa, os itens também estão em ordem sugerida —
+    mas itens sem dependência entre si podem andar em paralelo.
+    A etapa 7 (marca) é o único portão real: tudo antes dela roda no domínio provisório
+    <code>harmon-ia.otavio-projects.workers.dev</code>; tudo depois dela pressupõe nome + domínio definidos.<br>
+    Origem dos itens entre parênteses: P0–P4 = Plano Master · Parte 2–5 = backlog de aprimoramentos ·
+    novo = benchmark jul/2026. Preços de concorrentes revalidados em 18/07/2026 — reconferir por trimestre.
+  </footer>
+</div>
+
+<script>
+const ETAPAS = [
+
+/* ============================================================ ETAPA 1 */
+{ num: 1, nome: 'Ativar o P0 — segurança e medição', tipo: 'gratis', tempo: '½ dia de cliques',
+  tagline: 'O código já está no repo. Faltam só as ações manuais de painel — em ordem.',
+  desc: 'Tudo desta etapa já foi implementado no código (2026-07-18). O que resta são configurações que só você consegue fazer nos dashboards (Supabase, Cloudflare, Google, Resend). Os itens 1.1 e 1.2 são obrigatórios e na ordem exata.',
+  itens: [
+  { id: '1.1', t: 'Supabase: URL de retorno + fechar cadastros', origem: 'P0-1 · checklist', custo: 'R$ 0', tempo: '10 min',
+    e: 'Duas configurações no painel de Auth do Supabase que precisam existir ANTES do próximo deploy.',
+    faz: 'O login OAuth passa a voltar para /entrar.html (o código novo espera isso) e o beta fechado passa a ser imposto pelo servidor — conta Google nova não entra mais (fix do achado ALTO A1).',
+    passos: [
+      'Supabase → Authentication → URL Configuration → Redirect URLs: adicionar <code>https://harmon-ia.otavio-projects.workers.dev/entrar.html</code> e <code>http://localhost:8000/entrar.html</code> (dev local).',
+      'Supabase → Authentication → Sign In / Providers: desligar <b>"Allow new users to sign up"</b>.',
+      'Conferir: as 3 contas existentes continuam entrando; conta nova deve voltar com <code>signup_disabled</code> e a página de login mostra o aviso de pré-lançamento.',
+    ] },
+  { id: '1.2', t: 'Deploy + migração de segurança (ordem importa)', origem: 'checklist P0', custo: 'R$ 0', tempo: '15 min',
+    e: 'Publicar o código P0 e só DEPOIS rodar a migração que corta o INSERT anônimo da waitlist.',
+    faz: 'Waitlist passa a gravar só via Worker (Turnstile fail-closed quando o secret existir); site antigo não quebra porque a migração roda depois do deploy novo.',
+    passos: [
+      'No terminal: <code>npx wrangler deploy</code> (ou push no GitHub — Workers Builds).',
+      'Depois do deploy no ar: rodar <code>db/migration-p0-seguranca.sql</code> no SQL Editor do Supabase.',
+      'Teste: enviar e-mail novo na waitlist do site → linha aparece na tabela <code>waitlist</code>. Repetir o mesmo e-mail → continua sucesso (dedupe silencioso).',
+    ] },
+  { id: '1.3', t: 'Rotacionar e cofrear segredos', origem: 'P0-2 · fix A2', custo: 'R$ 0', tempo: '30 min',
+    e: 'A senha do banco e o GOOGLE_CLIENT_SECRET estão em texto puro em credenciais/CREDENCIAIS.md. Nunca foram commitados, mas estão a um deslize de vazar.',
+    faz: 'Elimina o risco de vazamento de credencial raiz — a senha do banco ignora RLS; o client secret permite se passar pelo app.',
+    passos: [
+      'Supabase → Settings → Database → <b>Reset database password</b>. Guardar a senha nova apenas no gerenciador de senhas (1Password/Bitwarden).',
+      'Google Cloud Console → Credentials → OAuth client: gerar novo client secret.',
+      'Atualizar o secret novo em: Supabase (Auth → Providers → Google) e no Worker via <code>npx wrangler secret put GOOGLE_CLIENT_SECRET</code>.',
+      'Excluir o secret antigo no Google Cloud Console.',
+      'Mover qualquer outro dado de credenciais/CREDENCIAIS.md para o gerenciador e apagar o arquivo.',
+    ] },
+  { id: '1.4', t: 'Turnstile real + Web Analytics', origem: 'P0-3 e P0-6', custo: 'R$ 0', tempo: '30 min',
+    e: 'A chave Turnstile nos HTML é a de TESTE (1x00000000000000000000BB) e não há analytics nenhum — a conversão da waitlist é invisível.',
+    faz: 'Anti-bot de verdade no formulário (fail-closed) e funil visitante → waitlist mensurável pela primeira vez.',
+    passos: [
+      'Cloudflare dashboard → Turnstile → Add widget (hostname <code>harmon-ia.otavio-projects.workers.dev</code>, modo Managed).',
+      'Trocar a sitekey de teste nos <code>&lt;div class="cf-turnstile"&gt;</code> de index.html e planos.html pela sitekey real.',
+      '<code>npx wrangler secret put TURNSTILE_SECRET</code> com o secret do widget. Sem o secret o Worker aceita sem verificar; com ele, vira fail-closed.',
+      'Cloudflare → Web Analytics → Add site → copiar o token → descomentar o snippet no fim de index.html e planos.html (a CSP já libera os domínios).',
+      'Redeploy (<code>npx wrangler deploy</code>) e testar a waitlist de novo.',
+    ] },
+  { id: '1.5', t: 'Resend: aviso interno de lead novo', origem: 'P0-9', custo: 'R$ 0 (free 3k/mês)', tempo: '20 min',
+    e: 'Conta gratuita no Resend para o Worker avisar você por e-mail a cada lead da waitlist.',
+    faz: 'Você fica sabendo de cada lead na hora. O e-mail de confirmação PARA O LEAD fica para a etapa 7 (exige domínio próprio verificado).',
+    passos: [
+      'Criar conta no Resend → gerar API key.',
+      '<code>npx wrangler secret put RESEND_API_KEY</code> e <code>npx wrangler secret put NOTIFY_EMAIL</code> (seu e-mail).',
+      'Teste: e-mail novo na waitlist → chega o aviso (o domínio de teste do Resend basta para o aviso interno).',
+    ] },
+  { id: '1.6', t: 'Higiene Supabase + testes de aceite', origem: 'P0-10 · checklist', custo: 'R$ 0', tempo: '30 min',
+    e: 'Última varredura: advisors de segurança, região do projeto e os 4 testes de aceite do P0.',
+    faz: 'Zera warnings de plataforma e confirma que o pacote P0 inteiro está funcionando em produção.',
+    passos: [
+      'Supabase → Database → Advisors (Security Advisor): rodar e revisar cada warning.',
+      'Supabase → Settings → General: conferir a região (ideal <code>sa-east-1</code> São Paulo — latência + "dados no Brasil").',
+      'Aceite 1: login com conta existente entra normal.',
+      'Aceite 2: conta Google NOVA volta pra tela de login com aviso de pré-lançamento.',
+      'Aceite 3: waitlist grava + e-mail de aviso chega.',
+      'Aceite 4: Configurações do app mostra o avatar do Google (CSP liberou googleusercontent.com).',
+    ] },
+] },
+
+/* ============================================================ ETAPA 2 */
+{ num: 2, nome: 'Reposicionamento macro: "hora marcada"', tipo: 'gratis', tempo: '1–2 semanas',
+  tagline: 'Horizontal no produto, vertical na comunicação. Nada aqui depende de domínio ou marca.',
+  desc: 'O sistema não é exclusivo de estética: qualquer profissional autônomo com agendamento + estoque + caixa cabe nele. O benchmark mostrou a fórmula vencedora (padrão Goldie/SimplyBook): um produto único, marca elegante âncora, landing pages por segmento e onboarding que pergunta o nicho. Esta etapa executa a virada — toda em copy, páginas e decisões, custo zero.',
+  itens: [
+  { id: '2.1', t: 'Decisão de posicionamento: âncora elegante + anéis de segmento', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '1 dia',
+    e: 'Formalizar a virada de "vertical de estética" para "o sistema elegante de quem atende com hora marcada", no padrão que o benchmark validou: Goldie mantém a marca beauty e lista 19 nichos em 3 anéis; SimplyBook pergunta o segmento no cadastro e liga só o que o nicho precisa.',
+    faz: 'Multiplica o mercado endereçável sem perder o público certeiro (beleza/estética continua sendo o anel núcleo e o tom da marca). Guia o naming, a copy, as fichas configuráveis e o onboarding das próximas etapas.',
+    passos: [
+      'Definir os 3 anéis por escrito: <b>núcleo</b> = beleza/estética (lash, sobrancelha, skin, micro, harmonização, unhas, barbearia); <b>adjacente</b> = saúde &amp; bem-estar particular (massoterapia, podologia, fisio, nutri, psico, terapias); <b>cauda</b> = hora marcada em geral (tatuagem, pet, fotografia, consultoria, aulas particulares).',
+      'Delimitar o que fica FORA por ora: clínica médica com convênio/TISS e prontuário regulado pelo CFM — iClinic/Amplimed dominam e o compliance é pesado. Médico particular simples pode usar, mas sem promessa de prontuário regulatório.',
+      'Adotar vocabulário neutro no app: "procedimento" → "atendimento", "clínica" → "negócio/espaço". Termos clínicos ficam só nos templates de ficha dos segmentos de estética/saúde.',
+      'Manter a identidade visual rosé/Satoshi intacta — é diferencial contra o SaaS azul genérico. Rebrand (etapa 7) é nome/logo, não design system.',
+      'Registrar a tese nova no PLANO-MASTER §3: "tudo incluso, preço na página, sem multa" continua — muda só o alvo, de "estética" para "hora marcada, com elegância".',
+    ] },
+  { id: '2.2', t: 'Copy v2 horizontal orientada a conversão', origem: 'P1-19 adaptado', custo: 'R$ 0', tempo: '1–2 dias',
+    e: 'Reescrever hero, subheads, CTAs e FAQ do site com o posicionamento novo. O hero recomendado já é naturalmente horizontal: "Agenda cheia, caixa no azul e cliente que volta."',
+    faz: 'Copy que vende resultado (não categoria) e ataca as reclamações documentadas dos concorrentes — sem citar estética como único público.',
+    passos: [
+      'Hero: "Agenda cheia, caixa no azul e cliente que volta." · sub: "Agenda, fichas de atendimento, WhatsApp automático, estoque e caixa — para quem vive de hora marcada. Tudo incluso."',
+      'Seção anti-add-on: "O WhatsApp automático que cobram R$ 150–229/mês de módulo? Aqui já vem no plano." com tabela de custo real (Belle/Trinks/Avec com add-ons).',
+      'Números do nicho nas seções de prova: lembrete WhatsApp = −30 a −70% de faltas; agendamento online = +33% receita/cliente; 46–58% dos agendamentos acontecem fora do horário comercial.',
+      'CTA: "Testar grátis por 35 dias" + microcopy "sem cartão · sem multa · cancele quando quiser".',
+      'Revisar o marquee de segmentos para cobrir os 3 anéis (hoje já lista 9 — completar com bem-estar e cauda).',
+      'FAQ de objeções: migração grátis, "já uso Trinks/Belle, e aí?", segurança/LGPD, "funciona no celular?".',
+    ] },
+  { id: '2.3', t: 'Hub de páginas por segmento (SEO)', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '3–5 dias',
+    e: 'Landing pages por nicho com template fixo — o mecanismo que Setmore (49 páginas), Acuity e Simples Agenda usam para ser horizontais sem diluir a home.',
+    faz: 'Cada nicho se reconhece ("sistema para lash designer" / "para massoterapeuta" / "para tatuador") e o Google indexa cauda longa de busca — canal orgânico sem mídia paga.',
+    passos: [
+      'Criar o template: headline com vocabulário do nicho, screenshot contextualizado (serviços com nomes do nicho), 3 dores específicas, depoimento (quando houver), mesmas features, CTA waitlist.',
+      'Gerar as 6–10 primeiras páginas priorizando o anel núcleo + adjacente: lash, sobrancelha, skincare, micropigmentação, barbearia, massoterapia, podologia, tatuagem.',
+      'Nav "Para quem" + links no rodapé (padrão Acuity: dropdown, cards na home, footer).',
+      'SEO por página: title "Sistema de agendamento para [nicho]", meta description própria, canonical, entrada no sitemap.xml.',
+      'Medir por página (item 2.5): qual segmento converte mais waitlist decide onde investir depoimento/screenshot primeiro.',
+    ] },
+  { id: '2.4', t: 'Site v2: provas reais + "Estúdio — em breve"', origem: 'P1-18 + análise §7', custo: 'R$ 0', tempo: '3–5 dias',
+    e: 'Substituir os 4 placeholders "imagem" e os SVGs genéricos por screenshots reais com dados demo caprichados; trocar o card "Team R$ --" por "Estúdio — em breve" com waitlist própria.',
+    faz: 'As provas de confiança que faltam para a landing converter — e um medidor de demanda real do plano de equipe antes de construí-lo (P2-26 vem lá na etapa 9).',
+    passos: [
+      'Criar seed de dados demo bonito: clientes fictícios, agenda cheia, caixa positivo — 1 conta demo de estética + 1 de outro anel (ex.: barbearia) para os screenshots dos segmentos.',
+      'Capturar screenshots reais em device frames (browser + celular) e substituir os placeholders de index.html e sobre.html.',
+      'Tabela comparativa de custo real vs Trinks/Belle/Clinicorp (preço com add-ons, multa, trial).',
+      'Corrigir CTAs: waitlist funcional em solucoes.html (hoje o CTA vira âncora) e CTA no corpo de sobre.html.',
+      'Card Team → "Estúdio — em breve" com captura própria (<code>source: \'waitlist-estudio\'</code> na tabela waitlist).',
+      'Gravar GIF/vídeo de 40–60s: agendar → confirmar → concluir → caixa atualizado.',
+    ] },
+  { id: '2.5', t: 'Funil mensurável por segmento (PostHog)', origem: 'P0-6 complemento', custo: 'R$ 0 (free tier)', tempo: '½ dia',
+    e: 'PostHog free por cima do Web Analytics da etapa 1: eventos de submit da waitlist com a página/segmento de origem.',
+    faz: 'Responde "qual nicho converte mais?" com dado — é o que prioriza os anéis daqui pra frente. Meta: visitante → waitlist 3–5%.',
+    passos: [
+      'Criar projeto no PostHog (free) e adicionar o snippet gatilhado pelo <code>window.onCookieConsent</code> que já existe no código.',
+      'Evento <code>waitlist_submit</code> com propriedades: página, segmento, source (hero/rodapé/estudio).',
+      'Dashboard com funil por página de segmento + taxa geral.',
+      'Rito semanal: olhar o funil, anotar hipóteses de copy no PLANO-MASTER §6.',
+    ] },
+] },
+
+/* ============================================================ ETAPA 3 */
+{ num: 3, nome: 'Núcleo do produto: agenda própria, fichas e pacotes', tipo: 'gratis', tempo: '6–9 semanas',
+  tagline: 'O que separa "agenda + caixa" de um sistema completo — tudo só código.',
+  desc: 'Os table-stakes que o benchmark apontou em TODOS os concorrentes relevantes, adaptados ao posicionamento horizontal. A agenda própria vem primeiro porque destrava quase tudo que segue (booking, lembretes, equipe). Ordem interna pensada por dependência.',
+  itens: [
+  { id: '3.1', t: 'Agenda própria — Google vira espelho opcional', origem: 'P1-14 · Parte 3', custo: 'R$ 0', tempo: '2–3 sem',
+    e: 'Hoje o Google Calendar É o banco da agenda: sem conectar Google, o módulo não funciona. Inverter: horário e duração moram no Postgres; o Google vira sincronização opcional.',
+    faz: 'Onboarding sem fricção (qualquer pessoa usa sem conta Google), independência de fornecedor e pré-requisito técnico do booking online, dos lembretes automáticos e do plano de equipe.',
+    passos: [
+      'Schema: <code>procedures</code> ganha <code>start_time</code>/<code>duration</code> (ou tabela própria de agendamentos); <code>google_event_id</code> passa a ser opcional.',
+      'agenda.js passa a ler do banco; sync de espelho best-effort (criar/atualizar/apagar evento no Google só se conectado).',
+      'Regras de disponibilidade na mesma leva (o booking da etapa 6 precisa): horário de trabalho por dia da semana, buffer entre atendimentos, antecedência mínima, bloqueios/folgas.',
+      'Agendamento recorrente (série semanal/quinzenal/mensal) — padrão dos horizontais (Setmore Pro), essencial para massoterapia/terapias/aulas.',
+      'Migração dos dados atuais: backfill de start_time/duração a partir dos eventos Google existentes.',
+      'Rollback e conflito: manter o padrão atual (RPC atômica; desfazer espelho se falhar).',
+    ] },
+  { id: '3.2', t: 'Login sem Google (e-mail/senha)', origem: 'Parte 3.2–3.3', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Cadastro/login próprio via Supabase Auth; cada função Google vira condicional a "Google conectado". Inclui o fluxo de desconectar Google com opções.',
+    faz: 'Remove a última dependência dura do Google — crítico para o público horizontal (nem todo autônomo vive no ecossistema Google) e para o onboarding self-service.',
+    passos: [
+      'Habilitar e-mail/senha no Supabase Auth (com confirmação de e-mail) e montar as telas de cadastro/login/recuperação em entrar.html.',
+      'Revisar auth.js e ensureSettings: sessão sem provider Google não tenta capturar refresh_token.',
+      'Varrer o app: cada chamada Google (Calendar/Contacts/Drive/Sheets) já tem tratamento NeedsReconnect — generalizar para "não conectado" com CTA de conectar.',
+      'Card Conta em Configurações: estado "Google não conectado" + botão conectar (OAuth incremental).',
+      'Desconectar Google com 3 opções: cancelar / desconectar e remover itens sincronizados (eventos + contatos-espelho) / desconectar mantendo os registros no app.',
+    ] },
+  { id: '3.3', t: 'Ficha de atendimento configurável + termo assinado', origem: 'P1-11 horizontal', custo: 'R$ 0', tempo: '2–3 sem',
+    e: 'Fichas por segmento em vez de "prontuário de estética": templates configuráveis (anamnese de estética, avaliação de massoterapia, ficha genérica), evolução por sessão e termo de consentimento com assinatura na tela.',
+    faz: 'O item que separa o app de "agenda + caixa" — e no formato configurável vira ativo horizontal: cada nicho recebe o template certo no onboarding. TCLE com hash e trilha tem validade pela MP 2.200-2/2001.',
+    passos: [
+      'Tabelas: <code>form_templates</code> (campos em jsonb: texto, múltipla escolha, escala, sim/não, foto), <code>form_responses</code> (por cliente/atendimento), <code>consent_terms</code> — RLS own_data padrão.',
+      'Builder simples de template (adicionar/ordenar campos) + biblioteca de templates prontos por segmento (seed usado pelo onboarding da etapa 6).',
+      'Assinatura: canvas → PNG no bucket privado + SHA-256 da resposta na linha + timestamp — trilha de auditoria.',
+      'Evolução por sessão anexada ao atendimento; alergias/contraindicações com destaque no perfil da cliente.',
+      'Export PDF da ficha + termo (para a cliente ou fiscalização).',
+      'Preencher pelo celular da cliente: link/QR que abre a ficha para ela responder na recepção (padrão Mangomint Express Booking).',
+    ] },
+  { id: '3.4', t: 'Fotos antes/depois com comparador', origem: 'P1-12', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Galeria por cliente/atendimento com comparador lado a lado (slider). O site já promete essa feature — ela não existe no app.',
+    faz: 'Caso medspa documentado: consultas convertendo de 45% para 90%+ ao mostrar resultados. Fecha o gap marketing↔produto. Vale além da estética (tatuagem, sobrancelha, cabelo).',
+    passos: [
+      'Tabela <code>photos</code> ligada a cliente + atendimento (tipo antes/depois, pareamento).',
+      'Upload comprimido no padrão do estoque (~1280px webp ~250 KB — a análise de custos já modelou: storage só vira custo relevante sem compressão).',
+      'Comparador com <code>clip-path</code> + slider; visualização em par na ficha e no perfil.',
+      'Política de arquivamento: reduzir resolução após 24 meses (mitigação de storage da análise §4).',
+      'Consentimento de uso de imagem: checkbox no termo da ficha (3.3).',
+    ] },
+  { id: '3.5', t: 'Pacotes de sessões confiáveis', origem: 'P1-13', custo: 'R$ 0', tempo: '1–1,5 sem',
+    e: 'Venda de pacote (N sessões, validade, valor), débito de sessão no atendimento, saldo visível e alertas de expiração.',
+    faz: 'Table-stakes absoluto do nicho — e o líder Belle tem falha pública documentada nisso (12 sessões debitadas num pacote de 10). Confiabilidade aqui vira argumento de venda.',
+    passos: [
+      'Tabelas <code>packages</code> + <code>package_sessions</code>; RPC atômica de débito/estorno (especialidade da casa).',
+      'Integrar a schedule/complete/cancel_procedure: agendar consome saldo reservado, concluir debita, cancelar devolve.',
+      'Venda do pacote entra no caixa (à vista ou parcelado, reusando financial_entries).',
+      'Saldo no perfil da cliente + badge "pacote a vencer" nos retornos da Home.',
+      'Testes de borda: pacote expirado, saldo zero, cancelamento pós-débito — é aqui que o Belle falha.',
+    ] },
+  { id: '3.6', t: 'Venda avulsa de produtos (comanda)', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '3–5 dias',
+    e: 'Registrar venda de produto sem atendimento (ou junto de um) — baixando estoque e lançando no caixa. Hoje produto só sai do estoque dentro de procedimento.',
+    faz: 'Home care / revenda é receita relevante em vários nichos (skincare, barbearia, pet). SimplyBook e Square tratam como POS básico; aqui reaproveita estoque + caixa que já existem.',
+    passos: [
+      'RPC <code>sell_products</code>: baixa estoque (movimentação "venda") + financial_entry categoria "Venda de produto" com custo congelado (lucro correto).',
+      'Botão "Nova venda" no Estoque e atalho na Home; seleção de itens com quantidade e preço de venda por item (campo novo <code>sale_price</code> em stock_items, opcional).',
+      'Opção de anexar a venda a um atendimento (comanda única no registro do procedimento).',
+      'Entradas do caixa e dashboard (etapa 4) passam a separar receita de serviço × produto.',
+    ] },
+  { id: '3.7', t: 'Estoque: lote/validade + ficha técnica por serviço', origem: 'P2-30', custo: 'R$ 0', tempo: '1–2 sem',
+    e: 'Controle por lote com validade e alertas 30/15/7 dias; ficha técnica por serviço (materiais default) com baixa automática no atendimento.',
+    faz: 'Clínica média perde US$ 4–12k/ano em produto vencido. A ficha técnica elimina a seleção manual de materiais a cada registro — o custo já congela hoje, falta o preset.',
+    passos: [
+      'Tabela <code>stock_batches</code> (item, lote, validade, quantidade); movimentações passam a apontar lote (FIFO por validade).',
+      'Alertas de vencimento no dashboard e na lista de compras (30/15/7 dias).',
+      'Tabela <code>service_materials</code>: preset de materiais por serviço, editável no registro do atendimento.',
+      'RPCs de procedimento consomem o preset por padrão; custo médio ponderado opcional (hoje é última compra).',
+    ] },
+  { id: '3.8', t: 'LGPD: excluir conta + consentimento do cliente final', origem: 'P1-16 · fix M2', custo: 'R$ 0', tempo: '2–3 dias',
+    e: 'Atendimento de estética/saúde é dado sensível (art. 11 LGPD). Falta exclusão de conta in-app, política de retenção e registro de consentimento do cliente final.',
+    faz: 'Conformidade real + argumento de venda ("seus dados são seus, export e exclusão a um clique").',
+    passos: [
+      'Botão "Excluir minha conta" em Configurações: Worker deleta o auth user (cascade já apaga os dados); confirmação forte digitando EXCLUIR.',
+      'Checkbox + timestamp de consentimento no cadastro de cliente (base legal registrada).',
+      'Texto de política de retenção nas páginas legais (rascunho técnico; revisão jurídica na etapa 7).',
+      'Conferir que o backup/export JSON continua cobrindo o direito de portabilidade.',
+    ] },
+  { id: '3.9', t: 'Importador CSV — migração assistida', origem: 'P1-25', custo: 'R$ 0', tempo: '3–5 dias',
+    e: 'Importar clientes, serviços e estoque de planilha/CSV com mapeamento de colunas e prévia (dry-run).',
+    faz: 'Captura órfãos do Salão99 (fechou mai/2026) e insatisfeitos de Trinks/Avec/Belle. "Migração grátis" vira promessa de marketing — Cliniko e Goldie fazem isso.',
+    passos: [
+      'Parser CSV client-side + tela de mapeamento de colunas (nome → campo) com detecção automática.',
+      'Prévia dry-run: mostra o que será criado/ignorado/duplicado antes de gravar.',
+      'Insert em lote com dedupe por telefone/e-mail.',
+      'Guias "migrando do X" no site (Trinks, Belle, Salão99, planilha) — casam com as páginas de segmento da etapa 2.',
+    ] },
+] },
+
+/* ============================================================ ETAPA 4 */
+{ num: 4, nome: 'Financeiro profissional: do caixa ao DRE', tipo: 'gratis', tempo: '4–6 semanas',
+  tagline: 'O bloco inteiro que o benchmark apontou como incompleto — tudo só código.',
+  desc: 'Hoje o Fluxo de Caixa registra o passado com categoria em texto livre. Esta etapa entrega o financeiro que Belle cobra R$ 150/mês de add-on de BI: plano de contas, contas a pagar/receber recorrentes, taxas de cartão, metas, DRE, projeção de caixa, orçamentos e conciliação. Ordem interna importa — os 2 primeiros itens são fundação dos demais.',
+  itens: [
+  { id: '4.1', t: 'Plano de contas: categorias estruturadas', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '3–5 dias',
+    e: 'Hoje <code>financial_entries.category</code> é texto livre de 60 caracteres. Sem categorias estruturadas com grupo de DRE, nenhum relatório gerencial para em pé — é o pré-requisito não mapeado do plano antigo.',
+    faz: 'Mostra para onde o dinheiro vai (% insumos, % taxas, % aluguel) em vez de entradas/saídas soltas. Destrava DRE (4.5), projeção (4.6) e relatórios de margem.',
+    passos: [
+      'Migration: tabela <code>categories</code> (user_id, nome, tipo income|expense, grupo_dre, cor, ativo, ordem) com RLS own_data.',
+      'Seed de ~20 categorias típicas por segmento (insumos, aluguel, taxas de cartão, marketing, pró-labore…) via RPC <code>ensure_categories</code> no primeiro acesso.',
+      'Adicionar <code>category_id</code> nullable em financial_entries mantendo o texto legado; backfill por matching case-insensitive, resto vira "Sem categoria".',
+      'financeiro.js: trocar o input livre por select com busca (+ criar categoria inline); CRUD de categorias em Configurações.',
+      'Ranking do Resumo e gráficos passam a agrupar por category_id com a cor da categoria.',
+    ] },
+  { id: '4.2', t: 'Contas a pagar/receber com recorrência + alerta de vencimento', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Agenda de obrigações futuras: aluguel, luz, fornecedor, assinatura — com recorrência (a Conta Azul tem isso nativo; hoje aqui é redigitado todo mês).',
+    faz: '"X contas vencem esta semana" na Home — nada de conta esquecida. Base do fluxo de caixa projetado (4.6).',
+    passos: [
+      'Tabela <code>bills</code> (tipo pagar|receber, descrição, category_id, contraparte, valor, vencimento, status, recorrência nenhuma|semanal|mensal|anual, fim da recorrência, serie_id) com RLS.',
+      'Ao criar recorrente, RPC gera as próximas 12 ocorrências (sem precisar de cron novo); o cron semanal do Worker repõe ocorrências futuras.',
+      'Atrasadas marcadas na leitura (padrão de expiração preguiçosa que o app já usa).',
+      '"Marcar como pago" cria financial_entry vinculada (bill_id) — a conta vira lançamento real no caixa.',
+      'Card de vencimentos na Home (7 dias) + aba/lista no Financeiro com filtros.',
+    ] },
+  { id: '4.3', t: 'Taxa de cartão e valor líquido', origem: 'Parte 5 do backlog', custo: 'R$ 0', tempo: '3–5 dias',
+    e: 'Capturar a taxa (%) da maquininha por forma de pagamento e refletir o valor líquido recebido — para o lucro real.',
+    faz: 'Bruto × líquido visível no caixa e a taxa aparecendo como custo no DRE. Trinks faz até rateio da taxa na comissão — aqui começa pelo essencial.',
+    passos: [
+      'Configurações: taxa default por forma (débito, crédito à vista, crédito parcelado por faixa) + prazo de recebimento (D+1/D+30).',
+      'financial_entries ganha <code>fee_pct</code>/<code>net_amount</code> (aplicada no lançamento, ajustável caso a caso).',
+      'Caixa e stat-cards distinguem bruto × líquido; a taxa vira lançamento de despesa na categoria "Taxas de cartão" (alimenta o DRE).',
+      'Prazo de recebimento alimenta a projeção (4.6): crédito de hoje só vira caixa em D+30.',
+    ] },
+  { id: '4.4', t: 'Metas de faturamento com progresso', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '2–3 dias',
+    e: 'Meta mensal de faturamento/atendimentos/clientes novos com barra de progresso e projeção pró-rata no dashboard (padrão Belle/GestãoDS).',
+    faz: '"Faltam R$ 1.200 pra bater a meta" — gestão ativa em vez de retrovisor, e um gancho de hábito que faz a assinante abrir o app todo dia.',
+    passos: [
+      'Tabela <code>goals</code> (ano, mês, tipo, alvo) com RLS.',
+      'Card na Home: barra de progresso (realizado via financial_entries paid_at / procedures) + projeção pró-rata (realizado ÷ dias corridos × dias do mês) com cor verde/amarelo/vermelho.',
+      'Sugestão automática de meta = média dos 3 últimos meses +10%.',
+      'Form no próprio card ou em Configurações.',
+    ] },
+  { id: '4.5', t: 'Dashboard analítico + DRE simplificado', origem: 'P2-31', custo: 'R$ 0', tempo: '1–2 sem',
+    e: 'Página Relatórios: ticket médio, LTV, taxa de ocupação da agenda, ranking de serviços/clientes, receita serviço × produto e DRE gerencial gerado do plano de contas.',
+    faz: '"Gestão profissional" tangível — o que Belle vende como BI de R$ 150/mês. Ocupação mediana do setor é 38%: mostrar o número da própria agenda vende o resto do produto.',
+    passos: [
+      'RPCs de agregação server-side (não carregar tudo no client): por período, serviço, cliente, categoria.',
+      'DRE simplificado: receita de serviços + produtos − taxas de cartão − insumos (custo congelado) = margem bruta − despesas por grupo do plano de contas = resultado do mês.',
+      'Ticket médio, LTV estimada, ocupação (horas agendadas ÷ horas disponíveis das regras da 3.1), ranking top serviços/clientes.',
+      'Comparativos mês a mês (12 meses) reusando o padrão SVG inline dos gráficos atuais — um único sistema de dataviz (paleta derivada do accent).',
+      'Export PDF/CSV do DRE do mês.',
+    ] },
+  { id: '4.6', t: 'Fluxo de caixa projetado 30/60/90 dias', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Curva futura de saldo dia a dia: parcelas a receber + contas a pagar + agendamentos futuros com preço — só o Clinicorp entrega isso bem no segmento.',
+    faz: 'Responde "vou conseguir pagar o aluguel no dia 10?" — previsibilidade em vez de susto no fim do mês.',
+    passos: [
+      'Sem tabela nova: RPC que soma por dia, de hoje a D+90: financial_entries pendentes por due_date + bills futuras + agendamentos do período (preço do serviço, líquido conforme 4.3).',
+      'Saldo inicial = recebido − despesas até hoje.',
+      'Nova aba no Financeiro: gráfico de linha SVG (realizado sólido, previsto tracejado), dias negativos em vermelho, cards 30/60/90.',
+      'Clique no dia lista os lançamentos previstos daquele dia.',
+    ] },
+  { id: '4.7', t: 'Orçamentos para cliente (proposta com aprovação por link)', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '1–1,5 sem',
+    e: 'Proposta com serviços/pacote, desconto (% ou R$), validade e status (rascunho → enviado → aprovado/recusado/expirado). Aprovou, vira parcelas a receber e agendamento — sem redigitação.',
+    faz: 'Proposta profissional em 2 minutos com validade que cria urgência; orçamentos em aberto viram fila de follow-up. Alavanca direta da venda de pacotes (3.5). Belle e Clinicorp tratam orçamento como centro do funil.',
+    passos: [
+      'Tabelas <code>quotes</code> (cliente, número, validade, desconto, condições, status) + <code>quote_items</code> (serviço, sessões, preço, desconto por item) com RLS.',
+      'Tela de montagem puxando preços do catálogo; desconto por item ou no total.',
+      'Página pública <code>/orcamento/:token</code> servida pelo Worker (mesmo padrão da booking page) com botão Aprovar — compartilhada via wa.me.',
+      'Ao aprovar: RPC cria a série em financial_entries (ou bill a receber) + registra no perfil; expiração preguiçosa na leitura.',
+      'Lista "orçamentos em aberto" com follow-up sugerido (vira mensagem pronta na central da etapa 5).',
+    ] },
+  { id: '4.8', t: 'Conciliação bancária — fase OFX/CSV', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Importar extrato OFX/CSV do banco e casar com os lançamentos (matching assistido). Fase 2 com Open Finance (Pluggy/Belvo) fica na etapa 10 — essa fase 1 é 100% grátis.',
+    faz: 'Garante que o app reflete a conta de verdade: pega venda não lançada, despesa esquecida e taxa não percebida. Para o público com 1 conta MEI, a fase OFX já resolve a dor.',
+    passos: [
+      'Parser OFX/CSV em JS puro no client (OFX é SGML simples).',
+      'Tela de matching: sugere pares por valor igual e data ±3 dias; aceitar grava <code>reconciled_at</code> + <code>bank_ref</code> no lançamento.',
+      'Rejeitar oferece criar lançamento novo já categorizado (usa o plano de contas 4.1).',
+      'Indicador "% do mês conciliado" no Resumo.',
+    ] },
+] },
+
+/* ============================================================ ETAPA 5 */
+{ num: 5, nome: 'Retenção sem custo: mensagens e reputação', tipo: 'gratis', tempo: '1–2 semanas',
+  tagline: 'Todo o valor dos disparos — antes de pagar um centavo de WhatsApp API.',
+  desc: 'A versão assistida (wa.me com texto pronto) entrega ~80% do valor dos lembretes com custo e risco zero, e o e-mail via Resend free cobre o resto. Quando o WhatsApp oficial chegar (etapa 8), esses fluxos já estarão desenhados — só troca o canal.',
+  itens: [
+  { id: '5.1', t: 'Central de mensagens do dia (assistida via wa.me)', origem: 'Parte 2 · fase 1', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Tela "Mensagens de hoje": lembretes de amanhã, retornos vencidos, aniversários, parcelas a vencer, pós-atendimento e follow-up de orçamento — cada um com texto pronto e botão de envio via wa.me (1 clique por mensagem).',
+    faz: 'Zero custo, zero risco de ban (sem automação de WhatsApp pessoal — bibliotecas não-oficiais arriscam o número dela). Mantém o toque humano e já organiza os gatilhos que a Cloud API vai automatizar depois.',
+    passos: [
+      'Nova rota "Mensagens" agregando as queries que já existem: agendamentos de amanhã, retornos (return_dismissals), aniversários (clients.birthdate), parcelas due_date próximas, atendimentos concluídos ontem (aftercare), orçamentos a vencer (4.7).',
+      'Templates de texto editáveis por gatilho (tabela <code>message_templates</code> com variáveis {nome}, {hora}, {serviço}).',
+      'Botão wa.me por linha (reusa waLink) + marcar como enviada (não repetir no dia).',
+      'Opt-out por cliente (campo no cadastro — exigência LGPD e da futura Cloud API).',
+      'Badge com contagem de pendentes na Home.',
+    ] },
+  { id: '5.2', t: 'Lembretes automáticos por e-mail (Resend free)', origem: 'novo · benchmark', custo: 'R$ 0 (free 3k/mês)', tempo: '3–5 dias',
+    e: 'Confirmação e lembrete de véspera por e-mail, automáticos de verdade, via cron do Worker + Resend (100/dia grátis cobrem ~1.000 clientes finais).',
+    faz: 'Automação real sem custo por mensagem — e a decisão da análise de custos aplicada desde o início: aniversário/reativação por e-mail como padrão corta 2/3 do custo variável futuro do WhatsApp marketing.',
+    passos: [
+      'Campo e-mail do cliente já existe; adicionar opt-in de lembrete por e-mail no cadastro.',
+      'Cron diário no Worker (já existe infra de cron): varre agendamentos de amanhã + aniversários do dia e envia via Resend.',
+      'Templates HTML simples com a identidade do app; remetente do domínio de teste até a etapa 7, depois domínio próprio.',
+      'Log de envios (tabela <code>message_log</code>) para não duplicar e para o painel de automações futuro.',
+    ] },
+  { id: '5.3', t: 'Pedido de avaliação no Google', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '1 dia',
+    e: 'Ao concluir atendimento, mensagem pronta pedindo avaliação no perfil do Google do negócio (Setmore Pro e Goldie vendem isso como feature).',
+    faz: 'Reviews no Google são o principal canal de aquisição local de serviços — pedir na hora certa multiplica a taxa de resposta. Casa com o CAC orgânico obrigatório do plano.',
+    passos: [
+      'Campo <code>google_review_link</code> em user_settings (Configurações, com instrução de como pegar o link curto do perfil).',
+      'Gatilho na central (5.1): atendimento concluído → linha "pedir avaliação" com wa.me pré-preenchido.',
+      'Guardar <code>review_requested_at</code> no atendimento para não repetir por cliente.',
+      'Quando a Cloud API chegar (8.3): vira template automático X horas após a conclusão.',
+    ] },
+  { id: '5.4', t: 'NPS pós-atendimento (versão grátis)', origem: 'P2-32 parcial', custo: 'R$ 0', tempo: '2–3 dias',
+    e: 'Pesquisa 0–10 simples por link (página pública do Worker), disparada pela central ou pelo e-mail automático.',
+    faz: 'Termômetro de satisfação por cliente/serviço + insumo de depoimento para o site (nota 9–10 → pedir review no Google).',
+    passos: [
+      'Tabela <code>nps_responses</code> (cliente, atendimento, nota, comentário) + página pública <code>/nps/:token</code>.',
+      'Envio: linha na central (5.1) e/ou anexado ao e-mail de pós-atendimento (5.2).',
+      'Nota 9–10 → tela de agradecimento oferece o link de review do Google (5.3); nota ≤6 → alerta na Home para a dona agir.',
+      'Média NPS no dashboard (4.5).',
+    ] },
+] },
+
+/* ============================================================ ETAPA 6 */
+{ num: 6, nome: 'Alcance: booking público, PWA e onboarding', tipo: 'gratis', tempo: '4–6 semanas',
+  tagline: 'O cliente final agenda sozinho; o app instala como app; a conta nova se ativa sem toque humano.',
+  desc: 'Fecha a faixa grátis da esteira. Tudo funciona no domínio provisório e migra automaticamente para o definitivo na etapa 7 (URLs relativas). O onboarding com pergunta de segmento é a peça que amarra o posicionamento horizontal ao produto.',
+  itens: [
+  { id: '6.1', t: 'Booking page pública + widget', origem: 'P1-17', custo: 'R$ 0', tempo: '2–4 sem',
+    e: 'Página pública por negócio (ex.: /a/studio-maria) mobile-first: cliente escolhe serviço + horário livre e agenda sozinho. Inclui perfil leve (bio, fotos, serviços) e widget embutível para quem já tem site.',
+    faz: '+33% de receita por cliente; 46–58% dos agendamentos acontecem com o negócio fechado; 94% preferem quem tem agendamento online. Base de todos os players do benchmark, do Square ao Prit.',
+    passos: [
+      'Rota pública no Worker com slug configurável; lê via anon key + policies públicas read-only cuidadosas.',
+      'Slots calculados das regras de disponibilidade (3.1): horário de trabalho − agendamentos − buffers − antecedência.',
+      'Confirmar cria atendimento status scheduled + notifica a dona (e-mail 5.2 / badge Home); Turnstile contra abuso.',
+      'Política de confirmação configurável: auto-confirma ou aprovação manual.',
+      'Cancelar/remarcar pelo link do próprio agendamento (token) — reduz WhatsApp manual.',
+      'Widget <code>&lt;iframe&gt;</code>/script de embed + QR code pronto para bio do Instagram.',
+      'SEO local básico: schema.org LocalBusiness na página pública.',
+    ] },
+  { id: '6.2', t: 'Fila de espera com liberação de vaga', origem: 'P2-33', custo: 'R$ 0 nesta fase', tempo: '1 sem',
+    e: 'Cliente entra na fila de um horário cheio; cancelamento dispara oferta automática com tempo de expiração — por e-mail/notificação nesta fase, WhatsApp quando a Cloud API chegar.',
+    faz: 'Recupera 60–70% dos cancelamentos de última hora (benchmark Zenoti: US$ 780k/ano em 18k conversões). GlossGenius preenche 12% mais horários com isso.',
+    passos: [
+      'Tabela <code>waitlist_entries</code> (cliente, serviço, período preferido, criado_em).',
+      'Entrada pela booking page (horário cheio → "entrar na fila") e pelo app.',
+      'Trigger no cancel: oferece a vaga ao primeiro da fila por e-mail com link de confirmação e expiração (ex.: 2h); expirou, passa ao próximo.',
+      'Painel simples da fila na Agenda.',
+    ] },
+  { id: '6.3', t: 'PWA completo: offline leve + push', origem: 'P2-34', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Service worker com cache de assets e leitura offline básica, Web Push para a dona (lembretes/alertas) e manifest corrigido.',
+    faz: 'Responde o "tem app?" sem app store — instala na tela inicial com ícone e abre standalone. Push substitui parte dos SMS que os concorrentes cobram.',
+    passos: [
+      'Service worker stale-while-revalidate para assets; fallback offline da Home/Agenda (dados do último load).',
+      'Corrigir site.webmanifest (start_url, theme_color) — pendência conhecida.',
+      'Web Push via Worker: novo agendamento do booking, conta a vencer, estoque crítico (opt-in por tipo).',
+      'Banner "instalar app" no primeiro uso mobile.',
+    ] },
+  { id: '6.4', t: 'Onboarding self-service com pergunta de segmento', origem: 'P1-24 + benchmark', custo: 'R$ 0', tempo: '1–2 sem',
+    e: 'Wizard de primeiro acesso no padrão SimplyBook: 1 pergunta de segmento ("com o que você trabalha?") que pré-configura serviços típicos, template de ficha (3.3) e vocabulário; depois horários, WhatsApp e checklist de ativação.',
+    faz: 'Trial → ativação sem toque humano (motion PLG obrigatória no segmento: CAC máximo ≈ R$ 225). A pergunta de segmento é o que faz o produto horizontal parecer feito sob medida para cada nicho.',
+    passos: [
+      'Wizard 4 passos: segmento → serviços sugeridos do nicho (editáveis) → horários de trabalho → número de WhatsApp.',
+      'Seed por segmento: serviços típicos com duração/preço sugeridos + template de ficha do nicho + categorias financeiras.',
+      'Dados de exemplo opcionais ("quero explorar antes") com botão limpar.',
+      'Checklist de ativação persistente no dashboard: 1º cliente, 1º agendamento, 1ª ficha, booking publicado.',
+      'Gravar o segmento no user_settings — alimenta analytics, templates e futuros defaults.',
+      'Abertura real de signups fica para a etapa 8 (junto do trial/billing); até lá o wizard roda para contas do beta.',
+    ] },
+  { id: '6.5', t: 'Escala técnica: RPCs, paginação, testes, CI', origem: 'P2-35', custo: 'R$ 0', tempo: '1–2 sem',
+    e: 'Pagar os atalhos deliberados antes que mordam: movimentação de estoque vira RPC atômica, paginação server-side nos módulos "carrega tudo", índices e testes das RPCs.',
+    faz: 'Multi-dispositivo sem corrida e app rápido com milhares de registros — o risco técnico apontado na análise de custos não é preço, é o padrão load-all.',
+    passos: [
+      'Os 11 comentários <code>ponytail:</code> no código marcam os pontos exatos — varrer e resolver um a um.',
+      'RPC atômica de movimentação de estoque (fim do read-then-write client-side).',
+      'Paginação/agregação server-side em Clientes, Histórico e Financeiro.',
+      'Testes SQL das RPCs críticas (pacotes, procedimentos, restore) + CI já roda node --check.',
+    ] },
+  { id: '6.6', t: 'Sentry + alerta do backup', origem: 'P2-36', custo: 'R$ 0 (free tier)', tempo: '½ dia',
+    e: 'Error tracking no front e no Worker; alerta se o backup semanal no Drive falhar (hoje é silencioso).',
+    faz: 'Você fica sabendo dos erros antes da cliente reclamar.',
+    passos: [
+      'Sentry free: SDK browser no app.html + integração no Worker.',
+      'Catch do cron de backup → e-mail/notificação em falha (Resend já configurado).',
+      'Alerta de billing/quota do Supabase (dashboard → notifications).',
+    ] },
+  { id: '6.7', t: 'Ambiente de staging', origem: 'P2-37', custo: 'R$ 0 (free tiers)', tempo: '1 dia',
+    e: 'Worker de staging (wrangler env) + projeto Supabase separado com seed — testar migrations e features sem medo.',
+    faz: 'Deploy seguro. Hoje todo teste é em produção com as 3 usuárias reais.',
+    passos: [
+      '<code>wrangler.jsonc</code>: env.staging com workers.dev próprio.',
+      'Projeto Supabase free de staging + script de seed (reusa o seed demo da 2.4).',
+      'Fluxo: feature → staging → aceite → produção. Migrations versionadas (supabase migration) em vez do schema.sql idempotente.',
+    ] },
+] },
+
+/* ============================================================ ETAPA 7 */
+{ num: 7, nome: 'Marca: nome, domínio e formalização', tipo: 'marca', tempo: '2–3 semanas + processos',
+  tagline: '🔒 O portão. Destrava quando o nome estiver definido — tudo antes roda sem ele.',
+  desc: 'Único bloqueio real da esteira. O naming agora pode (e deve) refletir o posicionamento horizontal — o nome não precisa amarrar em estética. Custos pequenos: domínio ~R$ 40/ano + jurídico pontual.',
+  itens: [
+  { id: '7.1', t: 'Naming sprint: decidir o nome', origem: 'novo · pré-req do rebrand', custo: 'R$ 0 (INPI ~R$ 142/classe se registrar)', tempo: '3–5 dias',
+    e: 'Processo estruturado para sair de "Harmon IA" (provisório) para o nome definitivo — agora com brief horizontal: elegante, curto, pronunciável em PT, sem prender em estética.',
+    faz: 'Destrava TODA a etapa 7 — domínio, CNPJ, legais, OAuth. É o item que está segurando o resto.',
+    passos: [
+      'Brief de 1 página: posicionamento "hora marcada com elegância", tom da marca (rosé, sofisticado, acolhedor), critérios (2–3 sílabas, .com.br livre, @ livre no Instagram, sem colisão INPI classe 42).',
+      'Gerar 30–50 candidatos (brainstorm + IA), sem julgar.',
+      'Filtro objetivo: busca INPI (marca), Registro.br (domínio), Instagram/TikTok (@), Google (colisões) → shortlist de 5.',
+      'Teste rápido com 5–10 pessoas do público-alvo: pronúncia, memorização, associação.',
+      'Decidir. Logo/wordmark vem depois do nome (mesma identidade visual, só o símbolo).',
+      'Registrar a marca no INPI (classe 42, software) — pode correr em paralelo ao resto.',
+    ] },
+  { id: '7.2', t: 'CNPJ + revisão jurídica das legais', origem: 'P1-22', custo: 'R$ 1–3k (jurídico)', tempo: '1 sem + prazos',
+    e: 'Abrir a empresa (SaaS não cabe em MEI — SLU/ME no Simples, com contador), preencher os [PREENCHER] de razão social/CNPJ/DPO nas páginas legais e passar termos + privacidade por revisão jurídica.',
+    faz: 'Destrava billing (CNPJ para o gateway), OAuth (privacidade final) e credibilidade — hoje as legais se declaram rascunho.',
+    passos: [
+      'Contador: abrir SLU no Simples (anexo III/V conforme fator R) — 1 semana típica.',
+      'Preencher os 3 [PREENCHER] (razão social, CNPJ, contato DPO) em privacidade/termos/cookies.html + rodapé.',
+      'Advogado: revisão pontual de termos + privacidade (LGPD art. 11 — dado sensível de saúde nos segmentos clínicos).',
+      'Conta PJ (banco digital) para o gateway da etapa 8.',
+    ] },
+  { id: '7.3', t: 'Domínio próprio + e-mail corporativo', origem: 'P1-21', custo: '~R$ 40/ano', tempo: '2h + propagação',
+    e: 'Registrar o domínio do nome novo no Registro.br e apontar para a Cloudflare; e-mail corporativo via Email Routing (grátis).',
+    faz: 'Marca, SEO, deliverability e pré-requisito da verificação OAuth. Sai do workers.dev.',
+    passos: [
+      'Registro.br: registrar o .com.br (~R$ 40/ano). Cloudflare Registrar não suporta .br — registra lá e aponta o DNS pra Cloudflare (grátis).',
+      'Adicionar a zona na Cloudflare (proxied) e rotear o Worker pro domínio (custom domain).',
+      'Email Routing: contato@dominio → seu Gmail; remetente verificado no Resend (destrava o e-mail de confirmação pro lead).',
+      'Atualizar: canonical/OG/sitemap, Redirect URLs no Supabase, redirect URIs no Google Cloud, hostname do Turnstile.',
+      'Agora sim: regras de WAF/Rate Limiting por zona em /api/* (a pendência do P0 que não aplicava em workers.dev) + scan securityheaders.com.',
+    ] },
+  { id: '7.4', t: 'Rebrand global no código e no site', origem: 'P1-22 execução', custo: 'R$ 0', tempo: '2–3 dias',
+    e: 'Troca do nome/wordmark em todos os pontos mapeados desde a Fase 2 do plano do site.',
+    faz: 'Marca consistente em produto, site, metadados e stores de busca.',
+    passos: [
+      'Varredura mapeada: wordmark do header, titles, og:site_name, rodapé, monograma do favicon/og-image, manifest, textos legais, README.',
+      'Gerar favicon/ícones/og-image novos com o logo definitivo.',
+      'E-mail de anúncio pra waitlist ("agora somos X") — primeiro uso do remetente próprio.',
+      'Atualizar templates de e-mail (5.2) com a marca nova.',
+    ] },
+  { id: '7.5', t: 'Verificação OAuth do Google', origem: 'P1-23', custo: 'R$ 0', tempo: '1–2 sem (processo)',
+    e: 'O app usa scopes sensíveis (Calendar, Contacts). Sem verificação: cap de 100 usuários e tela "app não verificado" que mata conversão.',
+    faz: 'Login Google sem fricção para usuários ilimitados. Processo demora — iniciar assim que domínio + privacidade final existirem.',
+    passos: [
+      'Google Cloud Console → OAuth consent screen: domínio verificado, política de privacidade final, links da home.',
+      'Vídeo demo do uso de cada scope + justificativa escrita (Calendar = espelho da agenda; Contacts = espelho de clientes; drive.file = backup).',
+      'Submeter e acompanhar (idas e voltas por e-mail são normais).',
+      'Enquanto pende: o login e-mail/senha (3.2) segura a conversão sem fricção.',
+    ] },
+  { id: '7.6', t: 'E-mail de confirmação pro lead + réguas do domínio', origem: 'P0-9 fase 2', custo: 'R$ 0', tempo: '½ dia',
+    e: 'Com remetente verificado: e-mail "você está na lista" para cada lead (hoje só existe o aviso interno).',
+    faz: 'Loop de reengajamento aberto no momento de maior interesse — o lead não esfria até o lançamento.',
+    passos: [
+      'Verificar o domínio no Resend (DKIM/SPF via DNS na Cloudflare).',
+      'Template "você está na lista" + o que esperar + link de indicação (waitlist com referência).',
+      'Sequência leve: confirmação → 1 e-mail de bastidores/mês até o lançamento.',
+    ] },
+] },
+
+/* ============================================================ ETAPA 8 */
+{ num: 8, nome: 'Lançamento: cobrar, automatizar, emitir', tipo: 'pago', tempo: '6–9 semanas',
+  tagline: 'O motor de receita — e os primeiros custos variáveis (todos repassáveis no preço).',
+  desc: 'Com produto completo e marca no ar, liga a monetização: assinatura com trial, WhatsApp oficial, pagamentos e NFS-e. Custo fixo do stack ≈ R$ 140–350/mês; break-even em ~5 assinantes (análise de custos). O gancho regulatório da NFS-e nacional (ago–set/2026) marca a data do lançamento.',
+  itens: [
+  { id: '8.1', t: 'Supabase Pro', origem: 'análise §2', custo: 'US$ 25/mês (~R$ 135)', tempo: '10 min',
+    e: 'Upgrade do projeto no primeiro cliente pagante (ou antes do lançamento).',
+    faz: 'Backup diário gerenciado 7d, sem pausa por inatividade, 8 GB de banco (2.000 clientes usam 6), suporte.',
+    passos: [
+      'Dashboard Supabase → upgrade para Pro.',
+      'Desligar o spend cap (com cap ligado o serviço degrada em vez de cobrar) e configurar alertas de billing.',
+      'Testar restore de um backup gerenciado (rito trimestral).',
+    ] },
+  { id: '8.2', t: 'Pricing público + trial 35 dias + billing', origem: 'P1-20 + análise §6', custo: 'taxas do gateway (2,99% + R$ 0,49)', tempo: '1–2 sem',
+    e: 'Publicar a escada Começo R$ 24,90 / Profissional R$ 54,90 / Estúdio R$ 99,90 (margens 83%/78%/60% validadas na análise), trial 35 dias sem cartão, cobrança recorrente via Asaas.',
+    faz: 'O motor de receita self-service. Trial sem cartão converte 8,9–18% (benchmark). Preço público é a regra comercial nº 1 contra os incumbentes de "sob consulta".',
+    passos: [
+      'Abrir conta Asaas PJ (CNPJ da 7.2); módulo de assinaturas (grátis; cartão recorrente 2,99% + R$ 0,49 — melhor que Stripe BR).',
+      'Signups abertos no Supabase + gating suave: banner de dias restantes do trial, bloqueio gentil no fim.',
+      'Checkout hospedado do Asaas + webhook de status no Worker (ativo/inadimplente/cancelado).',
+      'Página de planos com preço real, fair-use de WhatsApp por plano (150/600 msgs) e "Estúdio" com preço + aviso de fila (até a etapa 9 destravar).',
+      'Regras que viram marketing: sem multa, sem implantação, anual -20%, migração grátis.',
+    ] },
+  { id: '8.3', t: 'WhatsApp oficial (Cloud API): confirmação + lembretes', origem: 'P1-15 · Parte 2 fase 2', custo: '~R$ 0,04/msg utility (grátis na janela 24h)', tempo: '2–3 sem',
+    e: 'Confirmação na hora + lembretes 24h/2h com botões Confirmar/Remarcar, via WhatsApp Business Cloud API (Meta, oficial — sem risco de ban).',
+    faz: 'Reduz no-show em 30–70% (leitura ~98%). A maior arbitragem do mercado BR: concorrentes cobram R$ 150–229/mês de add-on — aqui vem incluso com fair-use. Os fluxos da etapa 5 só trocam de canal.',
+    passos: [
+      'App Meta + número business dedicado + verificação do negócio (usa o CNPJ da 7.2).',
+      'Templates utility aprovados: confirmação, lembrete véspera, lembrete 2h, parcela a vencer.',
+      'Fila de envio em tabela + cron no Worker (infra da 5.2 reaproveitada); webhook de status/resposta.',
+      'Botões: resposta "Confirmar" atualiza o status; "Remarcar" abre o link de remarcação da booking page.',
+      'Desenhar para a janela grátis: lembrete pede resposta → resposta abre janela de 24h → mensagens seguintes gratuitas (a análise assume 55% fora da janela — dá pra melhorar).',
+      'Medidor de fair-use por conta (150/600) + pacote extra de 200 msgs por R$ 9,90.',
+    ] },
+  { id: '8.4', t: 'Automações completas: aniversário, reativação, NPS', origem: 'P2-32', custo: 'custo das msgs (e-mail = R$ 0)', tempo: '1 sem',
+    e: 'Painel de automações liga/desliga por tipo: aniversário (com oferta opcional), reativação 60–90 dias, NPS — e-mail como canal padrão, WhatsApp fair-use como upgrade.',
+    faz: 'Aniversário: +481% em transações por mensagem; reativação recupera 15–25% dos inativos. A decisão e-mail-default derruba o custo variável de R$ 9 para ~R$ 4/cliente.',
+    passos: [
+      'Painel em Configurações: cada automação com canal (e-mail/WhatsApp), horário e template.',
+      'Cron diário unificado (5.2 + 8.3) com log e opt-out por cliente.',
+      'Reativação usa a régua que já existe no Histórico (60/90 dias) — automatizar o disparo.',
+      'Relatório simples: enviadas × respondidas × agendamentos gerados (o case que vira marketing).',
+    ] },
+  { id: '8.5', t: 'Pagamentos online + sinal anti no-show', origem: 'P2-27', custo: '% por transação (Pix ~0,99%)', tempo: '2–3 sem',
+    e: 'Link de pagamento/Pix por atendimento e sinal configurável no booking (ex.: 30% para reservar) via Asaas/Mercado Pago.',
+    faz: 'Pix = 76% dos consumidores; pré-pagamento derruba no-show em até 95% (claim do Prit — o benchmark horizontal confirma como diferencial nº 1). Table-stakes 2026.',
+    passos: [
+      'Cobrança por atendimento: QR Pix / link no detalhe do agendamento e na confirmação do booking.',
+      'Sinal no booking: % configurável por serviço; slot só confirma com sinal pago.',
+      'Webhook concilia automático em financial_entries (paga a fase 1 da conciliação 4.8).',
+      'Política de cancelamento/no-show ligada ao sinal (retenção configurável) — padrão Square/GlossGenius.',
+    ] },
+  { id: '8.6', t: 'NFS-e nacional: "conecte seu Asaas"', origem: 'P2-28 + análise §5', custo: 'R$ 0 p/ plataforma (R$ 0,49/nota paga pela cliente)', tempo: '2–3 sem',
+    e: 'Emissão de NFS-e ao concluir atendimento usando a conta Asaas DA PRÓPRIA CLIENTE (modelo decidido na análise de custos — evita o modelo caro por CNPJ do Focus).',
+    faz: 'NFS-e nacional obrigatória: autônomos 01/08/2026, Simples 01/09/2026. "Emita automático antes do prazo" é o gancho de aquisição com data marcada do lançamento.',
+    passos: [
+      'Configurações: conectar conta Asaas (API key da cliente) + dados fiscais (CNPJ, código de serviço, ISS).',
+      'Emissão no complete_procedure (automática opt-in ou botão "emitir nota") + painel de notas do mês.',
+      'Tratamento de erro fiscal (fila de retry + aviso claro).',
+      'Conteúdo/SEO casado: guia "NFS-e nacional para autônomas" nas páginas de segmento (tráfego com prazo).',
+    ] },
+  { id: '8.7', t: 'Blog/SEO + páginas comparativas', origem: 'P2-38', custo: 'R$ 0', tempo: 'contínuo',
+    e: 'Conteúdo orgânico ("como reduzir faltas", "NFS-e para esteticista/tatuador") e páginas "X vs Trinks/Belle/Clinicorp" com comparação honesta de custo real.',
+    faz: 'Canal de aquisição sem mídia paga; comparativos capturam quem já quer trocar de sistema. Precisa do domínio (por isso está aqui e não antes).',
+    passos: [
+      'Estrutura de blog estático no padrão do site (sem build), schema.org Article.',
+      '2 posts/mês guiados pelo funil do PostHog (2.5): temas dos segmentos que mais convertem.',
+      'Páginas comparativas com a tabela de custo real (add-ons, multa, trial) — atualizar por trimestre.',
+    ] },
+] },
+
+/* ============================================================ ETAPA 9 */
+{ num: 9, nome: 'Equipe e escala: o ticket maior', tipo: 'pago', tempo: '2–3 meses',
+  tagline: 'Orgs, comissões, salas — destrava o plano Estúdio prometido no site.',
+  desc: 'O maior refactor do roadmap (orgs) e tudo que depende dele. Priorizar guiado pela demanda medida na waitlist do "Estúdio — em breve" (2.4). Código é grátis; está na faixa paga porque só faz sentido com o negócio já cobrando.',
+  itens: [
+  { id: '9.1', t: 'Multi-profissional (organizações)', origem: 'P2-26', custo: 'R$ 0', tempo: '4–6 sem',
+    e: 'Organizações com membros e papéis (dono/profissional/recepção), agenda por profissional, permissões. O modelo hoje é 1 conta = 1 tenant.',
+    faz: 'Destrava o plano Estúdio (R$ 99,90 + R$ 29,90/profissional) e o mercado de clínicas/studios. Maior item arquitetural do plano — a análise §7 descarta atalhos (risco de vazamento entre contas).',
+    passos: [
+      'Tabelas <code>orgs</code>/<code>members</code> (papéis) + <code>org_id</code> nas ~12 tabelas.',
+      'Reescrita das policies RLS: de user_id para org + papel — com testes SQL de isolamento antes de migrar.',
+      'Migração automática: cada conta atual vira org de 1 membro.',
+      'Convites por e-mail (Supabase Auth) + tela de equipe.',
+      'Agenda por profissional (filtro/cores) na Agenda e no booking (cliente escolhe o profissional).',
+      '/code-review ultra antes do merge — é o refactor mais arriscado do plano.',
+    ] },
+  { id: '9.2', t: 'Comissões por profissional', origem: 'P2-29', custo: 'R$ 0', tempo: '1–2 sem',
+    e: 'Percentual por profissional/serviço, cálculo automático no fechamento, relatório mensal — com rateio opcional da taxa de cartão (padrão Trinks, o motor mais completo do benchmark).',
+    faz: 'Table-stakes do plano de equipe; área onde Avec/Clinicorp colecionam reclamações de cálculo errado — confiabilidade vira argumento.',
+    passos: [
+      'Tabela <code>commission_rules</code> (profissional × serviço × %, base bruto/líquido).',
+      'Linha de comissão gerada no complete_procedure; ajuste manual com trilha.',
+      'Fechamento mensal por profissional: bruto, descontos, taxa rateada (4.3), base, %, valor final — o relatório do Trinks como referência.',
+      'Visão do profissional (papel membro): só as próprias comissões.',
+    ] },
+  { id: '9.3', t: 'Salas e equipamentos (recursos na agenda)', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Recurso escasso além do profissional: sala, maca, laser. Serviço pode exigir tipo de recurso; agenda checa conflito.',
+    faz: 'Evita duas clientes no mesmo laser. Requisito do tenant clínica que paga o ticket maior (Square cobra isso no plano Premium).',
+    passos: [
+      'Tabela <code>resources</code> (org, nome, tipo sala|equipamento, cor) + <code>resource_id</code> no agendamento.',
+      'Campo "exige recurso do tipo X" em serviços.',
+      'Checagem de sobreposição na RPC de agendar (lock) + filtro por recurso na agenda.',
+      'Booking (6.1) só oferece slots com recurso livre.',
+    ] },
+  { id: '9.4', t: 'Fechamento de caixa diário', origem: 'novo · benchmark', custo: 'R$ 0', tempo: '3–5 dias',
+    e: 'Ritual de abrir/fechar o caixa do dia com conferência por forma de pagamento e diferença apurada — relevante quando há recepção/equipe.',
+    faz: 'Controle antifurto/antierro com equipe; lançamentos de dias fechados ficam travados.',
+    passos: [
+      'Tabela <code>cash_sessions</code> (data, esperado por forma, conferido por forma, diferença).',
+      '"Fechar o dia" agrega os lançamentos pagos por payment_method; usuária digita o conferido.',
+      'Policy: lançamentos com paid_at ≤ último fechamento ficam read-only.',
+      'Relatório de diferenças no dashboard.',
+    ] },
+  { id: '9.5', t: 'Split de pagamento (Lei Salão Parceiro)', origem: 'P3-40', custo: 'via gateway', tempo: '2 sem',
+    e: 'Divisão automática na fonte entre negócio e profissional parceiro (Lei 13.352/2016), via split nativo do Asaas/MP sobre as regras de comissão.',
+    faz: 'Comissão cai direto na conta de cada um — recurso que só os grandes têm (Avec Pay, Trinks/Stone).',
+    passos: [
+      'Subcontas/recebedores no gateway por profissional.',
+      'Split configurado a partir das commission_rules (9.2).',
+      'Conciliação do split no financeiro + termos da Lei Salão Parceiro no contrato.',
+    ] },
+  { id: '9.6', t: 'Multiunidade', origem: 'P3-43', custo: 'R$ 0', tempo: '4–8 sem',
+    e: 'Uma org, várias unidades: estoque, agenda, caixa e relatórios por unidade + consolidado.',
+    faz: 'Abre o segmento de redes pequenas (ticket 2–3x). Só depois das orgs maduras.',
+    passos: [
+      'Camada <code>location_id</code> sobre o modelo de orgs (9.1).',
+      'Seletor de unidade no shell; relatórios com filtro unidade/consolidado.',
+      'Estoque e booking por unidade.',
+    ] },
+] },
+
+/* ============================================================ ETAPA 10 */
+{ num: 10, nome: 'Diferenciais de retenção e LTV', tipo: 'pago', tempo: '2–3 meses',
+  tagline: 'Memberships, portal do cliente e integrações que seguram a assinante.',
+  desc: 'Depois do lançamento rodando: os itens que aumentam LTV do cliente final (e da assinante). Ordem flexível — puxar pelo que os dados de uso pedirem.',
+  itens: [
+  { id: '10.1', t: 'Memberships + cashback + gift cards + cupons', origem: 'P3-39 ampliado', custo: 'R$ 0 (cobrança via gateway)', tempo: '3–4 sem',
+    e: 'Assinaturas recorrentes de tratamento (créditos com rollover, padrão Boulevard), cashback com aviso de saldo, vale-presente e cupons de desconto (padrões Goldie/Acuity/SimplyBook do benchmark horizontal).',
+    faz: 'Membros: ~3x visitas, +35% gasto, 3,5x LTV; cashback faz a cliente voltar 22 dias antes; gift card é receita antecipada.',
+    passos: [
+      'Tabelas <code>subscriptions</code> + wallet de créditos (rollover configurável) + cobrança recorrente no gateway.',
+      'Cashback: % por atendimento vira saldo; aviso automático de saldo via automações (8.4).',
+      'Gift cards: emissão com código, resgate no caixa; cupons: código, validade, % — aplicáveis no booking.',
+      'Retry de cobrança falhada (dunning) — o detalhe que diferencia o Boulevard.',
+    ] },
+  { id: '10.2', t: 'Portal do cliente final', origem: 'P3-44', custo: 'R$ 0', tempo: '4–6 sem',
+    e: 'Área do cliente via magic link: histórico, saldo de pacote/cashback, próximos horários, remarcação, fichas para preencher em casa.',
+    faz: 'Reduz o WhatsApp manual do negócio e aumenta a percepção de profissionalismo (padrão SimplyBook client app / Prit Consumidor).',
+    passos: [
+      'Auth por magic link (token por e-mail/WhatsApp) — sem senha.',
+      'Read-only do próprio subset: atendimentos, pacotes, cashback, fichas pendentes.',
+      'Remarcar/cancelar dentro das regras de antecedência.',
+      'PWA instalável com o tema do negócio (cores/logo).',
+    ] },
+  { id: '10.3', t: 'Ghost overlay na câmera (antes/depois padronizado)', origem: 'P3-41', custo: 'R$ 0', tempo: '1 sem',
+    e: 'Ao fotografar o "depois", a foto "antes" aparece sobreposta translúcida para replicar ângulo e enquadramento (padrão RxPhoto).',
+    faz: 'Antes/depois comparável de verdade — documentação premium que nenhum player BR pequeno tem.',
+    passos: [
+      '<code>getUserMedia</code> + overlay da última foto com opacidade 50%.',
+      'Grade de alinhamento opcional; captura direto pra galeria do atendimento (3.4).',
+    ] },
+  { id: '10.4', t: 'Import Mercado Livre (estoque)', origem: 'P3-42 · Parte 4', custo: 'R$ 0', tempo: '1–2 sem',
+    e: 'Colar link do ML e importar nome/foto/preço do produto. A API do ML exige OAuth server-side — proxy no Worker.',
+    faz: 'Cadastro de produto em segundos; casa com a lista de compras que já tem links de recompra.',
+    passos: [
+      'App de dev no Mercado Livre (client id/secret como secrets do Worker).',
+      'Endpoint proxy: recebe URL, extrai MLB-id, chama a API com token renovável, devolve JSON normalizado.',
+      'estoque.js: campo "colar link do ML" no form + preencher campos (avisar que unidades/embalagem nem sempre vêm).',
+    ] },
+  { id: '10.5', t: 'Conciliação fase 2: Open Finance', origem: 'novo · benchmark fase 2', custo: 'Pluggy/Belvo (por conexão)', tempo: '1–2 sem',
+    e: 'Conexão direta com o banco via agregador (Pluggy/Belvo): extrato entra sozinho, matching automático — a fase OFX (4.8) vira fallback.',
+    faz: 'A conciliação da Conta Azul ("economia de 20h/mês") dentro do vertical. Diferencial forte no plano superior.',
+    passos: [
+      'Avaliar Pluggy vs Belvo (custo por conexão ativa) e o plano em que a feature entra (Profissional+?).',
+      'Webhook de transações novas → fila de matching da 4.8.',
+      'Consentimento e renovação de conexão (Open Finance expira) com aviso.',
+    ] },
+  { id: '10.6', t: 'Assinatura eletrônica reforçada (Clicksign/D4Sign)', origem: 'P3-45', custo: '~R$ 1–2/doc', tempo: '3 dias',
+    e: 'Upgrade opcional do termo assinado: carimbo de tempo e ICP para clínicas maiores que exigirem validade jurídica reforçada.',
+    faz: 'Compliance premium; o canvas + hash próprio (3.3) já atende o caso comum.',
+    passos: [
+      'Integração por documento, acionada só se a conta ativar.',
+      'Cobrar como custo repassado ou embutir no plano topo.',
+    ] },
+] },
+
+/* ============================================================ ETAPA 11 */
+{ num: 11, nome: 'IA e plataforma: a fronteira', tipo: 'pago', tempo: '6–12 meses',
+  tagline: 'Onde Fresha/Zenoti estão hoje — com 12–24 meses de vantagem local.',
+  desc: 'Visão de longo prazo. O agente de WhatsApp é o único add-on aceitável no posicionamento "tudo incluso" (tem custo variável real de LLM). Tudo aqui pressupõe as etapas anteriores rodando com dados.',
+  itens: [
+  { id: '11.1', t: 'Agente IA no WhatsApp 24/7', origem: 'P4-46', custo: 'LLM por conversa (add-on R$ 79–99)', tempo: '6–10 sem',
+    e: 'Recepcionista IA que responde, agenda, reagenda e tira dúvidas sozinha no WhatsApp do negócio, com escalação para humano.',
+    faz: 'Fronteira internacional (Fresha AI Concierge, Zenoti AI, Goldie AI Receptionist); lift de 30–50% em agendamentos — 46–58% dos contatos chegam fora do horário.',
+    passos: [
+      'Claude API + tools: disponibilidade (3.1), serviços, booking (6.1), FAQ do negócio.',
+      'Guardrails: nunca inventa preço/horário; handoff para humano com resumo; log completo.',
+      'Piloto com 3–5 contas do beta medindo conversão antes de abrir.',
+      'Cobrança como add-on pelo custo variável (o único add-on do posicionamento).',
+    ] },
+  { id: '11.2', t: 'IA de atendimento e previsão', origem: 'P4-47', custo: 'LLM por uso', tempo: '4–6 sem',
+    e: 'Rascunho automático da evolução na ficha pós-atendimento (ambient scribe estilo Jane/Pabau), score preditivo de no-show por cliente e previsão de consumo de estoque pela agenda futura.',
+    faz: 'Diferencial defensável que nenhum player BR pequeno tem — e alimenta decisões (sinal obrigatório só pra quem tem score alto de falta).',
+    passos: [
+      'Rascunho de evolução: Claude API sobre a ficha + histórico (com consentimento explícito, dado sensível).',
+      'Score de no-show: heurística sobre histórico (faltas, antecedência, clima de resposta) — começa sem LLM.',
+      'Previsão de estoque: consumo médio por serviço × agenda futura → sugestão na lista de compras.',
+    ] },
+  { id: '11.3', t: 'API pública + webhooks', origem: 'P4-48', custo: 'R$ 0', tempo: '3–4 sem',
+    e: 'API keys por tenant, webhooks de eventos (agendamento criado, pagamento recebido) e integração Zapier/Make.',
+    faz: 'Ecossistema e lock-in positivo; requisito de clientes maiores.',
+    passos: [
+      'Gateway no Worker com rate limit por key.',
+      'Webhooks assinados (HMAC) com retry.',
+      'Docs públicas + coleção de exemplos; app no Zapier/Make.',
+    ] },
+  { id: '11.4', t: 'Marketplace / vitrine de descoberta', origem: 'P4-49', custo: 'alto', tempo: 'trimestres',
+    e: 'Diretório público dos negócios com agendamento direto — o motor de demanda que faz Trinks/Fresha/Booksy crescerem.',
+    faz: 'Vira canal de aquisição para os próprios clientes (e moat de rede). Só faz sentido com massa crítica de booking pages.',
+    passos: [
+      'Agregado público das booking pages (6.1) com busca por segmento/cidade — os anéis da etapa 2 viram categorias.',
+      'SEO local pesado (schema.org, páginas por cidade+segmento).',
+      'Avaliar modelo comercial (incluso vs comissão por cliente novo — Fresha cobra 20%).',
+    ] },
+] },
+
+];
+
+/* ================================================================= render */
+const $ = (s, el = document) => el.querySelector(s);
+const TIPO = {
+  gratis: { chip: '<span class="chip free">Grátis</span>', label: 'grátis' },
+  marca:  { chip: '<span class="chip gate">🔒 Espera a marca</span>', label: 'marca' },
+  pago:   { chip: '<span class="chip paid">Pago</span>', label: 'pago' },
+};
+
+function tiles() {
+  const all = ETAPAS.flatMap(e => e.itens);
+  const nFree = ETAPAS.filter(e => e.tipo === 'gratis').flatMap(e => e.itens).length;
+  const nPaid = all.length - nFree;
+  $('#tiles').innerHTML = [
+    ['Itens no total', String(all.length), '11 etapas em ordem de execução', ''],
+    ['Sem custo de ferramenta', String(nFree), 'etapas 1–6 · só código e cliques', 'free'],
+    ['Pagos ou travados pela marca', String(nPaid), 'etapas 7–11', 'paid'],
+    ['Próxima ação', 'Etapa 1', 'ativar o P0 (½ dia de cliques)', ''],
+  ].map(([k, v, s, c]) => `<div class="tile"><div class="k">${k}</div><div class="v ${c}">${v}</div><div class="s">${s}</div></div>`).join('');
+}
+
+function costClass(c) { return /R\$ ?0(?![,.\d])|free|grátis/i.test(c) ? 'cost-free' : 'cost-paid'; }
+
+function render() {
+  $('#belt').innerHTML = ETAPAS.map(et => `
+    <details class="stage" data-tipo="${et.tipo}" id="etapa-${et.num}" ${et.num === 1 ? 'open' : ''}>
+      <summary>
+        <span class="stage-num">${et.num}</span>
+        <span class="stage-head">
+          <h2>${et.nome}</h2>
+          <span class="tagline">${et.tagline}</span>
+        </span>
+        <span class="stage-side">
+          <span class="stage-chips">${TIPO[et.tipo].chip}</span>
+          <span class="stage-info">${et.itens.length} itens · ${et.tempo}</span>
+        </span>
+        <span class="stage-caret">▶</span>
+      </summary>
+      <div class="stage-body">
+        <p class="stage-desc">${et.desc}</p>
+        ${et.itens.map(it => item(it)).join('')}
+      </div>
+    </details>`).join('');
+}
+
+function item(it) {
+  return `
+  <details class="item" data-search="${(it.id + ' ' + it.t + ' ' + it.e + ' ' + it.faz + ' ' + it.origem).toLowerCase().replace(/"/g, '')}">
+    <summary>
+      <span class="item-num">${it.id}</span>
+      <span class="item-title">${it.t}</span>
+      <span class="item-badges">
+        <span class="b origem">${it.origem}</span>
+        <span class="b ${costClass(it.custo)}">${it.custo}</span>
+        <span class="b">${it.tempo}</span>
+      </span>
+    </summary>
+    <div class="item-body">
+      <h4>O que é</h4>
+      <p class="oque">${it.e}</p>
+      <h4>O que faz</h4>
+      <p>${it.faz}</p>
+      <h4>Como fazer — passo a passo</h4>
+      <ol>${it.passos.map(p => `<li>${p}</li>`).join('')}</ol>
+      ${it.depNote ? `<div class="dep-note"><b>Depende de:</b> ${it.depNote}</div>` : ''}
+    </div>
+  </details>`;
+}
+
+/* busca */
+$('#search').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  let shown = 0, total = 0;
+  document.querySelectorAll('details.item').forEach(d => {
+    total++;
+    const ok = !q || d.dataset.search.includes(q);
+    d.classList.toggle('hidden', !ok);
+    if (ok) shown++;
+  });
+  document.querySelectorAll('details.stage').forEach(s => {
+    const any = s.querySelector('details.item:not(.hidden)');
+    s.classList.toggle('hidden', !any);
+    if (q && any) s.open = true;
+  });
+  $('#countNote').textContent = q ? `${shown} de ${total} itens` : '';
+});
+
+$('#expandAll').addEventListener('click', () =>
+  document.querySelectorAll('details').forEach(d => d.open = true));
+$('#collapseAll').addEventListener('click', () =>
+  document.querySelectorAll('details').forEach(d => d.open = false));
+
+/* tema */
+const setTheme = t => { document.documentElement.dataset.theme = t; localStorage.setItem('pm-theme', t); };
+setTheme(localStorage.getItem('pm-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+$('#themeBtn').addEventListener('click', () =>
+  setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+tiles(); render();
+</script>
+</body>
+</html>

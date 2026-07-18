@@ -11,6 +11,8 @@
 // Secrets (Workers → Settings → Variables and Secrets):
 //   SUPABASE_URL (var pública), SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
 //   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
+// Opcionais (P0): TURNSTILE_SECRET (anti-bot da waitlist), RESEND_API_KEY +
+//   NOTIFY_EMAIL (aviso interno de lead novo).
 // ============================================================================
 
 export default {
@@ -18,6 +20,9 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/google-refresh') {
       return handleGoogleRefresh(request, env);
+    }
+    if (url.pathname === '/api/waitlist') {
+      return handleWaitlist(request, env, ctx);
     }
     // qualquer outra rota: assets estáticos (com _headers/_redirects aplicados)
     return env.ASSETS.fetch(request);
@@ -64,6 +69,72 @@ async function handleGoogleRefresh(request, env) {
 
   return json({ access_token: tok.access_token, expires_in: tok.expires_in }, 200,
     { 'Cache-Control': 'no-store' });
+}
+
+// ------------------------------------------------------------ /api/waitlist --
+// Insere e-mail da lista de espera. O INSERT anônimo direto no banco foi
+// removido (db/migration-p0-seguranca.sql): agora só o Worker escreve, depois
+// de validar e-mail, honeypot e o token do Turnstile. Notifica o dono via
+// Resend quando configurado.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function handleWaitlist(request, env, ctx) {
+  if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'bad_json' }, 400); }
+
+  if (body.company) return json({ ok: true }); // honeypot preenchido: finge sucesso pro bot
+
+  const email = String(body.email || '').trim().toLowerCase();
+  if (!email || email.length > 254 || !EMAIL_RE.test(email)) return json({ error: 'bad_email' }, 400);
+  const source = String(body.source || '').slice(0, 40) || null;
+
+  // Turnstile: fail-closed quando configurado; sem TURNSTILE_SECRET ainda,
+  // segue sem verificar (mesmo nível de proteção que o form tinha antes).
+  if (env.TURNSTILE_SECRET) {
+    const v = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        secret: env.TURNSTILE_SECRET,
+        response: String(body.token || ''),
+        remoteip: request.headers.get('CF-Connecting-IP') || '',
+      }),
+    }).then((r) => r.json()).catch(() => null);
+    if (!v || !v.success) return json({ error: 'turnstile_failed' }, 403);
+  }
+
+  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = env;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return json({ error: 'server_misconfigured' }, 500);
+
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/waitlist?on_conflict=email`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=ignore-duplicates',
+    },
+    body: JSON.stringify({ email, source }),
+  });
+  if (!r.ok) return json({ error: 'insert_failed' }, 502);
+
+  // aviso interno de lead novo — best-effort, nunca segura a resposta
+  if (env.RESEND_API_KEY && env.NOTIFY_EMAIL) {
+    ctx.waitUntil(fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Harmon IA <onboarding@resend.dev>',
+        to: [env.NOTIFY_EMAIL],
+        subject: `Novo lead na waitlist: ${email}`,
+        text: `E-mail: ${email}\nOrigem: ${source || '—'}\nQuando: ${new Date().toISOString()}`,
+      }),
+    }).catch(() => {}));
+  }
+
+  return json({ ok: true });
 }
 
 function json(obj, status = 200, extra = {}) {

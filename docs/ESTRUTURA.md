@@ -131,8 +131,13 @@ Harmon IA/
   Cloudflare → Google).
 - `HISTORICO.md` — changelog cronológico (inclui o histórico Vercel — mantido).
 - `ESTRUTURA.md` — **este arquivo** (mapa do projeto).
-- `APRIMORAMENTOS-PENDENTES.md` — backlog.
-- `DIAGNOSTICO-SITE.md` · `PLANO-SITE-PROFISSIONAL.md` — notas de site/landing.
+- `PLANO.md` — **plano único** (estratégia + esteira de 68 itens em 11 etapas;
+  absorveu PLANO-MASTER, P0-CHECKLIST, PLANO-SITE-PROFISSIONAL,
+  APRIMORAMENTOS-PENDENTES e DIAGNOSTICO-SITE).
+- `plano-master.html` — visualização interativa da esteira.
+- `PLANO-EXECUCAO-AGENTES.md` — orquestração das ondas de agentes
+  (`claude --model opus "/executar-onda N"`).
+- `ANALISE-CUSTOS-PRICING.md` · `simulador-custos.html` — custos e pricing.
 - `specs/` — specs datadas de features.
 
 ## Infra / config (referência rápida)

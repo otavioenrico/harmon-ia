@@ -201,10 +201,11 @@ create table if not exists public.waitlist (
 
 alter table public.waitlist enable row level security;
 
+-- P0 (2026-07-18): INSERT anônimo removido — o form envia pro Worker
+-- (/api/waitlist), que valida o Turnstile e insere via service role.
+-- RLS ligada sem NENHUMA policy = anon/authenticated não leem nem escrevem;
+-- só o service role (que ignora RLS) passa.
 drop policy if exists "waitlist_insert" on public.waitlist;
-create policy "waitlist_insert" on public.waitlist
-  for insert to anon, authenticated
-  with check (true);
 
 -- migrações p/ bancos já implantados (idempotente) ----------------------------
 alter table public.clients add column if not exists address_complement text;
@@ -756,9 +757,13 @@ end $$;
 -- ============================================================ STORAGE =========
 -- Um bucket privado para fotos de itens e anexos de NF. Caminho sempre
 -- prefixado pelo user_id: "<uid>/arquivo.jpg" — a policy garante isolamento.
-insert into storage.buckets (id, name, public)
-values ('uploads', 'uploads', false)
-on conflict (id) do nothing;
+-- P0: limites server-side (antes só o client validava tamanho/tipo).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('uploads', 'uploads', false, 10485760, -- 10 MB
+        array['image/webp','image/jpeg','image/png','image/heic','application/pdf'])
+on conflict (id) do update
+  set file_size_limit    = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists "uploads_own" on storage.objects;
 create policy "uploads_own" on storage.objects

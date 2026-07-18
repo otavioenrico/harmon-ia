@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Sem build e sem testes ainda: o gate é sintaxe válida em todos os JS.
+      - name: node --check em assets/js e worker
+        run: |
+          set -e
+          find assets/js worker -name '*.js' -o -name '*.mjs' | while read -r f; do
+            node --check "$f"
+          done

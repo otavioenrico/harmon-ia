@@ -490,7 +490,10 @@ function openForm(ctx, it, onSaved) {
     const links = [...mwrap.querySelectorAll('.field-row')].map((r) => ({
       name: r.querySelector('[data-ml="name"]').value.trim(),
       url: r.querySelector('[data-ml="url"]').value.trim(),
-    })).filter((l) => l.url);
+    })).filter((l) => l.url)
+      // só http(s) vira <a href>: sem esquema ganha https://; javascript:/data: caem fora
+      .map((l) => ({ ...l, url: /^[a-z][a-z0-9+.-]*:/i.test(l.url) ? l.url : `https://${l.url}` }))
+      .filter((l) => /^https?:\/\//i.test(l.url));
 
     const submit = foot.querySelector('[type="submit"]');
     busy(submit, true);
