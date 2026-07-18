@@ -1,8 +1,10 @@
 {
   // Config do Cloudflare Worker do Harmon IA (site estático + API + cron).
-  // Deploy automático via Git integration (Workers Builds) a partir do GitHub.
+  // Deploy: `npx wrangler deploy` logado como otavio.projects@gmail.com
+  // (a Git integration/Workers Builds NÃO está conectada — push não deploya).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "harmon-ia",
+  "account_id": "61b70378bada7a7fb04217410b495c6f",
   "main": "worker/index.js",
   "compatibility_date": "2026-04-01",
 
