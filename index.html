@@ -13,18 +13,18 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)" />
   <link rel="canonical" href="https://harmon-ia.otavio-projects.workers.dev/" />
-  <title>Harmon IA — Gestão para profissionais de beleza e estética</title>
-  <meta name="description" content="Agenda, clientes, estoque e financeiro num só app — feito para quem vive de atendimento: manicure, sobrancelha, tatuador, estética e muito mais. Entre na lista de espera." />
-  <meta property="og:title" content="Harmon IA — a gestão do seu negócio de beleza num só lugar" />
-  <meta property="og:description" content="Agenda sincronizada, clientes, estoque e caixa sem planilha. Feito para profissionais de beleza e estética." />
+  <title>Harmon IA — O sistema elegante de quem atende com hora marcada</title>
+  <meta name="description" content="Agenda, fichas de atendimento, WhatsApp automático, estoque e caixa: tudo incluso, para quem vive de hora marcada. Beleza, estética, bem-estar e mais. Entre na lista de espera." />
+  <meta property="og:title" content="Harmon IA — Agenda cheia, caixa no azul e cliente que volta." />
+  <meta property="og:description" content="Agenda, fichas de atendimento, WhatsApp automático, estoque e caixa — tudo incluso, para quem vive de hora marcada." />
   <meta property="og:image" content="https://harmon-ia.otavio-projects.workers.dev/assets/img/og-image.png" />
   <meta property="og:url" content="https://harmon-ia.otavio-projects.workers.dev/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Harmon IA" />
   <meta property="og:locale" content="pt_BR" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Harmon IA — a gestão do seu negócio de beleza num só lugar" />
-  <meta name="twitter:description" content="Agenda sincronizada, clientes, estoque e caixa sem planilha. Feito para profissionais de beleza e estética." />
+  <meta name="twitter:title" content="Harmon IA — Agenda cheia, caixa no azul e cliente que volta." />
+  <meta name="twitter:description" content="Agenda, fichas de atendimento, WhatsApp automático, estoque e caixa — tudo incluso, para quem vive de hora marcada." />
   <meta name="twitter:image" content="https://harmon-ia.otavio-projects.workers.dev/assets/img/og-image.png" />
   <link rel="stylesheet" href="assets/css/tokens.css" />
   <link rel="stylesheet" href="assets/css/layout.css" />
@@ -40,9 +40,11 @@
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      { "@type": "Question", "name": "Serve pro meu ramo?", "acceptedAnswer": { "@type": "Answer", "text": "Se você agenda clientes e cobra por atendimento, serve. De unha a tatuagem." } },
-      { "@type": "Question", "name": "Precisa instalar?", "acceptedAnswer": { "@type": "Answer", "text": "Não. É web, abre em qualquer navegador, no celular ou no computador." } },
-      { "@type": "Question", "name": "Meus dados ficam seguros?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Cada conta só vê os próprios dados, com login pelo Google." } }
+      { "@type": "Question", "name": "Serve pro meu ramo?", "acceptedAnswer": { "@type": "Answer", "text": "Se você atende com hora marcada, serve. Beleza e estética no centro: lash, sobrancelha, skin, unhas, barbearia. E também massoterapia, podologia, fisioterapia, tatuagem, pet, aulas e consultoria." } },
+      { "@type": "Question", "name": "Já uso Trinks, Belle ou outro sistema. Vale a pena trocar?", "acceptedAnswer": { "@type": "Answer", "text": "Faça a conta do custo real: mensalidade + módulo de WhatsApp, que no mercado sai por R$ 150 a 229 por mês. No Harmon IA o WhatsApp automático já vem no plano, sem multa e sem fidelidade, e a migração é por nossa conta." } },
+      { "@type": "Question", "name": "Como funciona a migração?", "acceptedAnswer": { "@type": "Answer", "text": "Grátis. Trazemos seus dados da planilha ou do seu sistema atual (clientes, serviços e histórico), sem custo e sem você digitar tudo de novo." } },
+      { "@type": "Question", "name": "Meus dados ficam seguros? E a LGPD?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Login pelo Google, criptografia em trânsito e em repouso, e cada conta só acessa os próprios dados. Seguimos a LGPD, e os dados são seus: dá pra exportar tudo quando quiser." } },
+      { "@type": "Question", "name": "Funciona no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Funciona: é onde a maioria usa. É web, abre em qualquer navegador, no celular ou no computador, sem instalar nada." } }
     ]
   }
   </script>
@@ -61,6 +63,19 @@
         <a href="/" aria-current="page" data-i18n="common.navHome">Início</a>
         <a href="/sobre.html" data-i18n="common.navAbout">Sobre</a>
         <a href="/solucoes.html" data-i18n="common.navSolutions">Soluções</a>
+        <details class="nav-dropdown">
+          <summary data-i18n="common.navForWho">Para quem</summary>
+          <ul class="nav-dropdown__menu">
+            <li><a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a></li>
+            <li><a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a></li>
+            <li><a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a></li>
+            <li><a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a></li>
+            <li><a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a></li>
+            <li><a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a></li>
+            <li><a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a></li>
+            <li><a href="/para/tatuagem.html" data-i18n="common.segTattoo">Tatuagem</a></li>
+          </ul>
+        </details>
         <a href="/planos.html" data-i18n="common.navPlans">Planos</a>
       </nav>
 
@@ -82,6 +97,17 @@
           <a href="/sobre.html" data-i18n="common.navAbout">Sobre</a>
           <a href="/solucoes.html" data-i18n="common.navSolutions">Soluções</a>
           <a href="/planos.html" data-i18n="common.navPlans">Planos</a>
+          <div class="landing-nav-mobile__group">
+            <span class="landing-nav-mobile__group-label" data-i18n="common.navForWho">Para quem</span>
+            <a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a>
+            <a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a>
+            <a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a>
+            <a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a>
+            <a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a>
+            <a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a>
+            <a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a>
+            <a href="/para/tatuagem.html" data-i18n="common.segTattoo">Tatuagem</a>
+          </div>
           <a href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
           <a href="/entrar.html" data-i18n="common.navLogin">Entrar</a>
           <div class="lang-switch" role="group" aria-label="Idioma / Language">
@@ -97,12 +123,12 @@
     <!-- ---------------------------------------------------------- hero --- -->
     <section class="lp-hero-full">
       <div class="lp-hero-full__media">
-        <img src="assets/img/hero-banner-bw.webp" alt="Painel do Harmon IA com agenda, ficha de cliente e financeiro" fetchpriority="high" data-i18n-attr="alt:home.heroImgAlt" />
+        <img src="assets/img/hero-banner-bw.webp" alt="Painel do Harmon IA com agenda, ficha de atendimento e caixa" fetchpriority="high" data-i18n-attr="alt:home.heroImgAlt" />
       </div>
       <div class="landing-container">
         <div class="lp-hero-full__overlay">
-          <h1 class="lp-hero__title" data-i18n="home.heroTitle">A gestão do seu negócio de beleza, num só lugar.</h1>
-          <p class="lp-hero__subtitle" data-i18n="home.heroSubtitle">Agenda, clientes, estoque e caixa sem planilha e sem enrolação — feito para quem vive de atendimento.</p>
+          <h1 class="lp-hero__title" data-i18n="home.heroTitle">Agenda cheia, caixa no azul e cliente que volta.</h1>
+          <p class="lp-hero__subtitle" data-i18n="home.heroSubtitle">Agenda, fichas de atendimento, WhatsApp automático, estoque e caixa — para quem vive de hora marcada. Tudo incluso.</p>
           <div class="lp-hero__actions">
             <form id="waitlist-hero" class="waitlist-form" data-waitlist data-source="hero">
               <label class="sr-only" for="wl-hero-email" data-i18n="home.emailSrLabel">Seu e-mail</label>
@@ -117,6 +143,11 @@
               </div>
             </form>
           </div>
+          <!-- ponytail: combo lp-hero__subtitle + waitlist-microcopy pra herdar a cor
+               clara do hero escuro sem CSS novo (waitlist-microcopy sozinha é
+               text-muted = ilegível sobre a foto). Upgrade: variante da microcopy
+               pro hero em landing.css. -->
+          <p class="lp-hero__subtitle waitlist-microcopy" data-i18n="home.heroMicrocopy">No lançamento: 35 dias grátis · sem cartão · sem multa</p>
         </div>
       </div>
     </section>
@@ -126,7 +157,7 @@
       <div class="landing-container">
         <div class="section__head" data-reveal>
           <h2 class="section__title" data-i18n="home.segTitle">Feito para o seu trabalho.</h2>
-          <p class="section__subtitle" data-i18n="home.segSubtitle">Se você atende cliente e vive de agenda, o Harmon IA é pra você.</p>
+          <p class="section__subtitle" data-i18n="home.segSubtitle">Beleza e estética no centro. E junto, todo trabalho que vive de hora marcada.</p>
         </div>
       </div>
       <div class="segment-marquee">
@@ -140,6 +171,13 @@
           <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6l1 4-4 3-4-3 1-4Z"/><path d="M8 9h8v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9Z"/></svg><span data-i18n="home.segMakeup">Maquiagem</span></li>
           <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.5 15.5M20 20L8.5 8.5"/></svg><span data-i18n="home.segBarber">Barbearia</span></li>
           <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M4 8l4-4h8l4 4"/></svg><span data-i18n="home.segWaxing">Depilação</span></li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span data-i18n="common.segMassage">Massoterapia</span></li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="8.5" rx="4" ry="5.5"/><ellipse cx="12" cy="18.5" rx="2.8" ry="2.5"/></svg><span data-i18n="common.segPodo">Podologia</span></li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2.5-6 4 12 2.5-6h5"/></svg><span data-i18n="home.segPhysio">Fisioterapia</span></li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14.5" r="3.5"/><circle cx="6.5" cy="10" r="1.6"/><circle cx="10" cy="6.8" r="1.6"/><circle cx="14" cy="6.8" r="1.6"/><circle cx="17.5" cy="10" r="1.6"/></svg><span data-i18n="home.segPet">Banho e tosa</span></li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M9 7l1.5-3h3L15 7"/></svg><span data-i18n="home.segPhoto">Fotografia</span></li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 2 9l10 5 10-5-10-5Z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v5"/></svg><span data-i18n="home.segClasses">Aulas particulares</span></li>
+          <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg><span data-i18n="home.segConsulting">Consultoria</span></li>
           <li class="segment-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span data-i18n="home.segMore">e muito mais</span></li>
 
           <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6M10 2v3.5L7 9v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9l-3-3.5V2"/></svg><span data-i18n="home.segManicure">Manicure e nail design</span></li>
@@ -151,6 +189,13 @@
           <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l1 4-4 3-4-3 1-4Z"/><path d="M8 9h8v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9Z"/></svg><span data-i18n="home.segMakeup">Maquiagem</span></li>
           <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.5 15.5M20 20L8.5 8.5"/></svg><span data-i18n="home.segBarber">Barbearia</span></li>
           <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M4 8l4-4h8l4 4"/></svg><span data-i18n="home.segWaxing">Depilação</span></li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span data-i18n="common.segMassage">Massoterapia</span></li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="8.5" rx="4" ry="5.5"/><ellipse cx="12" cy="18.5" rx="2.8" ry="2.5"/></svg><span data-i18n="common.segPodo">Podologia</span></li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 4 12 2.5-6h5"/></svg><span data-i18n="home.segPhysio">Fisioterapia</span></li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.5" r="3.5"/><circle cx="6.5" cy="10" r="1.6"/><circle cx="10" cy="6.8" r="1.6"/><circle cx="14" cy="6.8" r="1.6"/><circle cx="17.5" cy="10" r="1.6"/></svg><span data-i18n="home.segPet">Banho e tosa</span></li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M9 7l1.5-3h3L15 7"/></svg><span data-i18n="home.segPhoto">Fotografia</span></li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2 9l10 5 10-5-10-5Z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v5"/></svg><span data-i18n="home.segClasses">Aulas particulares</span></li>
+          <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg><span data-i18n="home.segConsulting">Consultoria</span></li>
           <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span data-i18n="home.segMore">e muito mais</span></li>
         </ul>
       </div>
@@ -193,11 +238,80 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/></svg>
           </div>
           <h3 class="feature__title" data-i18n="home.feat4Title">O caixa no azul, sem planilha.</h3>
-          <p class="feature__text" data-i18n="home.feat4Text">Fluxo de caixa, parcelas e lucro de verdade por serviço. Você vê
+          <p class="feature__text" data-i18n="home.feat4Text">Fluxo de caixa, parcelas e lucro de verdade por atendimento. Você vê
             quanto entra, quanto sai e o que realmente dá dinheiro.</p>
         </div>
       </div>
       <div class="features-cta"><a class="btn btn--ghost" href="/solucoes.html" data-i18n="home.featCta">Ver todas as soluções&nbsp;→</a></div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------- números de prova -- -->
+    <section class="section-band">
+      <div class="landing-container section">
+        <div class="section__head" data-reveal>
+          <h2 class="section__title" data-i18n="home.statsTitle">Hora marcada tem matemática.</h2>
+          <p class="section__subtitle" data-i18n="home.statsSubtitle">O que estudos do setor de agendamento mostram, e o que o Harmon IA automatiza pra você.</p>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card" data-reveal>
+            <span class="stat-card__value" data-i18n="home.stat1Value">−30 a −70%</span>
+            <span class="stat-card__label" data-i18n="home.stat1Label">de faltas quando o lembrete chega automático pelo WhatsApp.</span>
+          </div>
+          <div class="stat-card" data-reveal>
+            <span class="stat-card__value" data-i18n="home.stat2Value">+33%</span>
+            <span class="stat-card__label" data-i18n="home.stat2Label">de receita por cliente quando ele pode agendar online, sem esperar resposta.</span>
+          </div>
+          <div class="stat-card" data-reveal>
+            <span class="stat-card__value" data-i18n="home.stat3Value">46–58%</span>
+            <span class="stat-card__label" data-i18n="home.stat3Label">dos agendamentos acontecem fora do horário comercial, enquanto você atende ou descansa.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------ anti-add-on + custo real -- -->
+    <section class="section-band section-band--alt">
+      <div class="landing-container section">
+        <div class="section__head" data-reveal>
+          <h2 class="section__title" data-i18n="home.addonTitle">O WhatsApp automático que cobram R$ 150–229/mês de módulo? Aqui já vem no plano.</h2>
+          <p class="section__subtitle" data-i18n="home.addonSubtitle">Compare o custo real: a mensalidade anunciada + o módulo que aparece depois.</p>
+        </div>
+        <div class="compare-table" data-reveal>
+          <table>
+            <caption class="sr-only" data-i18n="home.compareCaption">Comparação de custo real entre sistemas de agendamento</caption>
+            <thead>
+              <tr>
+                <th scope="col" data-i18n="home.compareColSystem">Sistema</th>
+                <th scope="col" data-i18n="home.compareColMonthly">Mensalidade</th>
+                <th scope="col" data-i18n="home.compareColWhats">WhatsApp automático</th>
+                <th scope="col" data-i18n="home.compareColLockin">Multa / fidelidade</th>
+                <th scope="col" data-i18n="home.compareColReal">Custo real por mês</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- ponytail: linha nomeando o Trinks (com custo real derivado R$ 226-305) removida até
+                   registrar fonte pública verificável (URL da página de preços + print + data) em
+                   docs/ANALISE-CUSTOS-PRICING.md; upgrade: reintroduzir linhas por concorrente, uma a uma,
+                   cada qual com fonte registrada. -->
+              <tr>
+                <th scope="row" data-i18n="home.compareRow1Name">Sistemas com WhatsApp à parte</th>
+                <td data-i18n="home.compareRow1Monthly">R$ 39,90 a 76</td>
+                <td data-i18n="home.compareRow1Whats">Módulo à parte: + R$ 150 a 229 no mercado</td>
+                <td data-i18n="home.compareRow1Lockin">Conforme o contrato</td>
+                <td data-i18n="home.compareRow1Real">Mensalidade + módulo</td>
+              </tr>
+              <tr>
+                <th scope="row" class="is-us" data-i18n="home.compareRowUsName">Harmon IA</th>
+                <td class="is-us" data-i18n="home.compareRowUsMonthly">Um preço só, tudo incluso</td>
+                <td class="is-us" data-i18n="home.compareRowUsWhats">Incluso no plano</td>
+                <td class="is-us" data-i18n="home.compareRowUsLockin">Sem multa · cancele quando quiser</td>
+                <td class="is-us" data-i18n="home.compareRowUsReal">Só a mensalidade</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="waitlist-microcopy" data-i18n="home.compareFootnote">Preços públicos consultados em 18/07/2026: Trinks R$ 76/mês; outros sistemas do segmento (Agendiva, Simples Agenda, IterClinic) de R$ 39,90 a R$ 69/mês, com WhatsApp automático vendido como módulo de R$ 150 a 229/mês no mercado.</p>
       </div>
     </section>
 
@@ -214,7 +328,7 @@
           </li>
           <li class="pain-card" data-reveal>
             <span class="pain-card__before"><span class="pain-card__icon" aria-hidden="true">✕</span><span data-i18n="home.pain2Before">“Quanto eu lucrei esse mês?” sem resposta.</span></span>
-            <span class="pain-card__after"><span class="pain-card__icon" aria-hidden="true">✓</span><span data-i18n="home.pain2After">Caixa por serviço.</span></span>
+            <span class="pain-card__after"><span class="pain-card__icon" aria-hidden="true">✓</span><span data-i18n="home.pain2After">Caixa por atendimento.</span></span>
           </li>
           <li class="pain-card" data-reveal>
             <span class="pain-card__before"><span class="pain-card__icon" aria-hidden="true">✕</span><span data-i18n="home.pain3Before">Material que acaba no meio do atendimento.</span></span>
@@ -278,15 +392,23 @@
         <div class="faq">
           <details class="faq__item" data-reveal>
             <summary class="faq__q" data-i18n="home.faq1Q">Serve pro meu ramo?</summary>
-            <p class="faq__a" data-i18n="home.faq1A">Se você agenda clientes e cobra por atendimento, serve. De unha a tatuagem.</p>
+            <p class="faq__a" data-i18n="home.faq1A">Se você atende com hora marcada, serve. Beleza e estética no centro: lash, sobrancelha, skin, unhas, barbearia. E também massoterapia, podologia, fisioterapia, tatuagem, pet, aulas e consultoria.</p>
           </details>
           <details class="faq__item" data-reveal>
-            <summary class="faq__q" data-i18n="home.faq2Q">Precisa instalar?</summary>
-            <p class="faq__a" data-i18n="home.faq2A">Não. É web, abre em qualquer navegador, no celular ou no computador.</p>
+            <summary class="faq__q" data-i18n="home.faq2Q">Já uso Trinks, Belle ou outro sistema. Vale a pena trocar?</summary>
+            <p class="faq__a" data-i18n="home.faq2A">Faça a conta do custo real: mensalidade + módulo de WhatsApp, que no mercado sai por R$ 150 a 229 por mês. No Harmon IA o WhatsApp automático já vem no plano, sem multa e sem fidelidade, e a migração é por nossa conta.</p>
           </details>
           <details class="faq__item" data-reveal>
-            <summary class="faq__q" data-i18n="home.faq3Q">Meus dados ficam seguros?</summary>
-            <p class="faq__a" data-i18n="home.faq3A">Sim. Cada conta só vê os próprios dados, com login pelo Google.</p>
+            <summary class="faq__q" data-i18n="home.faq3Q">Como funciona a migração?</summary>
+            <p class="faq__a" data-i18n="home.faq3A">Grátis. Trazemos seus dados da planilha ou do seu sistema atual (clientes, serviços e histórico), sem custo e sem você digitar tudo de novo.</p>
+          </details>
+          <details class="faq__item" data-reveal>
+            <summary class="faq__q" data-i18n="home.faq4Q">Meus dados ficam seguros? E a LGPD?</summary>
+            <p class="faq__a" data-i18n="home.faq4A">Sim. Login pelo Google, criptografia em trânsito e em repouso, e cada conta só acessa os próprios dados. Seguimos a LGPD, e os dados são seus: dá pra exportar tudo quando quiser.</p>
+          </details>
+          <details class="faq__item" data-reveal>
+            <summary class="faq__q" data-i18n="home.faq5Q">Funciona no celular?</summary>
+            <p class="faq__a" data-i18n="home.faq5A">Funciona: é onde a maioria usa. É web, abre em qualquer navegador, no celular ou no computador, sem instalar nada.</p>
           </details>
         </div>
       </div>
@@ -299,6 +421,7 @@
         <p class="cta-band__subtitle" data-i18n="home.ctaFinalSubtitle">Estamos abrindo vagas aos poucos. Entre na lista e seja avisado
           antes de todo mundo.</p>
         <a class="btn btn--primary" href="#waitlist-hero" data-i18n="home.ctaFinalBtn">Entrar na lista de espera&nbsp;→</a>
+        <p class="waitlist-microcopy" data-i18n="home.ctaFinalMicrocopy">No lançamento: 35 dias grátis · sem cartão · sem multa · cancele quando quiser</p>
         <p class="cta-band__footnote"><a href="/entrar.html" data-i18n="home.ctaFinalFootnote">Já tem convite? Entrar</a></p>
       </div>
     </section>
