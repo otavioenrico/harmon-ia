@@ -532,6 +532,140 @@ summary.faq__q::after {
 .skip-link:focus { top: var(--sp-4); }
 
 
+/* ------------------------------------------------ nav dropdown "Para quem" --
+   <details class="nav-dropdown"> dentro de .landing-nav — nativo = teclado ok
+   (Enter/Espaço no summary, Tab pelos links) e foco visível via :focus-visible
+   global (layout.css). ponytail: sem fechar em clique-fora/Esc — nativo do
+   <details> não cobre; upgrade = handler pequeno em landing.js igual ao do
+   .landing-nav-mobile quando incomodar. */
+.nav-dropdown { position: relative; }
+.nav-dropdown > summary {
+  list-style: none; cursor: pointer;
+  color: var(--text-muted); font-weight: var(--fw-500);
+  padding-block: var(--sp-2);
+  display: flex; align-items: center; gap: var(--sp-1);
+}
+.nav-dropdown > summary::-webkit-details-marker { display: none; }
+.nav-dropdown > summary::after {
+  content: '▾'; font-size: 0.7em; display: inline-block;
+  transition: transform var(--transition);
+}
+.nav-dropdown > summary:hover,
+.nav-dropdown[open] > summary { color: var(--text); }
+.nav-dropdown[open] > summary::after { transform: rotate(180deg); }
+/* home: header transparente sobre o hero escuro pinta o summary de branco
+   (mesma regra dos <a> do .landing-nav) */
+.page-home .landing-header:not(.is-scrolled) .nav-dropdown > summary { color: var(--color-white); }
+.nav-dropdown__menu {
+  position: absolute; top: calc(100% + var(--sp-2)); left: 50%;
+  transform: translateX(-50%);
+  min-width: 220px; z-index: 60;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  padding: var(--sp-2); margin: 0; list-style: none;
+}
+.nav-dropdown__menu a {
+  display: flex; align-items: center; min-height: 40px; /* alvo de toque */
+  padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-sm);
+  color: var(--text-muted); font-weight: var(--fw-500); text-decoration: none;
+}
+.nav-dropdown__menu a:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+.nav-dropdown__menu a[aria-current="page"] { color: var(--text); font-weight: var(--fw-600); }
+
+/* lista "Para quem" no menu mobile: label mudo + links indentáveis no fluxo
+   do painel (landing.js já fecha o menu no clique de qualquer <a>). */
+.landing-nav-mobile__group { display: flex; flex-direction: column; gap: var(--sp-1); }
+.landing-nav-mobile__group-label {
+  font-size: var(--fs-xs); font-weight: var(--fw-600);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+.landing-nav-mobile__group a { padding-block: var(--sp-2); } /* ~40px de alvo */
+.landing-nav-mobile__group a[aria-current="page"] { font-weight: var(--fw-600); }
+
+/* -------------------------------------------- hero das páginas de segmento --
+   para/*.html: hero claro centrado com waitlist própria (sem foto por ora). */
+.seg-hero { background: var(--surface); border-bottom: 1px solid var(--border); }
+.seg-hero__inner {
+  max-width: 720px; padding-block: var(--sp-8);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.seg-hero__eyebrow {
+  font-size: var(--fs-sm); font-weight: var(--fw-600);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted); margin-bottom: var(--sp-3);
+}
+.seg-hero .lp-hero__title { font-size: clamp(2rem, 4vw, 3rem); }
+.seg-hero .lp-hero__subtitle { margin-inline: auto; }
+.seg-hero .waitlist-form {
+  flex-direction: column; align-items: stretch; gap: var(--sp-3);
+  width: 100%; max-width: 420px; margin-inline: auto;
+}
+.seg-hero .waitlist-form .input { flex: 1 1 auto; width: 100%; }
+@media (max-width: 600px) {
+  .seg-hero__inner { padding-block: var(--sp-7); }
+}
+
+/* microcopy do lançamento junto ao CTA da waitlist (promessa honesta, não botão) */
+.waitlist-microcopy { font-size: var(--fs-sm); color: var(--text-muted); margin-top: var(--sp-3); }
+
+/* pain-grid com 3 cards (páginas de segmento): 3 colunas -> 1 no mobile */
+.pain-grid--3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) {
+  .pain-grid--3 { grid-template-columns: 1fr; }
+}
+
+/* ------------------------------------------------ números de prova (stats) --
+   trio de cards com os números autorizados do PLANO (2.2.3). */
+.stat-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5);
+  max-width: 960px; margin-inline: auto;
+}
+.stat-card {
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+  padding: var(--sp-5); text-align: center;
+}
+.stat-card__value {
+  font-size: var(--fs-2xl); font-weight: var(--fw-700);
+  letter-spacing: -0.02em; line-height: 1.1;
+}
+.stat-card__label { color: var(--text-muted); font-size: var(--fs-sm); }
+@media (max-width: 720px) {
+  .stat-grid { grid-template-columns: 1fr; }
+}
+
+/* --------------------------------------------- tabela comparativa (custos) --
+   uso: <div class="compare-table"><table>…</table></div> — o wrapper rola na
+   horizontal em tela estreita; o body nunca estoura. Célula da coluna do
+   Harmon IA pode receber .is-us pra destacar. */
+.compare-table {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+}
+.compare-table table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: var(--fs-sm); }
+.compare-table th, .compare-table td {
+  padding: var(--sp-3) var(--sp-4); text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.compare-table thead th {
+  font-weight: var(--fw-600); color: var(--text);
+  background: var(--surface-2); white-space: nowrap;
+}
+.compare-table tbody td { color: var(--text-muted); }
+.compare-table tbody th { font-weight: var(--fw-500); color: var(--text); white-space: nowrap; }
+.compare-table tbody tr:last-child th, .compare-table tbody tr:last-child td { border-bottom: 0; }
+.compare-table .is-us { background: var(--surface-2); color: var(--text); font-weight: var(--fw-500); }
+
+/* ------------------------------------------------- plano "em breve" ---------
+   uso: <div class="plan-card card plan-card--soon"> + badge posicionada:
+   <span class="badge badge--muted plan-card__soon-badge">Em breve</span> */
+.plan-card--soon { border-style: dashed; box-shadow: var(--shadow-sm); }
+.plan-card--soon .plan-card__price { color: var(--text-muted); }
+.plan-card__soon-badge { position: absolute; top: var(--sp-4); right: var(--sp-4); }
+
 /* line-height dos títulos = 1.2 (corpos seguem 1.5 herdado do body).
    Bloco único e no fim do arquivo pra vencer o 1.5 herdado e o 1.1 do hero. */
 .lp-hero__title,

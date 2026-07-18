@@ -22,6 +22,33 @@ export default {
   'common.waitlistError':   { pt: 'Não consegui salvar seu e-mail. Confere e tenta de novo?', en: "Couldn't save your email. Check it and try again?" },
   'common.waitlistSuccess': { pt: 'Pronto! Você está na lista. Avisamos assim que abrir uma vaga.', en: "Done! You're on the list. We'll notify you as soon as a spot opens." },
 
+  // --- nav "Para quem" + hub de segmentos (para/*.html) ---
+  'common.navForWho':       { pt: 'Para quem', en: 'Who it’s for' },
+  'common.segLash':         { pt: 'Lash designer', en: 'Lash artists' },
+  'common.segBrow':         { pt: 'Sobrancelha', en: 'Brow artists' },
+  'common.segSkincare':     { pt: 'Skincare e estética', en: 'Skincare & estheticians' },
+  'common.segMicro':        { pt: 'Micropigmentação', en: 'Permanent makeup' },
+  'common.segBarber':       { pt: 'Barbearia', en: 'Barbershops' },
+  'common.segMassage':      { pt: 'Massoterapia', en: 'Massage therapy' },
+  'common.segPodo':         { pt: 'Podologia', en: 'Podiatry' },
+  'common.segTattoo':       { pt: 'Tatuagem', en: 'Tattoo artists' },
+
+  // --- waitlist compartilhada (hero dos segmentos, microcopy do lançamento) ---
+  'common.emailSrLabel':      { pt: 'Seu e-mail', en: 'Your email' },
+  'common.emailPlaceholder':  { pt: 'seu@email.com', en: 'you@email.com' },
+  'common.waitlistMicrocopy': { pt: 'No lançamento: 35 dias grátis · sem cartão · sem multa', en: 'At launch: 35 days free · no card · no cancellation fee' },
+  'common.segCtaSubtitle':    { pt: 'Estamos abrindo vagas aos poucos. Entre na lista e seja avisado antes de todo mundo.', en: "We're opening spots gradually. Join the list and be notified before everyone else." },
+  'common.segCtaBtn':         { pt: 'Entrar na lista de espera →', en: 'Join the waitlist →' },
+
+  // --- números de prova autorizados (PLANO.md 2.2.3) — usar exatamente estes ---
+  'common.statsTitle':  { pt: 'Hora marcada, em números.', en: 'Appointments, in numbers.' },
+  'common.stat1Value':  { pt: '−30 a −70%', en: '−30 to −70%' },
+  'common.stat1Label':  { pt: 'de faltas com lembrete automático no WhatsApp', en: 'fewer no-shows with automatic WhatsApp reminders' },
+  'common.stat2Value':  { pt: '+33%', en: '+33%' },
+  'common.stat2Label':  { pt: 'de receita por cliente com agendamento online', en: 'more revenue per client with online booking' },
+  'common.stat3Value':  { pt: '46–58%', en: '46–58%' },
+  'common.stat3Label':  { pt: 'dos agendamentos acontecem fora do horário comercial', en: 'of bookings happen outside business hours' },
+
   'common.legalPrevails':        { pt: 'Esta página está disponível em português e inglês. Em caso de divergência, a versão em português prevalece juridicamente; a tradução em inglês é oferecida apenas como cortesia.', en: 'This page is available in Portuguese and English. In case of discrepancy, the Portuguese version prevails legally; the English translation is provided for convenience only.' },
   'common.placeholderFill':      { pt: '[PREENCHER]', en: '[TO FILL IN]' },
   'common.footerPrivacyLinkText': { pt: 'Política de Privacidade', en: 'Privacy Policy' },
