@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)" />
   <link rel="canonical" href="https://harmon-ia.otavio-projects.workers.dev/solucoes.html" />
   <title>Soluções — Harmon IA | Agenda, clientes, estoque e caixa</title>
-  <meta name="description" content="Conheça cada parte do Harmon IA: agenda sincronizada, ficha de clientes, controle de estoque, fluxo de caixa e mais — feito para profissionais de beleza e estética." />
+  <meta name="description" content="Conheça cada parte do Harmon IA: agenda sincronizada, ficha de clientes, controle de estoque, fluxo de caixa e mais — feito pra quem vive de hora marcada." />
   <meta property="og:title" content="Soluções — Harmon IA" />
   <meta property="og:description" content="Agenda, clientes, estoque e financeiro num só app. Veja cada módulo em ação." />
   <meta property="og:image" content="https://harmon-ia.otavio-projects.workers.dev/assets/img/og-image.png" />
@@ -46,6 +46,19 @@
 
       <nav class="landing-nav" aria-label="Navegação principal" data-i18n-attr="aria-label:common.navAriaLabel">
         <a href="/" data-i18n="common.navHome">Início</a>
+        <details class="nav-dropdown">
+          <summary data-i18n="common.navForWho">Para quem</summary>
+          <ul class="nav-dropdown__menu">
+            <li><a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a></li>
+            <li><a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a></li>
+            <li><a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a></li>
+            <li><a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a></li>
+            <li><a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a></li>
+            <li><a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a></li>
+            <li><a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a></li>
+            <li><a href="/para/tatuagem.html" data-i18n="common.segTattoo">Tatuagem</a></li>
+          </ul>
+        </details>
         <a href="/sobre.html" data-i18n="common.navAbout">Sobre</a>
         <a href="/solucoes.html" aria-current="page" data-i18n="common.navSolutions">Soluções</a>
         <a href="/planos.html" data-i18n="common.navPlans">Planos</a>
@@ -56,7 +69,7 @@
           <button type="button" class="lang-switch__btn" data-lang-btn="pt" aria-pressed="true">PT</button>
           <button type="button" class="lang-switch__btn" data-lang-btn="en" aria-pressed="false">EN</button>
         </div>
-        <a class="btn btn--ghost btn--sm" href="/#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        <a class="btn btn--ghost btn--sm" href="#waitlist-solucoes" data-i18n="common.navWaitlist">Quero ser avisado</a>
         <a class="btn btn--primary btn--sm" href="/entrar.html" data-i18n="common.navLogin">Entrar</a>
       </div>
 
@@ -66,10 +79,21 @@
         </summary>
         <div class="landing-nav-mobile__panel">
           <a href="/" data-i18n="common.navHome">Início</a>
+          <div class="landing-nav-mobile__group">
+            <span class="landing-nav-mobile__group-label" data-i18n="common.navForWho">Para quem</span>
+            <a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a>
+            <a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a>
+            <a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a>
+            <a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a>
+            <a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a>
+            <a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a>
+            <a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a>
+            <a href="/para/tatuagem.html" data-i18n="common.segTattoo">Tatuagem</a>
+          </div>
           <a href="/sobre.html" data-i18n="common.navAbout">Sobre</a>
           <a href="/solucoes.html" aria-current="page" data-i18n="common.navSolutions">Soluções</a>
           <a href="/planos.html" data-i18n="common.navPlans">Planos</a>
-          <a href="/#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+          <a href="#waitlist-solucoes" data-i18n="common.navWaitlist">Quero ser avisado</a>
           <a href="/entrar.html" data-i18n="common.navLogin">Entrar</a>
           <div class="lang-switch" role="group" aria-label="Idioma / Language">
             <button type="button" class="lang-switch__btn" data-lang-btn="pt" aria-pressed="true">PT</button>
@@ -179,7 +203,7 @@
           </ul>
         </div>
         <div class="solution-card__media">
-          <img src="assets/img/solucoes/sol-servicos.svg" alt="Catalogo de servicos do Harmon IA com preco, duracao e lucro por procedimento" loading="lazy" width="1280" height="880" data-i18n-attr="alt:solucoes.card5Alt" />
+          <img src="assets/img/solucoes/sol-servicos.svg" alt="Catalogo de servicos do Harmon IA com preco, duracao e lucro por atendimento" loading="lazy" width="1280" height="880" data-i18n-attr="alt:solucoes.card5Alt" />
         </div>
       </article>
 
@@ -188,12 +212,12 @@
         <div class="solution-card__body">
           <h2 class="solution-card__title" data-i18n="solucoes.card6Title">Seus dados seguros, só seus.</h2>
           <p class="solution-card__text" data-i18n="solucoes.card6Text">Login pelo Google e isolamento total: cada conta só
-            enxerga os próprios dados. No plano Team, sua equipe divide agenda e clientes com
+            enxerga os próprios dados. No plano Estúdio, sua equipe divide agenda e clientes com
             permissões por usuário.</p>
           <ul class="solution-card__list">
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="solucoes.card6Li1">Login seguro com Google</span></li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="solucoes.card6Li2">Dados isolados por conta</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="solucoes.card6Li3">Permissões por usuário (Team)</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="solucoes.card6Li3">Permissões por usuário (Estúdio)</span></li>
           </ul>
         </div>
         <div class="solution-card__media">
@@ -203,12 +227,23 @@
 
     </section>
 
-    <!-- --------------------------------------------------------- cta final -- -->
-    <section class="cta-band">
-      <div class="landing-container" data-reveal>
-        <h2 class="cta-band__title" data-i18n="solucoes.ctaTitle">Pronto pra ver tudo isso junto?</h2>
-        <p class="cta-band__subtitle" data-i18n="solucoes.ctaSubtitle">Entre na lista de espera e seja avisado quando abrir uma vaga.</p>
-        <a class="btn btn--primary" href="/#waitlist-hero" data-i18n="solucoes.ctaBtn">Entrar na lista de espera&nbsp;→</a>
+    <!-- ------------------------------------------------- waitlist final --- -->
+    <section class="section-band section-band--alt">
+      <div class="landing-container section">
+        <div class="section__head" data-reveal>
+          <h2 class="section__title" data-i18n="solucoes.ctaTitle">Pronto pra ver tudo isso junto?</h2>
+          <p class="section__subtitle" data-i18n="solucoes.ctaSubtitle">Deixe seu e-mail e seja avisado assim que abrir uma vaga.</p>
+        </div>
+        <form id="waitlist-solucoes" class="waitlist-form" data-waitlist data-source="waitlist-solucoes">
+          <label class="sr-only" for="wl-solucoes-email" data-i18n="common.emailSrLabel">Seu e-mail</label>
+          <input class="input" id="wl-solucoes-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" data-i18n-attr="placeholder:common.emailPlaceholder" />
+          <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <!-- P0: anti-bot. Chave de TESTE (sempre passa, invisível) — trocar pela
+               sitekey real do Turnstile junto com o secret no Worker. -->
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAAD4qMUjfGKlbPPXW"></div>
+          <button class="btn btn--primary" type="submit" data-i18n="common.navWaitlist">Quero ser avisado</button>
+        </form>
+        <p class="waitlist-microcopy" data-i18n="common.waitlistMicrocopy">No lançamento: 35 dias grátis · sem cartão · sem multa</p>
       </div>
     </section>
   </main>
@@ -240,6 +275,8 @@
     </div>
   </div>
 
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script type="module" src="assets/js/waitlist.js"></script>
   <script type="module" src="assets/js/landing.js"></script>
   <script type="module" src="assets/js/cookie-consent.js"></script>
   <script type="module" src="/assets/js/i18n/boot.js"></script>

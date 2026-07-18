@@ -13,9 +13,9 @@
   <meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)" />
   <link rel="canonical" href="https://harmon-ia.otavio-projects.workers.dev/planos.html" />
   <title>Planos e preços — Harmon IA</title>
-  <meta name="description" content="Planos para quem atende sozinho e para estúdios, salões e clínicas. Em pré-lançamento — entre na lista de espera e seja avisado primeiro." />
+  <meta name="description" content="Planos para quem atende sozinho e para equipes — feito pra quem vive de hora marcada. Em pré-lançamento — entre na lista de espera e seja avisado primeiro." />
   <meta property="og:title" content="Planos — Harmon IA" />
-  <meta property="og:description" content="Planos para quem atende sozinho e para estúdios, salões e clínicas." />
+  <meta property="og:description" content="Planos para quem atende sozinho e para equipes — feito pra quem vive de hora marcada." />
   <meta property="og:image" content="https://harmon-ia.otavio-projects.workers.dev/assets/img/og-image.png" />
   <meta property="og:url" content="https://harmon-ia.otavio-projects.workers.dev/planos.html" />
   <meta property="og:type" content="website" />
@@ -23,7 +23,7 @@
   <meta property="og:locale" content="pt_BR" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Planos — Harmon IA" />
-  <meta name="twitter:description" content="Planos para quem atende sozinho e para estúdios, salões e clínicas." />
+  <meta name="twitter:description" content="Planos para quem atende sozinho e para equipes — feito pra quem vive de hora marcada." />
   <meta name="twitter:image" content="https://harmon-ia.otavio-projects.workers.dev/assets/img/og-image.png" />
   <link rel="stylesheet" href="assets/css/tokens.css" />
   <link rel="stylesheet" href="assets/css/layout.css" />
@@ -41,8 +41,8 @@
     "mainEntity": [
       { "@type": "Question", "name": "Quando lança?", "acceptedAnswer": { "@type": "Answer", "text": "Em desenvolvimento. Quem está na lista é avisado primeiro." } },
       { "@type": "Question", "name": "Preciso de cartão pra entrar na lista?", "acceptedAnswer": { "@type": "Answer", "text": "Não. Só o e-mail. Nada de pagamento nesta fase." } },
-      { "@type": "Question", "name": "Qual a diferença entre Personal e Team?", "acceptedAnswer": { "@type": "Answer", "text": "Personal é pra quem atende sozinho. Team é pra mais de uma pessoa dividindo a mesma agenda e base de clientes." } },
-      { "@type": "Question", "name": "Serve pro meu ramo?", "acceptedAnswer": { "@type": "Answer", "text": "Se você agenda clientes e cobra por atendimento, serve — de unha a tatuagem." } },
+      { "@type": "Question", "name": "Qual a diferença entre Personal e Estúdio?", "acceptedAnswer": { "@type": "Answer", "text": "Personal é pra quem atende sozinho. Estúdio é pra mais de uma pessoa dividindo a mesma agenda e base de clientes — e ainda está em construção." } },
+      { "@type": "Question", "name": "Serve pro meu ramo?", "acceptedAnswer": { "@type": "Answer", "text": "Se você atende com hora marcada e cobra por atendimento, serve — de unha a tatuagem." } },
       { "@type": "Question", "name": "Dá pra usar no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. É 100% web, funciona em qualquer navegador, sem instalar nada." } },
       { "@type": "Question", "name": "Meus dados ficam seguros?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Cada conta só acessa os próprios dados, com login pelo Google." } }
     ]
@@ -60,6 +60,19 @@
 
       <nav class="landing-nav" aria-label="Navegação principal" data-i18n-attr="aria-label:common.navAriaLabel">
         <a href="/" data-i18n="common.navHome">Início</a>
+        <details class="nav-dropdown">
+          <summary data-i18n="common.navForWho">Para quem</summary>
+          <ul class="nav-dropdown__menu">
+            <li><a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a></li>
+            <li><a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a></li>
+            <li><a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a></li>
+            <li><a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a></li>
+            <li><a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a></li>
+            <li><a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a></li>
+            <li><a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a></li>
+            <li><a href="/para/tatuagem.html" data-i18n="common.segTattoo">Tatuagem</a></li>
+          </ul>
+        </details>
         <a href="/sobre.html" data-i18n="common.navAbout">Sobre</a>
         <a href="/solucoes.html" data-i18n="common.navSolutions">Soluções</a>
         <a href="/planos.html" aria-current="page" data-i18n="common.navPlans">Planos</a>
@@ -80,6 +93,17 @@
         </summary>
         <div class="landing-nav-mobile__panel">
           <a href="/" data-i18n="common.navHome">Início</a>
+          <div class="landing-nav-mobile__group">
+            <span class="landing-nav-mobile__group-label" data-i18n="common.navForWho">Para quem</span>
+            <a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a>
+            <a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a>
+            <a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a>
+            <a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a>
+            <a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a>
+            <a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a>
+            <a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a>
+            <a href="/para/tatuagem.html" data-i18n="common.segTattoo">Tatuagem</a>
+          </div>
           <a href="/sobre.html" data-i18n="common.navAbout">Sobre</a>
           <a href="/solucoes.html" data-i18n="common.navSolutions">Soluções</a>
           <a href="/planos.html" aria-current="page" data-i18n="common.navPlans">Planos</a>
@@ -116,20 +140,28 @@
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="planos.personalLi4">Fluxo de caixa e lucro por serviço</span></li>
           </ul>
           <a class="btn btn--primary btn--block" href="#waitlist-planos" aria-label="Entrar na lista de espera — plano Personal" data-i18n="planos.planCta" data-i18n-attr="aria-label:planos.personalCtaAria">Entrar na lista de espera</a>
+          <p class="waitlist-microcopy" data-i18n="common.waitlistMicrocopy">No lançamento: 35 dias grátis · sem cartão · sem multa</p>
         </div>
 
-        <div class="plan-card card" data-reveal>
-          <h2 class="plan-card__name">Team</h2>
-          <div class="plan-card__audience" data-i18n="planos.teamAudience">Para estúdios, salões e clínicas com mais de uma pessoa</div>
+        <div class="plan-card card plan-card--soon" data-reveal>
+          <span class="badge badge--muted plan-card__soon-badge" data-i18n="common.badgeSoon">Em breve</span>
+          <h2 class="plan-card__name" data-i18n="planos.estudioName">Estúdio</h2>
+          <div class="plan-card__audience" data-i18n="planos.estudioAudience">Para equipes e espaços com mais de uma pessoa</div>
           <div class="plan-card__price">R$ --<span data-i18n="planos.perMonth">/mês</span></div>
-          <ul class="plan-card__features">
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="planos.teamLi1">Tudo do Personal</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="planos.teamLi2">Vários profissionais na mesma conta</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="planos.teamLi3">Agenda e clientes compartilhados</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="planos.teamLi4">Permissões por usuário</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-11"/></svg><span data-i18n="planos.teamLi5">Suporte prioritário</span></li>
-          </ul>
-          <a class="btn btn--primary btn--block" href="#waitlist-planos" aria-label="Entrar na lista de espera — plano Team" data-i18n="planos.planCta" data-i18n-attr="aria-label:planos.teamCtaAria">Entrar na lista de espera</a>
+          <!-- ponytail: copy curta no lugar da lista de features enquanto o plano
+               não existe; reusa .solution-card__text (muted + margem) em vez de
+               criar classe nova — quando o Estúdio lançar, volta a lista. -->
+          <p class="solution-card__text" data-i18n="planos.estudioBody">Tudo do Personal, mais agenda e clientes compartilhados e permissões
+            por usuário. Estamos construindo — deixe seu e-mail e seja avisado primeiro.</p>
+          <form id="waitlist-estudio" class="waitlist-form" data-waitlist data-source="waitlist-estudio">
+            <label class="sr-only" for="wl-estudio-email" data-i18n="common.emailSrLabel">Seu e-mail</label>
+            <input class="input" id="wl-estudio-email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email" spellcheck="false" data-i18n-attr="placeholder:common.emailPlaceholder" />
+            <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+            <!-- P0: anti-bot. Chave de TESTE (sempre passa, invisível) — trocar pela
+                 sitekey real do Turnstile junto com o secret no Worker. -->
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAAD4qMUjfGKlbPPXW"></div>
+            <button class="btn btn--ghost" type="submit" aria-label="Quero ser avisado quando o plano Estúdio abrir" data-i18n="planos.waitlistBtn" data-i18n-attr="aria-label:planos.estudioBtnAria">Quero ser avisado</button>
+          </form>
         </div>
       </div>
       </div>
@@ -151,6 +183,7 @@
           <div class="cf-turnstile" data-sitekey="0x4AAAAAAD4qMUjfGKlbPPXW"></div>
           <button class="btn btn--primary" type="submit" data-i18n="planos.waitlistBtn">Quero ser avisado</button>
         </form>
+        <p class="waitlist-microcopy" data-i18n="common.waitlistMicrocopy">No lançamento: 35 dias grátis · sem cartão · sem multa</p>
       </div>
     </section>
 
@@ -170,13 +203,13 @@
             <p class="faq__a" data-i18n="planos.faq2A">Não. Só o e-mail. Nada de pagamento nesta fase.</p>
           </details>
           <details class="faq__item" data-reveal>
-            <summary class="faq__q" data-i18n="planos.faq3Q">Qual a diferença entre Personal e Team?</summary>
-            <p class="faq__a" data-i18n="planos.faq3A">Personal é pra quem atende sozinho. Team é pra mais de uma pessoa dividindo
-              a mesma agenda e base de clientes.</p>
+            <summary class="faq__q" data-i18n="planos.faq3Q">Qual a diferença entre Personal e Estúdio?</summary>
+            <p class="faq__a" data-i18n="planos.faq3A">Personal é pra quem atende sozinho. Estúdio é pra mais de uma pessoa dividindo
+              a mesma agenda e base de clientes — e ainda está em construção.</p>
           </details>
           <details class="faq__item" data-reveal>
             <summary class="faq__q" data-i18n="planos.faq4Q">Serve pro meu ramo?</summary>
-            <p class="faq__a" data-i18n="planos.faq4A">Se você agenda clientes e cobra por atendimento, serve — de unha a tatuagem.</p>
+            <p class="faq__a" data-i18n="planos.faq4A">Se você atende com hora marcada e cobra por atendimento, serve — de unha a tatuagem.</p>
           </details>
           <details class="faq__item" data-reveal>
             <summary class="faq__q" data-i18n="planos.faq5Q">Dá pra usar no celular?</summary>

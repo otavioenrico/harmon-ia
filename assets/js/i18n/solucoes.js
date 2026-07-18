@@ -35,16 +35,15 @@ export default {
   'solucoes.card5Li1':   { pt: 'Catálogo com preço e duração', en: 'Catalog with price and duration' },
   'solucoes.card5Li2':   { pt: 'Materiais por serviço', en: 'Materials per service' },
   'solucoes.card5Li3':   { pt: 'Custo e lucro calculados', en: 'Calculated cost and profit' },
-  'solucoes.card5Alt':   { pt: 'Catalogo de servicos do Harmon IA com preco, duracao e lucro por procedimento', en: 'Harmon IA service catalog with price, duration and profit per procedure' },
+  'solucoes.card5Alt':   { pt: 'Catalogo de servicos do Harmon IA com preco, duracao e lucro por atendimento', en: 'Harmon IA service catalog with price, duration and profit per appointment' },
 
   'solucoes.card6Title': { pt: 'Seus dados seguros, só seus.', en: 'Your data, safe and yours alone.' },
-  'solucoes.card6Text':  { pt: 'Login pelo Google e isolamento total: cada conta só enxerga os próprios dados. No plano Team, sua equipe divide agenda e clientes com permissões por usuário.', en: 'Google sign-in and full isolation: each account only sees its own data. On the Team plan, your team shares calendar and clients with per-user permissions.' },
+  'solucoes.card6Text':  { pt: 'Login pelo Google e isolamento total: cada conta só enxerga os próprios dados. No plano Estúdio, sua equipe divide agenda e clientes com permissões por usuário.', en: 'Google sign-in and full isolation: each account only sees its own data. On the Studio plan, your team shares calendar and clients with per-user permissions.' },
   'solucoes.card6Li1':   { pt: 'Login seguro com Google', en: 'Secure sign-in with Google' },
   'solucoes.card6Li2':   { pt: 'Dados isolados por conta', en: 'Data isolated per account' },
-  'solucoes.card6Li3':   { pt: 'Permissões por usuário (Team)', en: 'Per-user permissions (Team)' },
+  'solucoes.card6Li3':   { pt: 'Permissões por usuário (Estúdio)', en: 'Per-user permissions (Studio)' },
   'solucoes.card6Alt':   { pt: 'Configuracoes do Harmon IA mostrando conta Google conectada e opcoes de privacidade e acesso', en: 'Harmon IA settings showing connected Google account and privacy/access options' },
 
   'solucoes.ctaTitle':    { pt: 'Pronto pra ver tudo isso junto?', en: 'Ready to see it all together?' },
-  'solucoes.ctaSubtitle': { pt: 'Entre na lista de espera e seja avisado quando abrir uma vaga.', en: "Join the waitlist and get notified when a spot opens up." },
-  'solucoes.ctaBtn':      { pt: 'Entrar na lista de espera →', en: 'Join the waitlist →' },
+  'solucoes.ctaSubtitle': { pt: 'Deixe seu e-mail e seja avisado assim que abrir uma vaga.', en: "Leave your email and get notified as soon as a spot opens up." },
 };
