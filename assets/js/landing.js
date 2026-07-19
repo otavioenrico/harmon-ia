@@ -104,8 +104,14 @@ if (segPicker) {
     segCards.forEach((c) => { c.hidden = true; });
     segBtns.forEach((b) => b.setAttribute('aria-expanded', 'false'));
     if (!wasOpen) {
+      // ícone da profissão clicada vai pro topo do card (svg estático nosso)
+      const icon = btn.querySelector('svg');
+      const slot = card.querySelector('.segment-picker__cardicon');
+      if (icon && slot) slot.innerHTML = icon.outerHTML;
       card.hidden = false;
       btn.setAttribute('aria-expanded', 'true');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      card.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
     }
   }));
 }
