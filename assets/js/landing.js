@@ -100,7 +100,9 @@ if (segPicker) {
   const segCards = segPicker.querySelectorAll('.segment-picker__card');
   segBtns.forEach((btn) => btn.addEventListener('click', () => {
     const card = document.getElementById(btn.getAttribute('aria-controls'));
-    const wasOpen = !card.hidden;
+    // toggle pelo BOTÃO, não pelo card: o card genérico é compartilhado por
+    // várias profissões — clicar em outra que usa o mesmo card deve trocar, não fechar.
+    const wasOpen = btn.getAttribute('aria-expanded') === 'true';
     segCards.forEach((c) => { c.hidden = true; });
     segBtns.forEach((b) => b.setAttribute('aria-expanded', 'false'));
     if (!wasOpen) {

@@ -540,6 +540,7 @@ summary.faq__q::after {
 .segment-picker__card[hidden] { display: none; }
 .segment-picker__card {
   width: min(560px, 100%); text-align: left;
+  margin-top: var(--sp-5);
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
   border-radius: var(--radius-xl, 20px); padding: var(--sp-6);
