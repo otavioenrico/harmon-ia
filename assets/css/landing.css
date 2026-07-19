@@ -540,14 +540,37 @@ summary.faq__q::after {
 .landing-footer__links--segments a { color: var(--text-faint); }
 .landing-footer__links--segments a:hover { color: var(--text); }
 
-.segment-links {
-  display: flex; flex-wrap: wrap; justify-content: center;
-  gap: var(--sp-2) var(--sp-4);
-  margin-top: var(--sp-6); font-size: var(--fs-sm);
+.segment-picker {
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--sp-4); margin-top: var(--sp-6);
 }
-.segment-links__label { color: var(--text-faint); font-weight: var(--fw-600); }
-.segment-links a { color: var(--text-muted); text-decoration: none; padding-block: var(--sp-2); }
-.segment-links a:hover { color: var(--text); text-decoration: underline; }
+.segment-picker__label { color: var(--text-muted); font-size: var(--fs-sm); }
+.segment-picker__list {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-2);
+}
+.segment-picker__btn {
+  font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-500);
+  color: var(--text-muted); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  padding: var(--sp-2) var(--sp-4); min-height: 40px; cursor: pointer;
+}
+.segment-picker__btn:hover { color: var(--text); border-color: var(--text-faint); }
+.segment-picker__btn[aria-expanded="true"] {
+  color: var(--accent-contrast, #fff); background: var(--accent);
+  border-color: var(--accent);
+}
+.segment-picker__card[hidden] { display: none; }
+.segment-picker__card {
+  width: min(560px, 100%); text-align: left;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl, 20px); padding: var(--sp-6);
+  display: flex; flex-direction: column; gap: var(--sp-4);
+}
+.segment-picker__title { font-size: var(--fs-lg); }
+.segment-picker__points { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--sp-2); }
+.segment-picker__points li { padding-left: 1.4em; position: relative; color: var(--text-muted); }
+.segment-picker__points li::before { content: "\2713"; position: absolute; left: 0; color: var(--accent); font-weight: var(--fw-700); }
+.segment-picker__card .btn { align-self: flex-start; }
 
 /* -------------------------------------------- hero das páginas de segmento --
    para/*.html: hero claro centrado com waitlist própria (sem foto por ora). */

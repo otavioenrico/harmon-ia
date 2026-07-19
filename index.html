@@ -181,16 +181,90 @@
           <li class="segment-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span data-i18n="home.segMore">e muito mais</span></li>
         </ul>
       </div>
-      <div class="landing-container segment-links" data-reveal>
-        <span class="segment-links__label" data-i18n="home.segPagesLabel">Seu ramo tem página própria:</span>
-        <a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a>
-        <a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a>
-        <a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a>
-        <a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a>
-        <a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a>
-        <a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a>
-        <a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a>
-        <a href="/para/tatuagem.html" data-i18n="common.segTattoo">Tatuagem</a>
+      <div class="landing-container segment-picker" data-reveal>
+        <p class="segment-picker__label" data-i18n="home.pickLabel">Qual é o seu ramo? Toque e veja como funciona pra você:</p>
+        <div class="segment-picker__list">
+          <button type="button" class="segment-picker__btn" aria-expanded="false" aria-controls="segcard-lash"><span data-i18n="common.segLash">Lash designer</span></button>
+          <button type="button" class="segment-picker__btn" aria-expanded="false" aria-controls="segcard-sobrancelha"><span data-i18n="common.segBrow">Sobrancelha</span></button>
+          <button type="button" class="segment-picker__btn" aria-expanded="false" aria-controls="segcard-skincare"><span data-i18n="common.segSkincare">Skincare e estética</span></button>
+          <button type="button" class="segment-picker__btn" aria-expanded="false" aria-controls="segcard-micro"><span data-i18n="common.segMicro">Micropigmentação</span></button>
+          <button type="button" class="segment-picker__btn" aria-expanded="false" aria-controls="segcard-barbearia"><span data-i18n="common.segBarber">Barbearia</span></button>
+          <button type="button" class="segment-picker__btn" aria-expanded="false" aria-controls="segcard-massoterapia"><span data-i18n="common.segMassage">Massoterapia</span></button>
+          <button type="button" class="segment-picker__btn" aria-expanded="false" aria-controls="segcard-podologia"><span data-i18n="common.segPodo">Podologia</span></button>
+          <button type="button" class="segment-picker__btn" aria-expanded="false" aria-controls="segcard-tatuagem"><span data-i18n="common.segTattoo">Tatuagem</span></button>
+        </div>
+        <div class="segment-picker__card" id="segcard-lash" hidden>
+          <h3 class="segment-picker__title" data-i18n="home.pickLashTitle">Pra quem vive de cílios</h3>
+          <ul class="segment-picker__points">
+            <li data-i18n="home.pickLash1">Retorno de manutenção marcado antes da cliente sair</li>
+            <li data-i18n="home.pickLash2">Ficha com técnica, cola e reação de cada cliente</li>
+            <li data-i18n="home.pickLash3">Estoque de fios e cola avisando antes de faltar</li>
+          </ul>
+          <a class="btn btn--primary btn--sm" href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        </div>
+        <div class="segment-picker__card" id="segcard-sobrancelha" hidden>
+          <h3 class="segment-picker__title" data-i18n="home.pickSobrancelhaTitle">Pra quem desenha sobrancelhas</h3>
+          <ul class="segment-picker__points">
+            <li data-i18n="home.pickSobrancelha1">Retoque de 30 dias lembrado sozinho</li>
+            <li data-i18n="home.pickSobrancelha2">Histórico com antes e depois de cada cliente</li>
+            <li data-i18n="home.pickSobrancelha3">Agenda sem furo e sem cliente em dobro</li>
+          </ul>
+          <a class="btn btn--primary btn--sm" href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        </div>
+        <div class="segment-picker__card" id="segcard-skincare" hidden>
+          <h3 class="segment-picker__title" data-i18n="home.pickSkincareTitle">Pra quem cuida de pele</h3>
+          <ul class="segment-picker__points">
+            <li data-i18n="home.pickSkincare1">Protocolo de sessões com evolução registrada</li>
+            <li data-i18n="home.pickSkincare2">Anamnese na ficha, não no caderno</li>
+            <li data-i18n="home.pickSkincare3">Pacotes e sessões controlados sem planilha</li>
+          </ul>
+          <a class="btn btn--primary btn--sm" href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        </div>
+        <div class="segment-picker__card" id="segcard-micro" hidden>
+          <h3 class="segment-picker__title" data-i18n="home.pickMicroTitle">Pra quem faz micropigmentação</h3>
+          <ul class="segment-picker__points">
+            <li data-i18n="home.pickMicro1">Retoque anual lembrado na data certa</li>
+            <li data-i18n="home.pickMicro2">Ficha com pigmento e agulha usados</li>
+            <li data-i18n="home.pickMicro3">Sinal e orçamento organizados por cliente</li>
+          </ul>
+          <a class="btn btn--primary btn--sm" href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        </div>
+        <div class="segment-picker__card" id="segcard-barbearia" hidden>
+          <h3 class="segment-picker__title" data-i18n="home.pickBarbeariaTitle">Pra barbearia</h3>
+          <ul class="segment-picker__points">
+            <li data-i18n="home.pickBarbearia1">Lembrete automático corta as faltas</li>
+            <li data-i18n="home.pickBarbearia2">Agenda cheia sem fila na porta</li>
+            <li data-i18n="home.pickBarbearia3">Caixa do dia fechado em segundos</li>
+          </ul>
+          <a class="btn btn--primary btn--sm" href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        </div>
+        <div class="segment-picker__card" id="segcard-massoterapia" hidden>
+          <h3 class="segment-picker__title" data-i18n="home.pickMassoterapiaTitle">Pra quem atende em sessões</h3>
+          <ul class="segment-picker__points">
+            <li data-i18n="home.pickMassoterapia1">Pacotes de sessão com saldo sempre certo</li>
+            <li data-i18n="home.pickMassoterapia2">Agenda da semana com intervalos entre atendimentos</li>
+            <li data-i18n="home.pickMassoterapia3">Caixa por atendimento, sem planilha</li>
+          </ul>
+          <a class="btn btn--primary btn--sm" href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        </div>
+        <div class="segment-picker__card" id="segcard-podologia" hidden>
+          <h3 class="segment-picker__title" data-i18n="home.pickPodologiaTitle">Pra podologia</h3>
+          <ul class="segment-picker__points">
+            <li data-i18n="home.pickPodologia1">Retorno clínico lembrado no prazo</li>
+            <li data-i18n="home.pickPodologia2">Ficha de cada paciente com fotos e histórico</li>
+            <li data-i18n="home.pickPodologia3">Agenda e caixa no mesmo lugar</li>
+          </ul>
+          <a class="btn btn--primary btn--sm" href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        </div>
+        <div class="segment-picker__card" id="segcard-tatuagem" hidden>
+          <h3 class="segment-picker__title" data-i18n="home.pickTatuagemTitle">Pra tatuador</h3>
+          <ul class="segment-picker__points">
+            <li data-i18n="home.pickTatuagem1">Sessões longas com duração real na agenda</li>
+            <li data-i18n="home.pickTatuagem2">Orçamento e sinal registrados por projeto</li>
+            <li data-i18n="home.pickTatuagem3">Ficha com referências e cuidados pós-tattoo</li>
+          </ul>
+          <a class="btn btn--primary btn--sm" href="#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
+        </div>
       </div>
     </section>
 

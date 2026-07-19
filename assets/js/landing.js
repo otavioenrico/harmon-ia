@@ -92,3 +92,20 @@ if (langMenus.length) {
     langMenus.forEach((m) => { if (m.open && !m.contains(e.target)) m.open = false; });
   });
 }
+
+// seletor de ramo (home): um card por vez; clicar de novo fecha.
+const segPicker = document.querySelector('.segment-picker');
+if (segPicker) {
+  const segBtns = segPicker.querySelectorAll('.segment-picker__btn');
+  const segCards = segPicker.querySelectorAll('.segment-picker__card');
+  segBtns.forEach((btn) => btn.addEventListener('click', () => {
+    const card = document.getElementById(btn.getAttribute('aria-controls'));
+    const wasOpen = !card.hidden;
+    segCards.forEach((c) => { c.hidden = true; });
+    segBtns.forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    if (!wasOpen) {
+      card.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  }));
+}
