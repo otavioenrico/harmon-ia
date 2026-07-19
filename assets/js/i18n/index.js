@@ -141,4 +141,8 @@ export default {
   'home.pickTatuagem1':      { pt: 'Sessões longas com duração real na agenda', en: 'Long sessions with real duration on the schedule' },
   'home.pickTatuagem2':      { pt: 'Orçamento e sinal registrados por projeto', en: 'Quote and deposit tracked per project' },
   'home.pickTatuagem3':      { pt: 'Ficha com referências e cuidados pós-tattoo', en: 'Card with references and aftercare notes' },
+  'home.pickGeralTitle': { pt: 'Pra todo trabalho de hora marcada', en: 'For any appointment-based work' },
+  'home.pickGeral1':     { pt: 'Agenda com lembrete automático no WhatsApp', en: 'Schedule with automatic WhatsApp reminders' },
+  'home.pickGeral2':     { pt: 'Ficha e histórico de cada cliente', en: 'A card and history for every client' },
+  'home.pickGeral3':     { pt: 'Caixa por atendimento, sem planilha', en: 'Cash flow per appointment, no spreadsheets' },
 };

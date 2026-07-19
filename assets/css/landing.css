@@ -210,35 +210,6 @@
 .segments-section { padding-block: var(--sp-8); }
 .segments-section .section__head { margin-bottom: var(--sp-6); }
 
-/* já é filho direto de .section-band (sem max-width) — full-bleed sem
-   precisar do truque 100vw, que soma a largura da scrollbar e causa overflow-x. */
-.segment-marquee {
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
-}
-.segment-track {
-  display: flex; gap: var(--sp-3); list-style: none; width: max-content;
-  animation: segment-scroll 36s linear infinite;
-}
-.segment-marquee:hover .segment-track { animation-play-state: paused; }
-@keyframes segment-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .segment-track { animation: none; }
-}
-
-.segment-chip {
-  flex: 0 0 auto; display: flex; align-items: center; gap: var(--sp-2);
-  background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--border); border-radius: var(--radius-pill);
-  padding: var(--sp-3) var(--sp-5); font-size: var(--fs-base); font-weight: var(--fw-500);
-  white-space: nowrap;
-}
-.segment-chip svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--text-muted); }
-
 /* ---------------------------------------------------------- pain-grid ---- */
 .pain-grid {
   display: grid; grid-template-columns: repeat(2, 1fr);
@@ -545,10 +516,17 @@ summary.faq__q::after {
   gap: var(--sp-4); margin-top: var(--sp-6);
 }
 .segment-picker__label { color: var(--text-muted); font-size: var(--fs-sm); }
+.segment-picker__gallery {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: var(--sp-2); max-width: 880px; margin-inline: auto;
+}
+.segment-picker__gallery svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-muted); }
+.segment-picker__btn[aria-expanded="true"] svg { color: currentColor; }
 .segment-picker__list {
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-2);
 }
 .segment-picker__btn {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
   font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-500);
   color: var(--text-muted); background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--radius-pill);
@@ -556,7 +534,7 @@ summary.faq__q::after {
 }
 .segment-picker__btn:hover { color: var(--text); border-color: var(--text-faint); }
 .segment-picker__btn[aria-expanded="true"] {
-  color: var(--accent-contrast, #fff); background: var(--accent);
+  color: var(--accent-text); background: var(--accent);
   border-color: var(--accent);
 }
 .segment-picker__card[hidden] { display: none; }
