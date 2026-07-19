@@ -53,4 +53,5 @@ export default {
   'common.placeholderFill':      { pt: '[PREENCHER]', en: '[TO FILL IN]' },
   'common.footerPrivacyLinkText': { pt: 'Política de Privacidade', en: 'Privacy Policy' },
   'common.footerSegmentsAria': { pt: 'Soluções por segmento', en: 'Solutions by segment' },
+  'common.ctaSeePlans': { pt: 'Conhecer os planos', en: 'See the plans' },
 };
