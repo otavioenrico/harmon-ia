@@ -52,4 +52,5 @@ export default {
   'common.legalPrevails':        { pt: 'Esta página está disponível em português e inglês. Em caso de divergência, a versão em português prevalece juridicamente; a tradução em inglês é oferecida apenas como cortesia.', en: 'This page is available in Portuguese and English. In case of discrepancy, the Portuguese version prevails legally; the English translation is provided for convenience only.' },
   'common.placeholderFill':      { pt: '[PREENCHER]', en: '[TO FILL IN]' },
   'common.footerPrivacyLinkText': { pt: 'Política de Privacidade', en: 'Privacy Policy' },
+  'common.footerSegmentsAria': { pt: 'Soluções por segmento', en: 'Solutions by segment' },
 };

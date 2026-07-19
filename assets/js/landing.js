@@ -74,3 +74,21 @@ if (faqItems.length) {
     });
   });
 }
+
+// menu de idioma (bandeira): fecha ao escolher, com Esc (foco volta ao gatilho)
+// ou clique fora — o <details> nativo não cobre esses dois últimos.
+const langMenus = document.querySelectorAll(".lang-menu");
+langMenus.forEach((menu) => {
+  menu.querySelectorAll("[data-lang-btn]").forEach((btn) =>
+    btn.addEventListener("click", () => { menu.open = false; }));
+  menu.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !menu.open) return;
+    menu.open = false;
+    menu.querySelector("summary").focus();
+  });
+});
+if (langMenus.length) {
+  document.addEventListener("click", (e) => {
+    langMenus.forEach((m) => { if (m.open && !m.contains(e.target)) m.open = false; });
+  });
+}

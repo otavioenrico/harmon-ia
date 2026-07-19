@@ -43,10 +43,13 @@
       <section class="login-form">
         <h1 class="sr-only" data-i18n="entrar.title">Entrar — Harmon IA</h1>
         <div class="login-form__topbar">
-          <div class="lang-switch" role="group" aria-label="Idioma / Language">
-            <button type="button" class="lang-switch__btn" data-lang-btn="pt" aria-pressed="true">PT</button>
-            <button type="button" class="lang-switch__btn" data-lang-btn="en" aria-pressed="false">EN</button>
+          <details class="lang-menu">
+          <summary class="lang-menu__btn" aria-label="Idioma / Language"><span class="lang-menu__flag lang-menu__flag--pt" aria-hidden="true">🇧🇷</span><span class="lang-menu__flag lang-menu__flag--en" aria-hidden="true">🇺🇸</span><svg class="lang-menu__caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="lang-menu__panel">
+            <button type="button" class="lang-menu__opt" data-lang-btn="pt" aria-pressed="true"><span aria-hidden="true">🇧🇷</span> Português (BR)</button>
+            <button type="button" class="lang-menu__opt" data-lang-btn="en" aria-pressed="false"><span aria-hidden="true">🇺🇸</span> English (US)</button>
           </div>
+        </details>
         </div>
         <div class="login__logo">Harmon&nbsp;<b>IA</b></div>
         <p class="login-form__sub" data-i18n="entrar.subtitle">Gestão inteligente para saúde estética.</p>

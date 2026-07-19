@@ -39,16 +39,16 @@ export default {
   'home.featCta':          { pt: 'Ver todas as soluções →', en: 'See all solutions →' },
 
   'home.statsTitle':       { pt: 'Hora marcada tem matemática.', en: 'Appointments have their own math.' },
-  'home.statsSubtitle':    { pt: 'O que estudos do setor de agendamento mostram, e o que o Harmon IA automatiza pra você.', en: 'What scheduling-industry studies show, and what Harmon IA automates for you.' },
+  'home.statsSubtitle':    { pt: 'Números de estudos do setor — o Harmon IA automatiza os três.', en: 'Industry study numbers — Harmon IA automates all three.' },
   'home.stat1Value':       { pt: '−30 a −70%', en: '−30 to −70%' },
-  'home.stat1Label':       { pt: 'de faltas quando o lembrete chega automático pelo WhatsApp.', en: 'fewer no-shows when reminders go out automatically on WhatsApp.' },
+  'home.stat1Label':       { pt: 'de faltas com lembrete automático no WhatsApp', en: 'fewer no-shows with automatic WhatsApp reminders' },
   'home.stat2Value':       { pt: '+33%', en: '+33%' },
-  'home.stat2Label':       { pt: 'de receita por cliente quando ele pode agendar online, sem esperar resposta.', en: 'more revenue per client when they can book online, without waiting for a reply.' },
+  'home.stat2Label':       { pt: 'de receita por cliente com agendamento online', en: 'more revenue per client with online booking' },
   'home.stat3Value':       { pt: '46–58%', en: '46–58%' },
-  'home.stat3Label':       { pt: 'dos agendamentos acontecem fora do horário comercial, enquanto você atende ou descansa.', en: 'of bookings happen outside business hours, while you work or rest.' },
+  'home.stat3Label':       { pt: 'dos agendamentos fora do horário comercial', en: 'of bookings happen outside business hours' },
 
-  'home.addonTitle':       { pt: 'O WhatsApp automático que cobram R$ 150–229/mês de módulo? Aqui já vem no plano.', en: 'The automatic WhatsApp others charge R$ 150–229/month for as an add-on? Here it comes with the plan.' },
-  'home.addonSubtitle':    { pt: 'Compare o custo real: a mensalidade anunciada + o módulo que aparece depois.', en: 'Compare the real cost: the advertised monthly fee + the add-on that shows up later.' },
+  'home.addonTitle':       { pt: 'WhatsApp automático incluso.', en: 'Automatic WhatsApp included.' },
+  'home.addonSubtitle':    { pt: 'Em outros sistemas é módulo pago à parte — de R$ 150 a R$ 229 por mês. Aqui já vem no plano.', en: 'Elsewhere it is a paid add-on — R$ 150 to 229 a month. Here it comes with the plan.' },
   'home.compareCaption':   { pt: 'Comparação de custo real entre sistemas de agendamento', en: 'Real-cost comparison between scheduling systems' },
   'home.compareColSystem': { pt: 'Sistema', en: 'System' },
   'home.compareColMonthly':{ pt: 'Mensalidade', en: 'Monthly fee' },
@@ -108,4 +108,5 @@ export default {
   'home.ctaFinalBtn':      { pt: 'Entrar na lista de espera →', en: 'Join the waitlist →' },
   'home.ctaFinalMicrocopy':{ pt: 'No lançamento: 35 dias grátis · sem cartão · sem multa · cancele quando quiser', en: 'At launch: 35 days free · no card · no cancellation fee · cancel anytime' },
   'home.ctaFinalFootnote': { pt: 'Já tem convite? Entrar', en: 'Already have an invite? Log in' },
+  'home.segPagesLabel':    { pt: 'Seu ramo tem página própria:', en: 'Your field has its own page:' },
 };

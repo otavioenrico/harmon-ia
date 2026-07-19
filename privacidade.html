@@ -41,10 +41,13 @@
       </nav>
 
       <div class="landing-header__actions">
-        <div class="lang-switch" role="group" aria-label="Idioma / Language">
-          <button type="button" class="lang-switch__btn" data-lang-btn="pt" aria-pressed="true">PT</button>
-          <button type="button" class="lang-switch__btn" data-lang-btn="en" aria-pressed="false">EN</button>
-        </div>
+        <details class="lang-menu">
+          <summary class="lang-menu__btn" aria-label="Idioma / Language"><span class="lang-menu__flag lang-menu__flag--pt" aria-hidden="true">🇧🇷</span><span class="lang-menu__flag lang-menu__flag--en" aria-hidden="true">🇺🇸</span><svg class="lang-menu__caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="lang-menu__panel">
+            <button type="button" class="lang-menu__opt" data-lang-btn="pt" aria-pressed="true"><span aria-hidden="true">🇧🇷</span> Português (BR)</button>
+            <button type="button" class="lang-menu__opt" data-lang-btn="en" aria-pressed="false"><span aria-hidden="true">🇺🇸</span> English (US)</button>
+          </div>
+        </details>
         <a class="btn btn--ghost btn--sm" href="/#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
         <a class="btn btn--primary btn--sm" href="/entrar.html" data-i18n="common.navLogin">Entrar</a>
       </div>
@@ -60,10 +63,13 @@
           <a href="/planos.html" data-i18n="common.navPlans">Planos</a>
           <a href="/#waitlist-hero" data-i18n="common.navWaitlist">Quero ser avisado</a>
           <a href="/entrar.html" data-i18n="common.navLogin">Entrar</a>
-          <div class="lang-switch" role="group" aria-label="Idioma / Language">
-            <button type="button" class="lang-switch__btn" data-lang-btn="pt" aria-pressed="true">PT</button>
-            <button type="button" class="lang-switch__btn" data-lang-btn="en" aria-pressed="false">EN</button>
+          <details class="lang-menu">
+          <summary class="lang-menu__btn" aria-label="Idioma / Language"><span class="lang-menu__flag lang-menu__flag--pt" aria-hidden="true">🇧🇷</span><span class="lang-menu__flag lang-menu__flag--en" aria-hidden="true">🇺🇸</span><svg class="lang-menu__caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="lang-menu__panel">
+            <button type="button" class="lang-menu__opt" data-lang-btn="pt" aria-pressed="true"><span aria-hidden="true">🇧🇷</span> Português (BR)</button>
+            <button type="button" class="lang-menu__opt" data-lang-btn="en" aria-pressed="false"><span aria-hidden="true">🇺🇸</span> English (US)</button>
           </div>
+        </details>
         </div>
       </details>
     </div>

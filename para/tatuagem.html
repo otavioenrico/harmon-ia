@@ -46,29 +46,19 @@
 
       <nav class="landing-nav" aria-label="Navegação principal" data-i18n-attr="aria-label:common.navAriaLabel">
         <a href="/" data-i18n="common.navHome">Início</a>
-        <details class="nav-dropdown">
-          <summary data-i18n="common.navForWho">Para quem</summary>
-          <ul class="nav-dropdown__menu">
-            <li><a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a></li>
-            <li><a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a></li>
-            <li><a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a></li>
-            <li><a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a></li>
-            <li><a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a></li>
-            <li><a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a></li>
-            <li><a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a></li>
-            <li><a href="/para/tatuagem.html" aria-current="page" data-i18n="common.segTattoo">Tatuagem</a></li>
-          </ul>
-        </details>
         <a href="/sobre.html" data-i18n="common.navAbout">Sobre</a>
         <a href="/solucoes.html" data-i18n="common.navSolutions">Soluções</a>
         <a href="/planos.html" data-i18n="common.navPlans">Planos</a>
       </nav>
 
       <div class="landing-header__actions">
-        <div class="lang-switch" role="group" aria-label="Idioma / Language">
-          <button type="button" class="lang-switch__btn" data-lang-btn="pt" aria-pressed="true">PT</button>
-          <button type="button" class="lang-switch__btn" data-lang-btn="en" aria-pressed="false">EN</button>
-        </div>
+        <details class="lang-menu">
+          <summary class="lang-menu__btn" aria-label="Idioma / Language"><span class="lang-menu__flag lang-menu__flag--pt" aria-hidden="true">🇧🇷</span><span class="lang-menu__flag lang-menu__flag--en" aria-hidden="true">🇺🇸</span><svg class="lang-menu__caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="lang-menu__panel">
+            <button type="button" class="lang-menu__opt" data-lang-btn="pt" aria-pressed="true"><span aria-hidden="true">🇧🇷</span> Português (BR)</button>
+            <button type="button" class="lang-menu__opt" data-lang-btn="en" aria-pressed="false"><span aria-hidden="true">🇺🇸</span> English (US)</button>
+          </div>
+        </details>
         <a class="btn btn--ghost btn--sm" href="#waitlist-seg" data-i18n="common.navWaitlist">Quero ser avisado</a>
         <a class="btn btn--primary btn--sm" href="/entrar.html" data-i18n="common.navLogin">Entrar</a>
       </div>
@@ -79,26 +69,18 @@
         </summary>
         <div class="landing-nav-mobile__panel">
           <a href="/" data-i18n="common.navHome">Início</a>
-          <div class="landing-nav-mobile__group">
-            <span class="landing-nav-mobile__group-label" data-i18n="common.navForWho">Para quem</span>
-            <a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a>
-            <a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a>
-            <a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a>
-            <a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a>
-            <a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a>
-            <a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a>
-            <a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a>
-            <a href="/para/tatuagem.html" aria-current="page" data-i18n="common.segTattoo">Tatuagem</a>
-          </div>
           <a href="/sobre.html" data-i18n="common.navAbout">Sobre</a>
           <a href="/solucoes.html" data-i18n="common.navSolutions">Soluções</a>
           <a href="/planos.html" data-i18n="common.navPlans">Planos</a>
           <a href="#waitlist-seg" data-i18n="common.navWaitlist">Quero ser avisado</a>
           <a href="/entrar.html" data-i18n="common.navLogin">Entrar</a>
-          <div class="lang-switch" role="group" aria-label="Idioma / Language">
-            <button type="button" class="lang-switch__btn" data-lang-btn="pt" aria-pressed="true">PT</button>
-            <button type="button" class="lang-switch__btn" data-lang-btn="en" aria-pressed="false">EN</button>
+          <details class="lang-menu">
+          <summary class="lang-menu__btn" aria-label="Idioma / Language"><span class="lang-menu__flag lang-menu__flag--pt" aria-hidden="true">🇧🇷</span><span class="lang-menu__flag lang-menu__flag--en" aria-hidden="true">🇺🇸</span><svg class="lang-menu__caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="lang-menu__panel">
+            <button type="button" class="lang-menu__opt" data-lang-btn="pt" aria-pressed="true"><span aria-hidden="true">🇧🇷</span> Português (BR)</button>
+            <button type="button" class="lang-menu__opt" data-lang-btn="en" aria-pressed="false"><span aria-hidden="true">🇺🇸</span> English (US)</button>
           </div>
+        </details>
         </div>
       </details>
     </div>
@@ -117,7 +99,7 @@
           <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
           <!-- P0: anti-bot. Chave de TESTE (sempre passa, invisível) — trocar pela
                sitekey real do Turnstile junto com o secret no Worker. -->
-          <div class="cf-turnstile" data-sitekey="0x4AAAAAAD4qMUjfGKlbPPXW"></div>
+          <div class="cf-turnstile" data-appearance="interaction-only" data-sitekey="0x4AAAAAAD4qMUjfGKlbPPXW"></div>
           <div class="waitlist-form__actions">
             <button class="btn btn--primary" type="submit" data-i18n="common.navWaitlist">Quero ser avisado</button>
           </div>
@@ -227,6 +209,16 @@
         <a href="/privacidade.html" data-i18n="common.footerPrivacy">Privacidade</a>
         <a href="/termos.html" data-i18n="common.footerTerms">Termos</a>
         <a href="/cookies.html" data-i18n="common.footerCookies">Cookies</a>
+      </nav>
+      <nav class="landing-footer__links landing-footer__links--segments" aria-label="Soluções por segmento" data-i18n-attr="aria-label:common.footerSegmentsAria">
+        <a href="/para/lash.html" data-i18n="common.segLash">Lash designer</a>
+        <a href="/para/sobrancelha.html" data-i18n="common.segBrow">Sobrancelha</a>
+        <a href="/para/skincare.html" data-i18n="common.segSkincare">Skincare e estética</a>
+        <a href="/para/micropigmentacao.html" data-i18n="common.segMicro">Micropigmentação</a>
+        <a href="/para/barbearia.html" data-i18n="common.segBarber">Barbearia</a>
+        <a href="/para/massoterapia.html" data-i18n="common.segMassage">Massoterapia</a>
+        <a href="/para/podologia.html" data-i18n="common.segPodo">Podologia</a>
+        <a href="/para/tatuagem.html" data-i18n="common.segTattoo">Tatuagem</a>
       </nav>
       <span><!-- TROCAR: nome/razão social definitiva no rebrand --><span data-i18n="common.footerCopyright">© 2026 Harmon IA · Todos os direitos reservados</span></span>
     </div>

@@ -1,31 +1,54 @@
 /* ============================================================================
-   i18n.css — toggle de idioma PT/EN (header desktop + painel mobile)
+   i18n.css — menu de idioma por bandeira (header desktop + painel mobile).
+   A bandeira exibida no gatilho segue html[lang] (i18n.js seta pt-BR/en):
+   CSS decide qual aparece — zero JS extra pra sincronizar.
    ============================================================================ */
 
-.lang-switch { display: inline-flex; align-self: flex-start; gap: 2px; border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 2px; }
-.lang-switch__btn {
-  font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-600);
-  padding: 4px 10px; border: 0; background: transparent; color: var(--text-muted);
-  border-radius: var(--radius-pill); cursor: pointer; min-height: 32px;
+.lang-menu { position: relative; align-self: center; }
+.lang-menu__btn {
+  display: inline-flex; align-items: center; gap: 4px; list-style: none;
+  font-size: var(--fs-md); line-height: 1; padding: 6px 8px; min-height: 32px;
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  cursor: pointer; color: var(--text-muted); background: transparent;
 }
-.lang-switch__btn[aria-pressed="true"] { background: var(--surface); color: var(--text); }
-.lang-switch__btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.lang-menu__btn::-webkit-details-marker { display: none; }
+.lang-menu__btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.lang-menu__caret { width: 12px; height: 12px; transition: transform var(--dur-fast, 120ms) var(--ease-out, ease); }
+.lang-menu[open] .lang-menu__caret { transform: rotate(180deg); }
 
-@media (max-width: 900px) {
-  /* alvo de toque >= 44px no painel mobile (WCAG 2.2) */
-  .lang-switch__btn { min-height: 44px; padding: 8px 14px; }
+/* bandeira do gatilho segue o idioma ativo */
+.lang-menu__flag--en { display: none; }
+html[lang="en"] .lang-menu__flag--pt { display: none; }
+html[lang="en"] .lang-menu__flag--en { display: inline; }
+
+.lang-menu__panel {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 60;
+  display: flex; flex-direction: column; gap: 2px; min-width: 180px;
+  padding: 6px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md, 12px); box-shadow: var(--shadow-lg, 0 8px 28px rgb(0 0 0 / 0.14));
 }
+.lang-menu__opt {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-600);
+  padding: 8px 10px; min-height: 40px; border: 0; background: transparent;
+  color: var(--text-muted); border-radius: var(--radius-sm, 8px); cursor: pointer; text-align: left;
+}
+.lang-menu__opt:hover { background: var(--surface-2, rgb(0 0 0 / 0.05)); }
+.lang-menu__opt[aria-pressed="true"] { color: var(--text); }
+.lang-menu__opt[aria-pressed="true"]::after { content: "✓"; margin-left: auto; font-size: var(--fs-sm); }
+.lang-menu__opt:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+
+/* painel mobile: menu abre no fluxo (sem flutuar sobre os links) */
+.landing-nav-mobile__panel .lang-menu__panel { position: static; box-shadow: none; border: 0; padding: 0 0 0 8px; }
+.landing-nav-mobile__panel .lang-menu__opt { min-height: 44px; }
 
 /* header transparente sobre o hero (home, antes de rolar): mesmo tratamento
-   visual do .btn--ghost nesse estado — texto/borda claros sobre a imagem.
-   Só o toggle do header desktop (__actions); o do painel mobile fica sempre
-   sobre fundo branco (.landing-nav-mobile__panel), não pode herdar essa cor. */
-.page-home .landing-header:not(.is-scrolled) .landing-header__actions .lang-switch { border-color: var(--hero-border); }
-.page-home .landing-header:not(.is-scrolled) .landing-header__actions .lang-switch__btn { color: var(--color-white); }
-.page-home .landing-header:not(.is-scrolled) .landing-header__actions .lang-switch__btn[aria-pressed="true"] {
-  background: rgb(from var(--color-white) r g b / 0.16); color: var(--color-white);
+   visual do .btn--ghost nesse estado — borda/ícone claros sobre a imagem.
+   Só o gatilho do header desktop; o painel dropdown continua em superfície. */
+.page-home .landing-header:not(.is-scrolled) .landing-header__actions .lang-menu__btn {
+  border-color: var(--hero-border); color: var(--color-white);
 }
 
-/* entrar.html não tem header — toggle fica dentro do card (fluxo normal,
+/* entrar.html não tem header — menu fica dentro do card (fluxo normal,
    sem position:absolute — evita sobrepor o card em telas estreitas). */
 .login-form__topbar { display: flex; justify-content: flex-end; margin-bottom: var(--sp-3); }
